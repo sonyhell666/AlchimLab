@@ -177,24 +177,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 buttonDisabled = 'disabled'; // Не хватает эссенции для покупки
             }
 
+            // !!! --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- !!!
             li.innerHTML = `
                 <div class="upgrade-info">
                     <h3>${upgrade.name} (Ур. ${upgrade.currentLevel})</h3>
                     <p>${upgrade.description}</p>
                     <p class="upgrade-cost">Стоимость: ${formatNumber(cost)} 🧪</p>
-                    ${isLocked ? `<p class="requirement-info">Требуется: ${formatNumber(requirement)} 🧪</p>` : ''} {/* Показать требование */}
+                    ${isLocked ? `<p class="requirement-info">Требуется: ${formatNumber(requirement)} 🧪</p>` : ''}
                 </div>
                 <button class="buy-upgrade-btn" data-upgrade-id="${upgrade.id}" ${buttonDisabled}>
                     ${buttonText}
                 </button>
             `;
+            // !!! --- КОНЕЦ ИСПРАВЛЕНИЯ --- !!!
 
             const buyButton = li.querySelector('.buy-upgrade-btn');
             if (buyButton) {
                 // Добавляем обработчик всегда, но сработает только если кнопка не 'disabled'
                 buyButton.addEventListener('click', () => {
-                    // Проверку на isLocked делать не обязательно здесь, т.к. кнопка и так disabled
-                    // Проверка на cost делается внутри buyUpgrade
                     buyUpgrade(upgrade.id);
                 });
             }
