@@ -23,7 +23,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Переменные для защиты от автокликера ---
     let lastClickTime = 0; // Время последнего ЗАСЧИТАННОГО клика
-    const MIN_CLICK_INTERVAL = 60; // Минимальный интервал между кликами в мс (~16 кликов/сек)
+    // !!! ИЗМЕНЕНИЕ ЗДЕСЬ: Интервал для ~15 кликов/сек !!!
+    const MIN_CLICK_INTERVAL = 67; // 1000 / 15 ≈ 66.67 -> 67 мс
     const MAX_WARNINGS = 3; // Количество предупреждений до блокировки
     let warningCount = 0; // Текущий счетчик предупреждений
     let isBlocked = false; // Флаг блокировки игрока
@@ -84,11 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Логика клика по котлу (с защитой) ---
     if (cauldronElement) {
         cauldronElement.addEventListener('click', () => {
-            // --- ПРОВЕРКА БЛОКИРОВКИ ---
             if (isBlocked) {
-                console.log("Blocked: Autoclicker detected previously.");
                 showTemporaryNotification("Автокликер обнаружен! Возможность кликать заблокирована.", "error");
-                return; // Выходим
+                return;
             }
 
             const currentTime = Date.now();
@@ -96,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // --- ПРОВЕРКА ИНТЕРВАЛА ---
             if (currentTime - lastClickTime >= MIN_CLICK_INTERVAL) {
                 // Валидный клик
-                // warningCount = 0; // Опционально: сброс предупреждений при валидном клике
+                warningCount = 0; // Сбрасываем счетчик предупреждений
 
                 if (Number.isFinite(essencePerClick)) {
                     essence += essencePerClick;
@@ -106,13 +105,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         showClickFeedback(`+${formatNumber(essencePerClick)}`);
                     }
 
-                    // Анимация котла
                     cauldronElement.style.transform = 'scale(0.95)';
                     setTimeout(() => {
                         cauldronElement.style.transform = 'scale(1)';
                     }, 80);
 
-                    lastClickTime = currentTime; // Обновляем время валидного клика
+                    // Обновляем lastClickTime ТОЛЬКО для ВАЛИДНЫХ кликов
+                    lastClickTime = currentTime;
 
                 } else {
                     console.error("Invalid essencePerClick value:", essencePerClick);
@@ -121,10 +120,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 // Клик слишком частый
                 warningCount++;
-                lastClickTime = currentTime; // Обновляем время, чтобы ловить серию
+                // НЕ обновляем lastClickTime здесь, чтобы следующий клик сравнивался с последним валидным
 
                 console.warn(`Autoclicker warning ${warningCount}/${MAX_WARNINGS}`);
-                showTemporaryNotification(`Обнаружен слишком частый клик! Предупреждение ${warningCount}/${MAX_WARNINGS}`, "error");
+                showTemporaryNotification(`Слишком частый клик! Предупреждение ${warningCount}/${MAX_WARNINGS}`, "warning");
 
                 // Проверка на блокировку
                 if (warningCount >= MAX_WARNINGS) {
@@ -146,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Функция для отображения "+1" при клике ---
     function showClickFeedback(text) {
-        if (isBlocked || !clickFeedbackContainer) return; // Не показываем фидбек, если заблокированы
+        if (isBlocked || !clickFeedbackContainer) return;
         const feedback = document.createElement('div');
         feedback.className = 'click-feedback';
         feedback.textContent = text;
@@ -182,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel));
     }
 
+    // ОБНОВЛЕННАЯ ФУНКЦИЯ RENDERUPGRADES (с показом заблокированных)
     function renderUpgrades() {
         if (!upgradesListElement) {
              console.error("Upgrades list element not found!");
@@ -246,7 +246,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function buyUpgrade(upgradeId) {
-        // Добавляем проверку на общую блокировку
         if (isBlocked) {
              showTemporaryNotification("Действие заблокировано из-за подозрений.", "error");
              return;
@@ -356,9 +355,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const gameState = {
             essence: essence,
             upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel }))
-            // Если хотите сохранять блокировку:
-            // , isBlocked: isBlocked
-            // , warningCount: warningCount
         };
         try {
             localStorage.setItem('alchemistClickerSave', JSON.stringify(gameState));
@@ -375,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
         warningCount = 0;
         if(cauldronElement) {
              cauldronElement.classList.remove('blocked-cauldron');
-             cauldronElement.style.cursor = 'pointer'; // Возвращаем обычный курсор
+             cauldronElement.style.cursor = 'pointer';
         }
 
 
@@ -391,14 +387,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     upgrade.currentLevel = savedUpgrade ? (Number(savedUpgrade.level) || 0) : 0;
                     if (!Number.isFinite(upgrade.currentLevel)) upgrade.currentLevel = 0;
                 });
-
-                // Если бы мы загружали статус блокировки:
-                // isBlocked = gameState.isBlocked || false;
-                // warningCount = Number(gameState.warningCount) || 0;
-                // if (isBlocked && cauldronElement) {
-                //     cauldronElement.classList.add('blocked-cauldron');
-                //     cauldronElement.style.cursor = 'not-allowed';
-                // }
 
                 recalculateBonuses();
                 console.log("Игра загружена");
@@ -439,7 +427,14 @@ document.addEventListener('DOMContentLoaded', () => {
         notification.style.transform = 'translateX(-50%)';
         notification.style.padding = '10px 20px';
         notification.style.borderRadius = '8px';
-        notification.style.backgroundColor = type === 'error' ? '#e74c3c' : '#3498db';
+        // Задаем цвет фона в зависимости от типа
+        if (type === 'error') {
+            notification.style.backgroundColor = '#e74c3c'; // Красный для ошибок
+        } else if (type === 'warning') {
+            notification.style.backgroundColor = '#f39c12'; // Оранжевый для предупреждений
+        } else {
+            notification.style.backgroundColor = '#3498db'; // Синий по умолчанию (info)
+        }
         notification.style.color = 'white';
         notification.style.zIndex = '1000';
         notification.style.opacity = '0';
