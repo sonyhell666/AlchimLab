@@ -1,254 +1,232 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Инициализация Telegram Web App
-    const tg = window.Telegram.WebApp;
-    tg.ready(); // Сообщаем Telegram, что приложение готово
-    tg.expand(); // Попытка раскрыть Mini App на весь экран
+// --- Определения улучшений ---
+// Добавляем поле requiredEssence: сколько нужно эссенции, чтобы увидеть улучшение
+const upgrades = [
+    // --- Начальный Тир (Доступны сразу) ---
+    { id: 'click1', name: 'Улучшенный рецепт', description: '+1 к клику', baseCost: 15, costMultiplier: 1.4, type: 'click', value: 1, currentLevel: 0, requiredEssence: 0 },
+    { id: 'auto1', name: 'Гомункул-Помощник', description: '+1 в секунду', baseCost: 60, costMultiplier: 1.6, type: 'auto', value: 1, currentLevel: 0, requiredEssence: 0 },
 
-    // Получаем ссылки на элементы DOM
-    const essenceCountElement = document.getElementById('essence-count');
-    const essencePerSecondElement = document.getElementById('essence-per-second');
-    const cauldronElement = document.getElementById('cauldron');
-    const clickFeedbackContainer = document.getElementById('click-feedback-container');
-    const openUpgradesBtn = document.getElementById('open-upgrades-btn');
-    const closeUpgradesBtn = document.getElementById('close-upgrades-btn');
-    const upgradesPanel = document.getElementById('upgrades-panel');
-    const upgradesListElement = document.getElementById('upgrades-list');
-    const userGreetingElement = document.getElementById('user-greeting');
-    const inviteFriendBtn = document.getElementById('invite-friend-btn');
+    // --- Тир 2 (Требуется ~500+ Эссенции) ---
+    { id: 'click2', name: 'Зачарованная ступка', description: '+5 к клику', baseCost: 300, costMultiplier: 1.5, type: 'click', value: 5, currentLevel: 0, requiredEssence: 500 },
+    { id: 'auto2', name: 'Пузырящийся котел', description: '+4 в секунду', baseCost: 750, costMultiplier: 1.7, type: 'auto', value: 4, currentLevel: 0, requiredEssence: 700 },
 
-    // Игровые переменные (состояние)
-    let essence = 0;
-    let essencePerClick = 1;
-    let essencePerSecond = 0;
+    // --- Тир 3 (Требуется ~10,000+ Эссенции) ---
+    { id: 'click3', name: 'Алембик Мастера', description: '+25 к клику', baseCost: 5000, costMultiplier: 1.6, type: 'click', value: 25, currentLevel: 0, requiredEssence: 10000 },
+    { id: 'auto3', name: 'Призванный Ифрит', description: '+20 в секунду', baseCost: 12000, costMultiplier: 1.8, type: 'auto', value: 20, currentLevel: 0, requiredEssence: 15000 },
+    { id: 'auto4', name: 'Сад Алхимических Растений', description: '+50 в секунду', baseCost: 30000, costMultiplier: 1.9, type: 'auto', value: 50, currentLevel: 0, requiredEssence: 40000 },
 
-    // --- Отображение имени пользователя (опционально) ---
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) {
-        userGreetingElement.textContent = `Лаборатория ${tg.initDataUnsafe.user.first_name}`;
-    }
 
-    // --- Определения улучшений ---
-    // Структура:
-    // id: уникальный идентификатор
-    // name: Название улучшения
-    // description: Описание эффекта
-    // baseCost: Начальная стоимость
-    // costMultiplier: Множитель стоимости для следующего уровня
-    // type: 'click' или 'auto' - тип улучшения
-    // value: На сколько увеличивается клик или авто-клик за уровень
-    // maxLevel: Максимальный уровень (опционально)
-    const upgrades = [
-        { id: 'click1', name: 'Улучшенный рецепт', description: '+1 к клику', baseCost: 10, costMultiplier: 1.5, type: 'click', value: 1, currentLevel: 0 },
-        { id: 'auto1', name: 'Гомункул-Помощник', description: '+1 в секунду', baseCost: 50, costMultiplier: 1.8, type: 'auto', value: 1, currentLevel: 0 },
-        { id: 'click2', name: 'Зачарованная ступка', description: '+5 к клику', baseCost: 200, costMultiplier: 1.6, type: 'click', value: 5, currentLevel: 0 },
-        { id: 'auto2', name: 'Автоматический перегонный куб', description: '+8 в секунду', baseCost: 1000, costMultiplier: 2.0, type: 'auto', value: 8, currentLevel: 0 },
-    ];
+    // --- Тир 4 (Требуется ~500,000+ Эссенции) ---
+     { id: 'click4', name: 'Сила Философского Камня (осколок)', description: '+150 к клику', baseCost: 250000, costMultiplier: 1.7, type: 'click', value: 150, currentLevel: 0, requiredEssence: 500000 },
+     { id: 'auto5', name: 'Эфирный Концентратор', description: '+250 в секунду', baseCost: 1000000, costMultiplier: 2.0, type: 'auto', value: 250, currentLevel: 0, requiredEssence: 1200000 },
+     { id: 'auto6', name: 'Портал в мир Эссенции', description: '+1000 в секунду', baseCost: 5000000, costMultiplier: 2.2, type: 'auto', value: 1000, currentLevel: 0, requiredEssence: 6000000 },
 
-    // --- Функции обновления UI ---
-    function updateEssenceDisplay() {
-        essenceCountElement.textContent = formatNumber(Math.floor(essence));
-        essencePerSecondElement.textContent = formatNumber(essencePerSecond);
-    }
+    // --- Тир 5 (Очень дорогой, для эндгейма) ---
+     { id: 'click5', name: 'Прикосновение Творца', description: '+1000 к клику', baseCost: 10000000, costMultiplier: 1.8, type: 'click', value: 1000, currentLevel: 0, requiredEssence: 15000000 },
+     { id: 'auto7', name: 'Поток Чистой Магии', description: '+5000 в секунду', baseCost: 50000000, costMultiplier: 2.1, type: 'auto', value: 5000, currentLevel: 0, requiredEssence: 60000000 },
+];
 
-    // Форматирование больших чисел (для наглядности)
-    function formatNumber(num) {
-        if (num < 1000) return num.toString();
-        if (num < 1000000) return (num / 1000).toFixed(1).replace('.0', '') + 'K';
-        if (num < 1000000000) return (num / 1000000).toFixed(1).replace('.0', '') + 'M';
-        return (num / 1000000000).toFixed(1).replace('.0', '') + 'B';
-    }
+// --- Функции обновления UI ---
+// ... (остальные функции остаются как были: updateEssenceDisplay, formatNumber, showClickFeedback) ...
 
-    // --- Логика клика по котлу ---
-    cauldronElement.addEventListener('click', () => {
-        essence += essencePerClick;
-        updateEssenceDisplay();
-        showClickFeedback(`+${formatNumber(essencePerClick)}`);
-        // Можно добавить анимацию котла при клике
-        cauldronElement.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            cauldronElement.style.transform = 'scale(1)';
-        }, 80); // Короткая анимация
+// --- Логика клика по котлу ---
+// ... (остается как была) ...
+
+// --- Функция для отображения "+1" при клике ---
+// ... (остается как была) ...
+
+// --- Логика авто-клика (пассивный доход) ---
+// ... (остается как была) ...
+
+// --- Логика улучшений ---
+function calculateCost(upgrade) {
+    return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel));
+}
+
+// !!! --- ИЗМЕНЕННАЯ ФУНКЦИЯ renderUpgrades --- !!!
+function renderUpgrades() {
+    upgradesListElement.innerHTML = ''; // Очищаем список перед рендером
+
+    // Фильтруем улучшения: показываем только те, для которых достигнут порог requiredEssence
+    const availableUpgrades = upgrades.filter(upgrade => {
+        // Если у улучшения нет requiredEssence, считаем его 0 (доступно всегда)
+        const requirement = upgrade.requiredEssence || 0;
+        // Используем Math.floor(essence), чтобы избежать проблем с дробными числами при сравнении
+        return Math.floor(essence) >= requirement;
     });
 
-    // --- Функция для отображения "+1" при клике ---
-    function showClickFeedback(text) {
-        const feedback = document.createElement('div');
-        feedback.className = 'click-feedback';
-        feedback.textContent = text;
+    // Сортируем доступные улучшения по требуемой эссенции (или по цене, если хотите)
+    availableUpgrades.sort((a, b) => (a.requiredEssence || 0) - (b.requiredEssence || 0));
 
-        // Случайное смещение для естественности
-        const offsetX = Math.random() * 40 - 20; // от -20px до +20px
-        const offsetY = Math.random() * 20 - 10; // от -10px до +10px
-        feedback.style.left = `calc(50% + ${offsetX}px)`;
-        feedback.style.top = `calc(50% + ${offsetY}px)`;
-
-        clickFeedbackContainer.appendChild(feedback);
-
-        // Удалить элемент после завершения анимации
-        setTimeout(() => {
-            feedback.remove();
-        }, 950); // Чуть меньше времени анимации (1s)
+    if (availableUpgrades.length === 0) {
+         upgradesListElement.innerHTML = '<li><p>Пока нет доступных улучшений. Копите эссенцию!</p></li>';
+         return;
     }
 
-    // --- Логика авто-клика (пассивный доход) ---
-    setInterval(() => {
-        essence += essencePerSecond / 10; // Начисляем 10 раз в секунду для плавности
+    availableUpgrades.forEach(upgrade => {
+        const cost = calculateCost(upgrade);
+        const li = document.createElement('li');
+
+        // Проверяем, хватает ли эссенции на ПОКУПКУ (не на открытие)
+        const canAfford = essence >= cost;
+
+        li.innerHTML = `
+            <div class="upgrade-info">
+                <h3>${upgrade.name} (Ур. ${upgrade.currentLevel})</h3>
+                <p>${upgrade.description}</p>
+                <p class="upgrade-cost">Стоимость: ${formatNumber(cost)} 🧪</p>
+            </div>
+            <button class="buy-upgrade-btn" data-upgrade-id="${upgrade.id}" ${!canAfford ? 'disabled' : ''}>
+                Купить
+            </button>
+        `;
+
+        // Добавляем обработчик на кнопку "Купить"
+        li.querySelector('.buy-upgrade-btn').addEventListener('click', () => {
+            buyUpgrade(upgrade.id);
+        });
+
+        upgradesListElement.appendChild(li);
+    });
+}
+// !!! --- КОНЕЦ ИЗМЕНЕННОЙ ФУНКЦИИ renderUpgrades --- !!!
+
+
+function buyUpgrade(upgradeId) {
+    // Находим улучшение в *полном* списке, а не только в доступных
+    const upgrade = upgrades.find(u => u.id === upgradeId);
+    if (!upgrade) return;
+
+    const cost = calculateCost(upgrade);
+    if (essence >= cost) {
+        essence -= cost;
+        upgrade.currentLevel++;
+
+        // Пересчитываем бонусы после покупки
+        recalculateBonuses();
+
+        // Обновляем UI
         updateEssenceDisplay();
-    }, 100); // Интервал 100мс
-
-    // --- Логика улучшений ---
-    function calculateCost(upgrade) {
-        return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel));
+        renderUpgrades(); // Перерисовываем панель улучшений
+    } else {
+        console.log("Недостаточно эссенции!");
+        // Можно показать временное уведомление игроку
+        showTemporaryNotification("Недостаточно эссенции!", "error");
     }
+}
 
-    function renderUpgrades() {
-        upgradesListElement.innerHTML = ''; // Очищаем список перед рендером
-        upgrades.forEach(upgrade => {
-            const cost = calculateCost(upgrade);
-            const li = document.createElement('li');
+// --- Функция для пересчета всех бонусов ---
+// Важно вызывать ее после покупки/загрузки, чтобы бонусы были актуальны
+function recalculateBonuses() {
+    essencePerClick = 1; // Начинаем с базового значения
+    essencePerSecond = 0; // Начинаем с нуля
 
-            const canAfford = essence >= cost;
+    upgrades.forEach(upgrade => {
+        if (upgrade.currentLevel > 0) {
+            if (upgrade.type === 'click') {
+                essencePerClick += upgrade.value * upgrade.currentLevel;
+            } else if (upgrade.type === 'auto') {
+                essencePerSecond += upgrade.value * upgrade.currentLevel;
+            }
+        }
+    });
+}
 
-            li.innerHTML = `
-                <div class="upgrade-info">
-                    <h3>${upgrade.name} (Ур. ${upgrade.currentLevel})</h3>
-                    <p>${upgrade.description}</p>
-                    <p class="upgrade-cost">Стоимость: ${formatNumber(cost)} 🧪</p>
-                </div>
-                <button class="buy-upgrade-btn" data-upgrade-id="${upgrade.id}" ${!canAfford ? 'disabled' : ''}>
-                    Купить
-                </button>
-            `;
+// --- Открытие/Закрытие панели улучшений ---
+// ... (остается как была) ...
 
-            // Добавляем обработчик на кнопку "Купить"
-            li.querySelector('.buy-upgrade-btn').addEventListener('click', () => {
-                buyUpgrade(upgrade.id);
+// --- Логика кнопки "Друзья" (заглушка) ---
+// ... (остается как была) ...
+
+// --- Сохранение/Загрузка ---
+function saveGame() {
+    const gameState = {
+        essence: essence,
+        upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel }))
+        // Важно: Не сохраняем essencePerClick и essencePerSecond,
+        // так как они будут пересчитаны при загрузке на основе уровней улучшений.
+    };
+    try {
+        localStorage.setItem('alchemistClickerSave', JSON.stringify(gameState));
+         console.log("Игра сохранена");
+    } catch (e) {
+        console.error("Ошибка сохранения в localStorage:", e);
+        // Можно уведомить пользователя, что сохранение не удалось
+        showTemporaryNotification("Ошибка сохранения прогресса!", "error");
+    }
+}
+
+function loadGame() {
+    const savedState = localStorage.getItem('alchemistClickerSave');
+    if (savedState) {
+        try {
+            const gameState = JSON.parse(savedState);
+            // Загружаем эссенцию, убеждаемся что это число
+            essence = Number(gameState.essence) || 0;
+
+            // Восстанавливаем уровни улучшений
+            upgrades.forEach(upgrade => {
+                const savedUpgrade = gameState.upgrades.find(su => su.id === upgrade.id);
+                upgrade.currentLevel = savedUpgrade ? (Number(savedUpgrade.level) || 0) : 0;
             });
 
-            upgradesListElement.appendChild(li);
-        });
-    }
+            // Пересчитываем бонусы на основе загруженных уровней
+            recalculateBonuses();
 
-    function buyUpgrade(upgradeId) {
-        const upgrade = upgrades.find(u => u.id === upgradeId);
-        if (!upgrade) return;
-
-        const cost = calculateCost(upgrade);
-        if (essence >= cost) {
-            essence -= cost;
-            upgrade.currentLevel++;
-
-            // Применяем эффект улучшения
-            if (upgrade.type === 'click') {
-                essencePerClick += upgrade.value;
-            } else if (upgrade.type === 'auto') {
-                essencePerSecond += upgrade.value;
-            }
-
-            // Обновляем UI
-            updateEssenceDisplay();
-            renderUpgrades(); // Перерисовываем панель улучшений с новыми ценами и состояниями
-        } else {
-            console.log("Недостаточно эссенции!"); // Можно добавить уведомление
+            console.log("Игра загружена");
+        } catch (e) {
+            console.error("Ошибка загрузки сохранения:", e);
+            localStorage.removeItem('alchemistClickerSave'); // Очищаем битое сохранение
+            resetGameData(); // Начинаем новую игру
         }
+    } else {
+         console.log("Сохранение не найдено, начинаем новую игру.");
+         resetGameData(); // Убедимся, что бонусы сброшены
     }
+    updateEssenceDisplay(); // Обновляем UI после загрузки/сброса
+}
 
-    // --- Открытие/Закрытие панели улучшений ---
-    openUpgradesBtn.addEventListener('click', () => {
-        renderUpgrades(); // Обновляем список перед показом
-        upgradesPanel.classList.remove('hidden');
-    });
+function resetGameData() {
+    essence = 0;
+    upgrades.forEach(u => u.currentLevel = 0);
+    recalculateBonuses(); // Сбрасываем бонусы
+}
 
-    closeUpgradesBtn.addEventListener('click', () => {
-        upgradesPanel.classList.add('hidden');
-    });
+// --- Добавим функцию для временных уведомлений (опционально) ---
+function showTemporaryNotification(message, type = "info") {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`; // Добавим классы для стилизации
+    notification.textContent = message;
 
-    // --- Логика кнопки "Друзья" (заглушка) ---
-    inviteFriendBtn.addEventListener('click', () => {
-        // Здесь должна быть логика интеграции с Telegram API
-        // Например, генерация реферальной ссылки и шаринг
-        // tg.share(...) или tg.openTelegramLink(...)
-        console.log('Кнопка "Друзья" нажата. Нужна интеграция с Telegram API.');
-        // Простое уведомление для демонстрации
-        tg.showPopup({
-            title: 'Пригласить друзей',
-            message: 'Эта функция пока в разработке. Вы сможете приглашать друзей и получать бонусы!',
-            buttons: [{ type: 'ok' }]
-        });
-    });
+    // Стилизуем уведомление (можно вынести в CSS)
+    notification.style.position = 'fixed';
+    notification.style.bottom = '70px'; // Чуть выше кнопок
+    notification.style.left = '50%';
+    notification.style.transform = 'translateX(-50%)';
+    notification.style.padding = '10px 20px';
+    notification.style.borderRadius = '8px';
+    notification.style.backgroundColor = type === 'error' ? '#e74c3c' : '#3498db';
+    notification.style.color = 'white';
+    notification.style.zIndex = '1000';
+    notification.style.opacity = '0';
+    notification.style.transition = 'opacity 0.5s ease';
 
-    // --- Первоначальная отрисовка ---
-    updateEssenceDisplay();
-    // renderUpgrades(); // Можно отрисовать сразу, но лучше при открытии панели
+    document.body.appendChild(notification);
 
-    // --- Сохранение/Загрузка (Очень простой пример с localStorage) ---
-    function saveGame() {
-        const gameState = {
-            essence: essence,
-            upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel }))
-        };
-        localStorage.setItem('alchemistClickerSave', JSON.stringify(gameState));
-        console.log("Игра сохранена");
-    }
+    // Анимация появления и исчезновения
+    setTimeout(() => { notification.style.opacity = '1'; }, 10); // Появление
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => { notification.remove(); }, 500); // Удалить после исчезновения
+    }, 2500); // Показать на 2.5 секунды
+}
 
-    function loadGame() {
-        const savedState = localStorage.getItem('alchemistClickerSave');
-        if (savedState) {
-            try {
-                const gameState = JSON.parse(savedState);
-                essence = gameState.essence || 0;
 
-                // Восстанавливаем уровни улучшений и пересчитываем бонусы
-                essencePerClick = 1; // Сбрасываем базовые значения перед пересчетом
-                essencePerSecond = 0;
-                upgrades.forEach(upgrade => {
-                    const savedUpgrade = gameState.upgrades.find(su => su.id === upgrade.id);
-                    if (savedUpgrade) {
-                        upgrade.currentLevel = savedUpgrade.level || 0;
-                        // Применяем эффекты от загруженных уровней
-                        if (upgrade.type === 'click') {
-                            essencePerClick += upgrade.value * upgrade.currentLevel;
-                        } else if (upgrade.type === 'auto') {
-                            essencePerSecond += upgrade.value * upgrade.currentLevel;
-                        }
-                    } else {
-                         upgrade.currentLevel = 0; // Если улучшение не найдено в сохранении
-                    }
-                });
+// --- Первоначальная инициализация ---
+loadGame(); // Загружаем игру
+// renderUpgrades(); // Убрали отсюда, вызывается при открытии панели
+updateEssenceDisplay(); // Первичная отрисовка счета
 
-                console.log("Игра загружена");
-            } catch (e) {
-                console.error("Ошибка загрузки сохранения:", e);
-                // Если ошибка - начинаем новую игру
-                resetGameData();
-            }
-        } else {
-             console.log("Сохранение не найдено, начинаем новую игру.");
-             resetGameData();
-        }
-        updateEssenceDisplay(); // Обновляем UI после загрузки
-    }
-
-    function resetGameData() {
-        essence = 0;
-        essencePerClick = 1;
-        essencePerSecond = 0;
-        upgrades.forEach(u => u.currentLevel = 0);
-    }
-
-    // Загружаем игру при старте
-    loadGame();
-
-    // Автосохранение каждые 30 секунд
-    setInterval(saveGame, 30000);
-
-     // Сохраняем перед закрытием (может не всегда срабатывать в Mini Apps)
-    window.addEventListener('beforeunload', saveGame);
-    // Для Mini Apps более надежно использовать события видимости, если API позволяет
-     document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'hidden') {
-            saveGame();
-        }
-    });
-
+// --- Автосохранение и обработчики событий ---
+// ... (остаются как были) ...
 
 }); // Конец DOMContentLoaded
