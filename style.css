@@ -8,7 +8,7 @@
     --bubble-color: #e8daef; /* Цвет пузырьков */
     --button-bg: #5d5480;
     --button-hover-bg: #71689a;
-    --disabled-color: #888;
+    --disabled-color: #6c6c6c; /* Сделаем чуть темнее */
 }
 
 * {
@@ -250,6 +250,8 @@ html, body {
     list-style: none;
     overflow-y: auto; /* Добавляем скролл, если улучшений много */
     flex-grow: 1;
+    /* Добавим немного отступа справа для скроллбара, если он появится */
+    padding-right: 5px;
 }
 
 #upgrades-list li {
@@ -258,6 +260,8 @@ html, body {
     align-items: center;
     padding: 12px 5px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    /* Плавный переход для opacity при разблокировке */
+    transition: opacity 0.3s ease, background-color 0.3s ease;
 }
 #upgrades-list li:last-child {
     border-bottom: none;
@@ -294,7 +298,9 @@ html, body {
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
-    transition: background-color 0.2s ease, opacity 0.2s ease;
+    transition: background-color 0.2s ease, opacity 0.2s ease, color 0.2s ease;
+    min-width: 90px; /* Чтобы кнопки с разным текстом были примерно одинаковой ширины */
+    text-align: center;
 }
 
 .buy-upgrade-btn:hover:not(:disabled) {
@@ -303,8 +309,9 @@ html, body {
 
 .buy-upgrade-btn:disabled {
     background-color: var(--disabled-color);
+    color: #a0a0a0; /* Более бледный текст для неактивной кнопки */
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.7; /* Чуть менее прозрачная, чем сама li.locked */
 }
 
 /* --- Класс для скрытия элементов --- */
@@ -323,4 +330,58 @@ html, body {
      .upgrades-panel:not(.hidden) {
         transform: translate(-50%, 0);
     }
+}
+
+/* --- Стили для заблокированных улучшений --- */
+#upgrades-list li.locked {
+    opacity: 0.5; /* Делаем их полупрозрачными */
+    /* Убрал pointer-events: none;, чтобы можно было видеть всплывающие подсказки, если они есть */
+    background-color: rgba(0, 0, 0, 0.15); /* Слегка затемняем фон */
+}
+
+/* Текст внутри заблокированного элемента */
+#upgrades-list li.locked .upgrade-info h3,
+#upgrades-list li.locked .upgrade-info p:not(.requirement-info) { /* Не меняем цвет requirement-info */
+    color: #b0b0b0; /* Делаем текст сероватым */
+    opacity: 0.8;
+}
+
+/* Кнопка внутри заблокированного элемента */
+#upgrades-list li.locked .buy-upgrade-btn {
+    background-color: #555; /* Темно-серый фон для кнопки требования */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--accent-color); /* Текст требования выделяем цветом */
+    font-size: 0.8em; /* Можно сделать текст требования чуть меньше */
+    opacity: 1; /* Непрозрачная кнопка, чтобы текст требования был читаем */
+}
+
+/* Стиль для текста с требованием (добавлен в JS) */
+.requirement-info {
+    font-size: 0.75em; /* Меньше основного описания */
+    color: var(--accent-color); /* Выделяем цветом требования */
+    opacity: 1; /* Непрозрачный, чтобы был виден на фоне locked */
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+/* --- Стили для уведомлений (добавлены ранее в JS) --- */
+.notification {
+    position: fixed;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    border-radius: 8px;
+    color: white;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    font-size: 0.9em;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.notification.info {
+    background-color: #3498db;
+}
+.notification.error {
+    background-color: #e74c3c;
 }

@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.expand(); // Попытка раскрыть Mini App на весь экран
 
     // Получаем ссылки на элементы DOM
-    // Убедитесь, что все ID в index.html совпадают!
     const essenceCountElement = document.getElementById('essence-count');
     const essencePerSecondElement = document.getElementById('essence-per-second');
     const cauldronElement = document.getElementById('cauldron');
@@ -56,7 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Функции обновления UI ---
     function updateEssenceDisplay() {
-        // Добавим проверку, существуют ли элементы, прежде чем обращаться к ним
         if (essenceCountElement) {
             essenceCountElement.textContent = formatNumber(Math.floor(essence));
         }
@@ -67,10 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Форматирование больших чисел (для наглядности)
     function formatNumber(num) {
-        // Добавим проверку на NaN
         if (isNaN(num) || !Number.isFinite(num)) {
              console.warn("formatNumber received invalid input:", num);
-             return "ERR"; // Или 0, или другое значение по умолчанию
+             return "ERR";
         }
         if (num < 1000) return num.toString();
         if (num < 1000000) return (num / 1000).toFixed(1).replace('.0', '') + 'K';
@@ -79,19 +76,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Логика клика по котлу ---
-    // Проверяем, что элемент найден, перед добавлением обработчика
     if (cauldronElement) {
         cauldronElement.addEventListener('click', () => {
-            // Проверяем, что essencePerClick - число
             if (Number.isFinite(essencePerClick)) {
                 essence += essencePerClick;
-                updateEssenceDisplay(); // Обновляем счетчик
-                // Проверяем, что clickFeedbackContainer найден
+                updateEssenceDisplay();
                 if (clickFeedbackContainer) {
-                     showClickFeedback(`+${formatNumber(essencePerClick)}`); // Показываем фидбек
+                     showClickFeedback(`+${formatNumber(essencePerClick)}`);
                 }
-
-                // Анимация котла при клике
                 cauldronElement.style.transform = 'scale(0.95)';
                 setTimeout(() => {
                     cauldronElement.style.transform = 'scale(1)';
@@ -107,22 +99,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Функция для отображения "+1" при клике ---
     function showClickFeedback(text) {
-        // Проверяем, что контейнер найден
         if (!clickFeedbackContainer) return;
-
         const feedback = document.createElement('div');
         feedback.className = 'click-feedback';
         feedback.textContent = text;
-
-        // Случайное смещение для естественности
         const offsetX = Math.random() * 40 - 20;
         const offsetY = Math.random() * 20 - 10;
         feedback.style.left = `calc(50% + ${offsetX}px)`;
         feedback.style.top = `calc(50% + ${offsetY}px)`;
-
         clickFeedbackContainer.appendChild(feedback);
-
-        // Удалить элемент после завершения анимации
         setTimeout(() => {
             feedback.remove();
         }, 950);
@@ -130,12 +115,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Логика авто-клика (пассивный доход) ---
     setInterval(() => {
-        // Проверяем, что essencePerSecond > 0 и является числом
         if (essencePerSecond > 0 && Number.isFinite(essencePerSecond)) {
             const essenceToAdd = essencePerSecond / 10;
             if (Number.isFinite(essenceToAdd)) {
                 essence += essenceToAdd;
-                updateEssenceDisplay(); // Обновляем только если что-то изменилось
+                updateEssenceDisplay();
             } else {
                  console.warn("Skipping auto-click: essenceToAdd resulted in invalid number", essenceToAdd);
             }
@@ -144,56 +128,73 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Логика улучшений ---
     function calculateCost(upgrade) {
-        // Добавим проверку на валидность данных
         if (!upgrade || typeof upgrade.baseCost !== 'number' || typeof upgrade.costMultiplier !== 'number' || typeof upgrade.currentLevel !== 'number') {
              console.error("Invalid upgrade data in calculateCost:", upgrade);
-             return Infinity; // Возвращаем "бесконечность", чтобы нельзя было купить
+             return Infinity;
         }
         return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel));
     }
 
+    // ОБНОВЛЕННАЯ ФУНКЦИЯ RENDERUPGRADES (с показом заблокированных)
     function renderUpgrades() {
         if (!upgradesListElement) {
              console.error("Upgrades list element not found!");
              return;
         }
-        upgradesListElement.innerHTML = '';
+        upgradesListElement.innerHTML = ''; // Очищаем список
 
-        const availableUpgrades = upgrades.filter(upgrade => {
-            const requirement = upgrade.requiredEssence || 0;
-            return Math.floor(essence) >= requirement;
-        });
+        // Сортируем все улучшения, например, по требуемой эссенции
+        upgrades.sort((a, b) => (a.requiredEssence || 0) - (b.requiredEssence || 0));
 
-        availableUpgrades.sort((a, b) => (a.requiredEssence || 0) - (b.requiredEssence || 0));
-
-        if (availableUpgrades.length === 0) {
-             upgradesListElement.innerHTML = '<li><p>Пока нет доступных улучшений. Копите эссенцию!</p></li>';
+        if (upgrades.length === 0) {
+             upgradesListElement.innerHTML = '<li><p>Улучшения не определены.</p></li>';
              return;
         }
 
-        availableUpgrades.forEach(upgrade => {
+        upgrades.forEach(upgrade => {
             const cost = calculateCost(upgrade);
-            if (!Number.isFinite(cost)) { // Пропускаем рендер, если стоимость некорректна
+            if (!Number.isFinite(cost)) {
                  console.error("Skipping render for upgrade with invalid cost:", upgrade.id);
                  return;
             }
+
+            const requirement = upgrade.requiredEssence || 0;
+            const isLocked = Math.floor(essence) < requirement; // Проверяем блокировку по требованию
+            const canAfford = essence >= cost; // Проверяем доступность по цене
+
             const li = document.createElement('li');
-            const canAfford = essence >= cost;
+            if (isLocked) {
+                li.classList.add('locked'); // Добавляем класс для заблокированных
+            }
+
+            let buttonText = 'Купить';
+            let buttonDisabled = '';
+
+            if (isLocked) {
+                buttonDisabled = 'disabled';
+                buttonText = `Нужно ${formatNumber(requirement)} 🧪`; // Показываем требование
+            } else if (!canAfford) {
+                buttonDisabled = 'disabled'; // Не хватает эссенции для покупки
+            }
 
             li.innerHTML = `
                 <div class="upgrade-info">
                     <h3>${upgrade.name} (Ур. ${upgrade.currentLevel})</h3>
                     <p>${upgrade.description}</p>
                     <p class="upgrade-cost">Стоимость: ${formatNumber(cost)} 🧪</p>
+                    ${isLocked ? `<p class="requirement-info">Требуется: ${formatNumber(requirement)} 🧪</p>` : ''} {/* Показать требование */}
                 </div>
-                <button class="buy-upgrade-btn" data-upgrade-id="${upgrade.id}" ${!canAfford ? 'disabled' : ''}>
-                    Купить
+                <button class="buy-upgrade-btn" data-upgrade-id="${upgrade.id}" ${buttonDisabled}>
+                    ${buttonText}
                 </button>
             `;
 
             const buyButton = li.querySelector('.buy-upgrade-btn');
             if (buyButton) {
+                // Добавляем обработчик всегда, но сработает только если кнопка не 'disabled'
                 buyButton.addEventListener('click', () => {
+                    // Проверку на isLocked делать не обязательно здесь, т.к. кнопка и так disabled
+                    // Проверка на cost делается внутри buyUpgrade
                     buyUpgrade(upgrade.id);
                 });
             }
@@ -208,6 +209,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!upgrade) {
              console.error("Upgrade not found:", upgradeId);
              return;
+        }
+
+        // Дополнительная проверка: не пытаемся ли купить заблокированное улучшение?
+        const requirement = upgrade.requiredEssence || 0;
+        if (Math.floor(essence) < requirement) {
+            console.log("Attempted to buy a locked upgrade:", upgradeId);
+            showTemporaryNotification(`Сначала накопите ${formatNumber(requirement)} эссенции!`, "error");
+            return; // Выходим, не даем купить
         }
 
         const cost = calculateCost(upgrade);
@@ -245,14 +254,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-         // Добавим проверку, что результаты - числа
         if (!Number.isFinite(essencePerClick)) {
              console.error("recalculateBonuses resulted in invalid essencePerClick:", essencePerClick);
-             essencePerClick = 1; // Сброс к безопасному значению
+             essencePerClick = 1;
         }
          if (!Number.isFinite(essencePerSecond)) {
              console.error("recalculateBonuses resulted in invalid essencePerSecond:", essencePerSecond);
-             essencePerSecond = 0; // Сброс к безопасному значению
+             essencePerSecond = 0;
         }
     }
 
@@ -278,7 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inviteFriendBtn) {
         inviteFriendBtn.addEventListener('click', () => {
             console.log('Кнопка "Друзья" нажата. Нужна интеграция с Telegram API.');
-            // Простое уведомление для демонстрации
             if (tg && tg.showPopup) {
                 tg.showPopup({
                     title: 'Пригласить друзей',
@@ -286,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     buttons: [{ type: 'ok' }]
                 });
             } else {
-                 alert('Эта функция пока в разработке.'); // Fallback для обычного браузера
+                 alert('Эта функция пока в разработке.');
             }
         });
     } else {
@@ -296,13 +303,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Сохранение/Загрузка ---
     function saveGame() {
-        // Перед сохранением убедимся, что эссенция - число
         if (!Number.isFinite(essence)) {
              console.error("Attempting to save invalid essence value:", essence);
-             // Возможно, стоит сбросить к 0 или последнему известному валидному значению
              essence = 0;
         }
-
         const gameState = {
             essence: essence,
             upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel }))
@@ -322,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const gameState = JSON.parse(savedState);
                 essence = Number(gameState.essence) || 0;
-                 if (!Number.isFinite(essence)) essence = 0; // Доп. проверка после загрузки
+                 if (!Number.isFinite(essence)) essence = 0;
 
                 upgrades.forEach(upgrade => {
                     const savedUpgrade = gameState.upgrades.find(su => su.id === upgrade.id);
@@ -330,20 +334,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!Number.isFinite(upgrade.currentLevel)) upgrade.currentLevel = 0;
                 });
 
-                recalculateBonuses(); // Пересчитываем бонусы на основе загруженных уровней
+                recalculateBonuses();
                 console.log("Игра загружена");
 
             } catch (e) {
                 console.error("Ошибка загрузки сохранения:", e);
                 localStorage.removeItem('alchemistClickerSave');
-                resetGameData(); // Начинаем новую игру
+                resetGameData();
             }
         } else {
              console.log("Сохранение не найдено, начинаем новую игру.");
              resetGameData();
         }
-         // Обновляем UI *после* загрузки/сброса
-         // Вызов updateEssenceDisplay() перенесен в конец блока инициализации
     }
 
     function resetGameData() {
@@ -354,14 +356,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Функция для временных уведомлений ---
     function showTemporaryNotification(message, type = "info") {
-        // ... (код функции без изменений) ...
          const notification = document.createElement('div');
-        notification.className = `notification ${type}`; // Добавим классы для стилизации
+        notification.className = `notification ${type}`;
         notification.textContent = message;
-
-        // Стилизуем уведомление (можно вынести в CSS)
         notification.style.position = 'fixed';
-        notification.style.bottom = '70px'; // Чуть выше кнопок
+        notification.style.bottom = '70px';
         notification.style.left = '50%';
         notification.style.transform = 'translateX(-50%)';
         notification.style.padding = '10px 20px';
@@ -371,15 +370,12 @@ document.addEventListener('DOMContentLoaded', () => {
         notification.style.zIndex = '1000';
         notification.style.opacity = '0';
         notification.style.transition = 'opacity 0.5s ease';
-
         document.body.appendChild(notification);
-
-        // Анимация появления и исчезновения
-        setTimeout(() => { notification.style.opacity = '1'; }, 10); // Появление
+        setTimeout(() => { notification.style.opacity = '1'; }, 10);
         setTimeout(() => {
             notification.style.opacity = '0';
-            setTimeout(() => { notification.remove(); }, 500); // Удалить после исчезновения
-        }, 2500); // Показать на 2.5 секунды
+            setTimeout(() => { notification.remove(); }, 500);
+        }, 2500);
     }
 
 
