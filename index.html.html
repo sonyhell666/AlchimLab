@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Алхимическая Лаборатория</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Ключевой скрипт для Telegram Mini Apps -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <p id="user-greeting">Лаборатория Алхимика</p>
+        </div>
+
+        <div class="game-area">
+            <div class="essence-display">
+                <span class="essence-icon">🧪</span>
+                <span id="essence-count">0</span>
+                <div class="per-second-display">
+                    <span id="essence-per-second">0</span> Эссенции / сек
+                </div>
+            </div>
+
+            <div id="cauldron" class="cauldron">
+                <div class="cauldron-liquid"></div>
+                <div class="cauldron-bubbles">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+                <div id="click-feedback-container"></div> <!-- Для отображения "+1" при клике -->
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="open-upgrades-btn" class="control-button">Улучшения</button>
+             <!-- Позже можно добавить кнопку для друзей -->
+            <button id="invite-friend-btn" class="control-button telegram-feature">Друзья</button>
+        </div>
+
+        <!-- Панель улучшений (скрыта по умолчанию) -->
+        <div id="upgrades-panel" class="upgrades-panel hidden">
+            <div class="panel-header">
+                <h2>Улучшения</h2>
+                <button id="close-upgrades-btn" class="close-button">&times;</button>
+            </div>
+            <ul id="upgrades-list">
+                <!-- Улучшения будут добавлены сюда через JS -->
+            </ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

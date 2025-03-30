@@ -1,0 +1,326 @@
+/* Базовые стили и переменные */
+:root {
+    --primary-bg: #2e2a40; /* Темно-фиолетовый фон лаборатории */
+    --secondary-bg: #4a4466; /* Цвет панелей */
+    --accent-color: #76d7c4; /* Бирюзовый для акцентов */
+    --text-color: #f0f0f0; /* Светлый текст */
+    --liquid-color: #a569bd; /* Фиолетовая жидкость */
+    --bubble-color: #e8daef; /* Цвет пузырьков */
+    --button-bg: #5d5480;
+    --button-hover-bg: #71689a;
+    --disabled-color: #888;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+                 Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    overflow: hidden; /* Предотвращаем скролл основной страницы */
+    -webkit-tap-highlight-color: transparent; /* Убираем подсветку при тапе */
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 15px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    opacity: 0.8;
+}
+
+.game-area {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative; /* Для позиционирования фидбека */
+}
+
+.essence-display {
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 2.5em;
+    font-weight: bold;
+}
+
+.essence-icon {
+    display: inline-block;
+    margin-right: 5px;
+    font-size: 0.9em; /* Немного меньше основного числа */
+}
+
+.per-second-display {
+    font-size: 0.4em; /* Меньший размер для дохода в секунду */
+    font-weight: normal;
+    opacity: 0.7;
+    margin-top: 5px;
+}
+
+/* --- Котел --- */
+.cauldron {
+    width: 150px;
+    height: 150px;
+    background-color: #333; /* Цвет котла */
+    border: 5px solid #222;
+    border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%; /* Форма котла */
+    position: relative;
+    cursor: pointer;
+    user-select: none; /* Запретить выделение */
+    overflow: hidden; /* Скрыть выходящие за пределы пузырьки */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s ease-out; /* Анимация при клике */
+}
+.cauldron:active {
+    transform: scale(0.95);
+}
+
+.cauldron-liquid {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60%; /* Уровень жидкости */
+    background-color: var(--liquid-color);
+    border-radius: 0 0 40% 40%;
+    opacity: 0.8;
+}
+
+.cauldron-bubbles {
+    position: absolute;
+    bottom: 10%;
+    left: 0;
+    width: 100%;
+    height: 50%;
+}
+
+.cauldron-bubbles span {
+    position: absolute;
+    bottom: 0;
+    width: 8px;
+    height: 8px;
+    background-color: var(--bubble-color);
+    border-radius: 50%;
+    opacity: 0;
+    animation: bubble 3s infinite ease-in;
+}
+/* Распределение пузырьков и задержка анимации */
+.cauldron-bubbles span:nth-child(1) { left: 20%; animation-delay: 0.5s; }
+.cauldron-bubbles span:nth-child(2) { left: 40%; animation-delay: 1.2s; width: 6px; height: 6px; }
+.cauldron-bubbles span:nth-child(3) { left: 60%; animation-delay: 0.2s; }
+.cauldron-bubbles span:nth-child(4) { left: 80%; animation-delay: 1.8s; width: 7px; height: 7px; }
+
+@keyframes bubble {
+    0% { transform: translateY(0); opacity: 0; }
+    20% { opacity: 0.7; }
+    80% { opacity: 0.5; }
+    100% { transform: translateY(-80px); opacity: 0; }
+}
+
+/* --- Фидбек при клике --- */
+#click-feedback-container {
+    position: absolute;
+    top: 0; /* Позиционируем над котлом */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 100px; /* Область для появления текста */
+    pointer-events: none; /* Не мешает кликам по котлу */
+    z-index: 10;
+}
+
+.click-feedback {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--accent-color);
+    opacity: 1;
+    animation: fadeUp 1s ease-out forwards;
+}
+
+@keyframes fadeUp {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); } /* Улетает вверх */
+}
+
+
+/* --- Кнопки управления --- */
+.controls {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around; /* Равномерное распределение кнопок */
+    padding: 10px 0;
+    background-color: rgba(0, 0, 0, 0.1); /* Легкий фон для зоны кнопок */
+    border-radius: 8px;
+}
+
+.control-button {
+    padding: 10px 20px;
+    font-size: 1em;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.control-button:hover {
+    background-color: var(--button-hover-bg);
+}
+
+.control-button:active {
+    transform: scale(0.98);
+}
+
+.telegram-feature { /* Стиль для кнопок Telegram-интеграции (пока просто цвет) */
+    background-color: #5093d1; /* Синеватый цвет */
+}
+.telegram-feature:hover {
+    background-color: #60a3e1;
+}
+
+/* --- Панель улучшений --- */
+.upgrades-panel {
+    position: fixed; /* Поверх всего */
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 60%; /* Занимает часть экрана снизу */
+    background-color: var(--secondary-bg);
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    transform: translateY(100%); /* Скрыта внизу */
+    transition: transform 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+.upgrades-panel:not(.hidden) {
+    transform: translateY(0); /* Показываем */
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.panel-header h2 {
+    margin: 0;
+    font-size: 1.4em;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 2em;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.7;
+}
+.close-button:hover {
+    opacity: 1;
+}
+
+#upgrades-list {
+    list-style: none;
+    overflow-y: auto; /* Добавляем скролл, если улучшений много */
+    flex-grow: 1;
+}
+
+#upgrades-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+#upgrades-list li:last-child {
+    border-bottom: none;
+}
+
+.upgrade-info {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.upgrade-info h3 {
+    font-size: 1em;
+    margin-bottom: 3px;
+}
+
+.upgrade-info p {
+    font-size: 0.8em;
+    opacity: 0.7;
+}
+
+.upgrade-cost {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: var(--accent-color);
+    margin-top: 4px;
+}
+
+.buy-upgrade-btn {
+    padding: 8px 15px;
+    font-size: 0.9em;
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.buy-upgrade-btn:hover:not(:disabled) {
+    background-color: #88e8d8; /* Светлее при наведении */
+}
+
+.buy-upgrade-btn:disabled {
+    background-color: var(--disabled-color);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* --- Класс для скрытия элементов --- */
+.hidden {
+    display: none; /* Или используйте transform/opacity для анимации */
+}
+
+/* --- Адаптивность (очень базовая) --- */
+@media (min-width: 600px) { /* Для больших экранов - можно сделать шире */
+    .upgrades-panel {
+        left: 50%;
+        transform: translate(-50%, 100%);
+        width: 80%;
+        max-width: 500px;
+    }
+     .upgrades-panel:not(.hidden) {
+        transform: translate(-50%, 0);
+    }
+}
