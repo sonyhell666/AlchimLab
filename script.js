@@ -21,6 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let essencePerClick = 1;
     let essencePerSecond = 0;
 
+    // --- Переменные для защиты от автокликера ---
+    let lastClickTime = 0; // Время последнего ЗАСЧИТАННОГО клика
+    const MIN_CLICK_INTERVAL = 60; // Минимальный интервал между кликами в мс (~16 кликов/сек)
+    const MAX_WARNINGS = 3; // Количество предупреждений до блокировки
+    let warningCount = 0; // Текущий счетчик предупреждений
+    let isBlocked = false; // Флаг блокировки игрока
+
     // --- Отображение имени пользователя (опционально) ---
     if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.first_name) {
         userGreetingElement.textContent = `Лаборатория ${tg.initDataUnsafe.user.first_name}`;
@@ -40,7 +47,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'click3', name: 'Алембик Мастера', description: '+25 к клику', baseCost: 5000, costMultiplier: 1.6, type: 'click', value: 25, currentLevel: 0, requiredEssence: 10000 },
         { id: 'auto3', name: 'Призванный Ифрит', description: '+20 в секунду', baseCost: 12000, costMultiplier: 1.8, type: 'auto', value: 20, currentLevel: 0, requiredEssence: 15000 },
         { id: 'auto4', name: 'Сад Алхимических Растений', description: '+50 в секунду', baseCost: 30000, costMultiplier: 1.9, type: 'auto', value: 50, currentLevel: 0, requiredEssence: 40000 },
-
 
         // --- Тир 4 (Требуется ~500,000+ Эссенции) ---
          { id: 'click4', name: 'Сила Философского Камня (осколок)', description: '+150 к клику', baseCost: 250000, costMultiplier: 1.7, type: 'click', value: 150, currentLevel: 0, requiredEssence: 500000 },
@@ -75,21 +81,62 @@ document.addEventListener('DOMContentLoaded', () => {
         return (num / 1000000000).toFixed(1).replace('.0', '') + 'B';
     }
 
-    // --- Логика клика по котлу ---
+    // --- Логика клика по котлу (с защитой) ---
     if (cauldronElement) {
         cauldronElement.addEventListener('click', () => {
-            if (Number.isFinite(essencePerClick)) {
-                essence += essencePerClick;
-                updateEssenceDisplay();
-                if (clickFeedbackContainer) {
-                     showClickFeedback(`+${formatNumber(essencePerClick)}`);
+            // --- ПРОВЕРКА БЛОКИРОВКИ ---
+            if (isBlocked) {
+                console.log("Blocked: Autoclicker detected previously.");
+                showTemporaryNotification("Автокликер обнаружен! Возможность кликать заблокирована.", "error");
+                return; // Выходим
+            }
+
+            const currentTime = Date.now();
+
+            // --- ПРОВЕРКА ИНТЕРВАЛА ---
+            if (currentTime - lastClickTime >= MIN_CLICK_INTERVAL) {
+                // Валидный клик
+                // warningCount = 0; // Опционально: сброс предупреждений при валидном клике
+
+                if (Number.isFinite(essencePerClick)) {
+                    essence += essencePerClick;
+                    updateEssenceDisplay();
+
+                    if (clickFeedbackContainer) {
+                        showClickFeedback(`+${formatNumber(essencePerClick)}`);
+                    }
+
+                    // Анимация котла
+                    cauldronElement.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        cauldronElement.style.transform = 'scale(1)';
+                    }, 80);
+
+                    lastClickTime = currentTime; // Обновляем время валидного клика
+
+                } else {
+                    console.error("Invalid essencePerClick value:", essencePerClick);
                 }
-                cauldronElement.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    cauldronElement.style.transform = 'scale(1)';
-                }, 80);
+
             } else {
-                 console.error("Invalid essencePerClick value:", essencePerClick);
+                // Клик слишком частый
+                warningCount++;
+                lastClickTime = currentTime; // Обновляем время, чтобы ловить серию
+
+                console.warn(`Autoclicker warning ${warningCount}/${MAX_WARNINGS}`);
+                showTemporaryNotification(`Обнаружен слишком частый клик! Предупреждение ${warningCount}/${MAX_WARNINGS}`, "error");
+
+                // Проверка на блокировку
+                if (warningCount >= MAX_WARNINGS) {
+                    isBlocked = true;
+                    console.error("Player blocked due to suspected autoclicker.");
+                    showTemporaryNotification("Автокликер обнаружен! Возможность кликать заблокирована.", "error");
+
+                    if(cauldronElement) {
+                        cauldronElement.classList.add('blocked-cauldron');
+                        cauldronElement.style.cursor = 'not-allowed';
+                    }
+                }
             }
         });
     } else {
@@ -99,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Функция для отображения "+1" при клике ---
     function showClickFeedback(text) {
-        if (!clickFeedbackContainer) return;
+        if (isBlocked || !clickFeedbackContainer) return; // Не показываем фидбек, если заблокированы
         const feedback = document.createElement('div');
         feedback.className = 'click-feedback';
         feedback.textContent = text;
@@ -135,15 +182,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel));
     }
 
-    // ОБНОВЛЕННАЯ ФУНКЦИЯ RENDERUPGRADES (с показом заблокированных)
     function renderUpgrades() {
         if (!upgradesListElement) {
              console.error("Upgrades list element not found!");
              return;
         }
-        upgradesListElement.innerHTML = ''; // Очищаем список
+        upgradesListElement.innerHTML = '';
 
-        // Сортируем все улучшения, например, по требуемой эссенции
         upgrades.sort((a, b) => (a.requiredEssence || 0) - (b.requiredEssence || 0));
 
         if (upgrades.length === 0) {
@@ -159,12 +204,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const requirement = upgrade.requiredEssence || 0;
-            const isLocked = Math.floor(essence) < requirement; // Проверяем блокировку по требованию
-            const canAfford = essence >= cost; // Проверяем доступность по цене
+            const isLocked = Math.floor(essence) < requirement;
+            const canAfford = essence >= cost;
 
             const li = document.createElement('li');
             if (isLocked) {
-                li.classList.add('locked'); // Добавляем класс для заблокированных
+                li.classList.add('locked');
             }
 
             let buttonText = 'Купить';
@@ -172,12 +217,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isLocked) {
                 buttonDisabled = 'disabled';
-                buttonText = `Нужно ${formatNumber(requirement)} 🧪`; // Показываем требование
+                buttonText = `Нужно ${formatNumber(requirement)} 🧪`;
             } else if (!canAfford) {
-                buttonDisabled = 'disabled'; // Не хватает эссенции для покупки
+                buttonDisabled = 'disabled';
             }
 
-            // !!! --- ИСПРАВЛЕНИЕ ЗДЕСЬ --- !!!
             li.innerHTML = `
                 <div class="upgrade-info">
                     <h3>${upgrade.name} (Ур. ${upgrade.currentLevel})</h3>
@@ -189,34 +233,36 @@ document.addEventListener('DOMContentLoaded', () => {
                     ${buttonText}
                 </button>
             `;
-            // !!! --- КОНЕЦ ИСПРАВЛЕНИЯ --- !!!
 
             const buyButton = li.querySelector('.buy-upgrade-btn');
             if (buyButton) {
-                // Добавляем обработчик всегда, но сработает только если кнопка не 'disabled'
                 buyButton.addEventListener('click', () => {
                     buyUpgrade(upgrade.id);
                 });
             }
-
             upgradesListElement.appendChild(li);
         });
     }
 
 
     function buyUpgrade(upgradeId) {
+        // Добавляем проверку на общую блокировку
+        if (isBlocked) {
+             showTemporaryNotification("Действие заблокировано из-за подозрений.", "error");
+             return;
+        }
+
         const upgrade = upgrades.find(u => u.id === upgradeId);
         if (!upgrade) {
              console.error("Upgrade not found:", upgradeId);
              return;
         }
 
-        // Дополнительная проверка: не пытаемся ли купить заблокированное улучшение?
         const requirement = upgrade.requiredEssence || 0;
         if (Math.floor(essence) < requirement) {
             console.log("Attempted to buy a locked upgrade:", upgradeId);
             showTemporaryNotification(`Сначала накопите ${formatNumber(requirement)} эссенции!`, "error");
-            return; // Выходим, не даем купить
+            return;
         }
 
         const cost = calculateCost(upgrade);
@@ -231,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
             upgrade.currentLevel++;
             recalculateBonuses();
             updateEssenceDisplay();
-            renderUpgrades(); // Перерисовываем панель улучшений
+            renderUpgrades();
         } else {
             console.log("Недостаточно эссенции!");
             showTemporaryNotification("Недостаточно эссенции!", "error");
@@ -267,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Открытие/Закрытие панели улучшений ---
      if (openUpgradesBtn && upgradesPanel) {
         openUpgradesBtn.addEventListener('click', () => {
-            renderUpgrades(); // Обновляем список перед показом
+            renderUpgrades();
             upgradesPanel.classList.remove('hidden');
         });
      } else {
@@ -310,6 +356,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const gameState = {
             essence: essence,
             upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel }))
+            // Если хотите сохранять блокировку:
+            // , isBlocked: isBlocked
+            // , warningCount: warningCount
         };
         try {
             localStorage.setItem('alchemistClickerSave', JSON.stringify(gameState));
@@ -321,6 +370,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadGame() {
+        // Сброс состояния блокировки при загрузке
+        isBlocked = false;
+        warningCount = 0;
+        if(cauldronElement) {
+             cauldronElement.classList.remove('blocked-cauldron');
+             cauldronElement.style.cursor = 'pointer'; // Возвращаем обычный курсор
+        }
+
+
         const savedState = localStorage.getItem('alchemistClickerSave');
         if (savedState) {
             try {
@@ -333,6 +391,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     upgrade.currentLevel = savedUpgrade ? (Number(savedUpgrade.level) || 0) : 0;
                     if (!Number.isFinite(upgrade.currentLevel)) upgrade.currentLevel = 0;
                 });
+
+                // Если бы мы загружали статус блокировки:
+                // isBlocked = gameState.isBlocked || false;
+                // warningCount = Number(gameState.warningCount) || 0;
+                // if (isBlocked && cauldronElement) {
+                //     cauldronElement.classList.add('blocked-cauldron');
+                //     cauldronElement.style.cursor = 'not-allowed';
+                // }
 
                 recalculateBonuses();
                 console.log("Игра загружена");
@@ -349,6 +415,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function resetGameData() {
+        // Сброс состояния блокировки
+        isBlocked = false;
+        warningCount = 0;
+         if(cauldronElement) {
+             cauldronElement.classList.remove('blocked-cauldron');
+             cauldronElement.style.cursor = 'pointer';
+         }
+
         essence = 0;
         upgrades.forEach(u => u.currentLevel = 0);
         recalculateBonuses();
@@ -380,18 +454,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Первоначальная инициализация ---
-    loadGame(); // Загружаем игру (пересчитывает бонусы)
+    loadGame(); // Загружаем игру (пересчитывает бонусы и сбрасывает блокировку)
     updateEssenceDisplay(); // Первичная отрисовка счета и дохода в сек
 
     // --- Автосохранение и обработчики событий видимости ---
-    setInterval(saveGame, 30000); // Сохраняем каждые 30 секунд
+    setInterval(saveGame, 30000);
 
-    window.addEventListener('beforeunload', saveGame); // Попытка сохранить перед закрытием
+    window.addEventListener('beforeunload', saveGame);
      document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
-            saveGame(); // Сохраняем при сворачивании/переключении вкладок
+            saveGame();
         }
     });
-
 
 }); // Конец DOMContentLoaded
