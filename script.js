@@ -26,18 +26,70 @@ const upgrades = [
 ];
 
 // --- Функции обновления UI ---
-// ... (остальные функции остаются как были: updateEssenceDisplay, formatNumber, showClickFeedback) ...
+function updateEssenceDisplay() {
+    essenceCountElement.textContent = formatNumber(Math.floor(essence));
+    essencePerSecondElement.textContent = formatNumber(essencePerSecond);
+}
+
+// Форматирование больших чисел (для наглядности)
+function formatNumber(num) {
+    if (num < 1000) return num.toString();
+    if (num < 1000000) return (num / 1000).toFixed(1).replace('.0', '') + 'K';
+    if (num < 1000000000) return (num / 1000000).toFixed(1).replace('.0', '') + 'M';
+    return (num / 1000000000).toFixed(1).replace('.0', '') + 'B';
+}
 
 // --- Логика клика по котлу ---
-// ... (остается как была) ...
+cauldronElement.addEventListener('click', () => {
+    essence += essencePerClick;
+    updateEssenceDisplay(); // Обновляем счетчик
+    showClickFeedback(`+${formatNumber(essencePerClick)}`); // Показываем фидбек
+
+    // Анимация котла при клике
+    cauldronElement.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+        cauldronElement.style.transform = 'scale(1)';
+    }, 80);
+});
 
 // --- Функция для отображения "+1" при клике ---
-// ... (остается как была) ...
+function showClickFeedback(text) {
+    const feedback = document.createElement('div');
+    feedback.className = 'click-feedback';
+    feedback.textContent = text;
+
+    // Случайное смещение для естественности
+    const offsetX = Math.random() * 40 - 20;
+    const offsetY = Math.random() * 20 - 10;
+    feedback.style.left = `calc(50% + ${offsetX}px)`;
+    feedback.style.top = `calc(50% + ${offsetY}px)`;
+
+    clickFeedbackContainer.appendChild(feedback);
+
+    // Удалить элемент после завершения анимации
+    setTimeout(() => {
+        feedback.remove();
+    }, 950);
+}
 
 // --- Логика авто-клика (пассивный доход) ---
-// ... (остается как была) ...
-
-// --- Логика улучшений ---
+setInterval(() => {
+    // Проверяем, что essencePerSecond > 0 перед начислением
+    if (essencePerSecond > 0) {
+         // Начисляем 10 раз в секунду для плавности
+        const essenceToAdd = essencePerSecond / 10;
+         // Проверяем, что результат не NaN или Infinity
+        if (Number.isFinite(essenceToAdd)) {
+            essence += essenceToAdd;
+            // Обновляем отображение только если что-то начислили
+            updateEssenceDisplay();
+        } else {
+             console.warn("Skipping auto-click: essencePerSecond resulted in invalid number", essencePerSecond);
+        }
+    }
+    // Не обновляем дисплей постоянно, если нет пассивного дохода,
+    // чтобы не вызывать лишних перерисовок
+}, 100); // Интервал 100мс
 function calculateCost(upgrade) {
     return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel));
 }
