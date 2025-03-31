@@ -10,7 +10,8 @@
     --button-hover-bg: #71689a;
     --disabled-color: #6c6c6c;
     --flask-color: #00abc1; /* Цвет для clip-path колбы */
-    --liquid-level: 45%; /* Уровень жидкости (можно менять через JS) */
+    --liquid-level: 45%; /* Начальный уровень жидкости */
+    --gem-color: #ff69b4; /* Розовый цвет для иконки кристалла */
 }
 
 * {
@@ -34,6 +35,7 @@ html, body {
     flex-direction: column;
     height: 100%;
     padding: 15px;
+    position: relative; /* Для позиционирования кристаллов */
 }
 
 .header {
@@ -56,6 +58,7 @@ html, body {
 .essence-display {
     text-align: center;
     margin-bottom: 15px;
+    margin-top: 30px; /* Отступ сверху, т.к. кристаллы ушли */
     font-size: 2.5em;
     font-weight: bold;
 }
@@ -75,65 +78,69 @@ html, body {
 }
 
 .per-second-display {
-    display: block;
+    display: block; /* Скрывается через JS, если доход 0 */
     font-size: 0.4em;
     font-weight: normal;
     opacity: 0.7;
     margin-top: 0;
-    margin-bottom: 8px;
+    margin-bottom: 0;
     color: var(--text-color);
 }
 
+/* Стили для кристаллов в правом верхнем углу */
 .secondary-currency {
-    display: block;
-    font-size: 1.1em;
-    font-weight: normal;
-    opacity: 0.9;
-    margin-top: 10px;
-    color: var(--accent-color);
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 5px 10px;
+    border-radius: 8px;
 }
 
+/* Стили для SVG иконки кристалла */
 .gem-icon {
-     display: inline-block;
-     margin-right: 5px;
-     font-size: 0.9em;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+     margin-right: 8px;
+     line-height: 1;
+}
+
+.gem-icon svg {
+    width: 1.1em;
+    height: 1.1em;
+    fill: var(--gem-color); /* Розовый цвет */
+    vertical-align: middle;
 }
 
 #gem-count {
      font-weight: bold;
-     color: #f1c40f;
+     color: var(--text-color); /* Стандартный цвет для числа */
 }
 
-/* --- ИЗМЕНЕНИЯ В КОЛБЕ --- */
+/* Колба (шире и объемнее) */
 .cauldron {
-    width: 180px; /* <<< Увеличена ширина */
-    height: 200px; /* <<< Высота оставлена прежней для эффекта расширения */
+    width: 180px;
+    height: 200px;
     background-color: var(--flask-color);
     position: relative;
     cursor: pointer;
     user-select: none;
     transition: transform 0.1s ease-out;
     margin: 20px auto;
-    /* <<< Скорректирован clip-path для ширины и объема >>> */
-    clip-path: polygon(
-        /* Top rim */ 46% 5%, 36% 5%, 34% 10%,
-        /* Left neck */ 36% 15%, 33% 30%,
-        /* Left shoulder */ 22% 50%,
-        /* Left body (wider) */ 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%,
-        /* Bottom */ 50% 97%,
-        /* Right body (wider) */ 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%,
-        /* Right shoulder */ 78% 50%,
-        /* Right neck */ 67% 30%, 64% 15%,
-        /* Right rim */ 66% 10%, 64% 5%, 54% 5%
-    );
+    clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
     overflow: hidden;
     border: none;
     border-radius: 0;
     box-shadow: none;
 }
-/* --- КОНЕЦ ИЗМЕНЕНИЙ В КОЛБЕ --- */
 
-/* Стиль для заблокированной колбы */
+/* Стиль для заблокированной колбы (анти-кликер) */
 .cauldron.blocked-cauldron {
     cursor: not-allowed !important;
     filter: grayscale(70%);
@@ -165,7 +172,7 @@ html, body {
     transition: height 0.5s ease;
 }
 
-/* Стиль для пузырьков */
+/* Стиль для отдельных пузырьков */
 .bubble {
     position: absolute;
     bottom: -20px;
@@ -177,7 +184,7 @@ html, body {
     animation: rise 3s infinite ease-in;
 }
 
-/* Анимация пузырьков */
+/* Анимация подъема пузырьков */
 @keyframes rise {
     0% { transform: translateY(0) scale(1); opacity: 0.6; }
     50% { transform: scale(1.1); }
@@ -185,7 +192,7 @@ html, body {
     100% { transform: translateY(-220px) scale(0.8); opacity: 0; }
 }
 
-/* Анимация клика */
+/* Анимация клика по колбе */
 .cauldron:active:not(.blocked-cauldron) {
     transform: scale(0.95);
 }
@@ -193,7 +200,7 @@ html, body {
 /* --- Фидбек при клике --- */
 #click-feedback-container {
     position: absolute;
-    top: calc(50% - 150px);
+    top: calc(50% - 150px); /* Расположение над колбой */
     left: 50%;
     transform: translateX(-50%);
     width: 170px;
@@ -209,11 +216,14 @@ html, body {
     transform: translate(-50%, -50%);
     font-size: 1.2em;
     font-weight: bold;
-    color: var(--accent-color);
+    color: var(--accent-color); /* Цвет по умолчанию (для эссенции) */
     opacity: 1;
     animation: fadeUp 1s ease-out forwards;
-    white-space: nowrap;
+    white-space: nowrap; /* Предотвращаем перенос */
 }
+
+/* Цвет фидбека для кристаллов (задается через JS) */
+/* .click-feedback.gem { color: #f1c40f; font-size: 1.3em; } */
 
 @keyframes fadeUp {
     0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -365,6 +375,7 @@ html, body {
     background-color: #88e8d8;
 }
 
+/* Стиль для кнопки, которую нельзя купить (не хватает ресурсов) */
 .buy-upgrade-btn:disabled:not(.locked .buy-upgrade-btn) {
     background-color: var(--disabled-color);
     color: #a0a0a0;
@@ -374,6 +385,7 @@ html, body {
 
 .hidden { display: none; }
 
+/* Адаптация панели улучшений для больших экранов */
 @media (min-width: 600px) {
     .upgrades-panel {
         left: 50%;
@@ -386,7 +398,7 @@ html, body {
     }
 }
 
-/* Стили для заблокированных улучшений */
+/* Стили для заблокированных улучшений (по требованию эссенции) */
 #upgrades-list li.locked {
     opacity: 0.5;
     background-color: rgba(0, 0, 0, 0.15);
@@ -398,15 +410,17 @@ html, body {
     opacity: 0.8;
 }
 
+/* Стиль кнопки для заблокированного улучшения (отображает требование) */
 #upgrades-list li.locked .buy-upgrade-btn {
     background-color: #555;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--accent-color);
+    color: var(--accent-color); /* Цвет текста требований */
     font-size: 0.8em;
     opacity: 1;
     cursor: default;
 }
 
+/* Стиль для текста с требованиями */
 .requirement-info {
     font-size: 0.75em;
     color: var(--accent-color);
@@ -418,15 +432,15 @@ html, body {
 /* Уведомления */
 .notification {
     position: fixed;
-    bottom: 70px;
+    bottom: 70px; /* Начальная позиция для анимации */
     left: 50%;
     transform: translateX(-50%);
     padding: 10px 20px;
     border-radius: 8px;
     color: white;
     z-index: 1001;
-    opacity: 0;
-    transition: opacity 0.5s ease, bottom 0.3s ease;
+    opacity: 0; /* Начальная прозрачность для анимации */
+    transition: opacity 0.5s ease, bottom 0.3s ease; /* Анимация появления/исчезновения */
     text-align: center;
     max-width: 80%;
     font-size: 0.9em;
@@ -437,7 +451,5 @@ html, body {
 .notification.warning { background-color: #f39c12; }
 .notification.success { background-color: #2ecc71; }
 
-/* Класс для <li>, если улучшение нельзя купить */
-#upgrades-list li.cannot-afford {
-    /* Стили применяются к кнопке через :disabled */
-}
+/* Дополнительный класс для <li>, если улучшение нельзя купить (стили применяются к кнопке) */
+#upgrades-list li.cannot-afford { }

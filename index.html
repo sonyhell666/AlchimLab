@@ -14,38 +14,42 @@
             <p id="user-greeting">Лаборатория Алхимика</p>
         </div>
 
+        <!-- Отображение Кристаллов (в правом верхнем углу) -->
+        <div class="secondary-currency">
+            <span class="gem-icon">
+                <!-- SVG иконка кристалла (розовый цвет задается в CSS) -->
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em">
+                    <path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/>
+                </svg>
+            </span>
+            <span id="gem-count">0</span>
+        </div>
+
+
         <div class="game-area">
-            <!-- ===== ИЗМЕНЕНИЯ ЗДЕСЬ ===== -->
+            <!-- Отображение основной валюты и дохода -->
             <div class="essence-display">
-                <!-- Основная валюта - Эссенция -->
                 <div class="main-currency">
-                    <span class="essence-icon">🧪</span> <!-- Иконка изменена на 🧪 -->
+                    <span class="essence-icon">🧪</span>
                     <span id="essence-count">0</span>
                 </div>
-                <!-- Отображение дохода в секунду -->
-                <div id="per-second-display" class="per-second-display"> <!-- ID добавлен сюда -->
-                     / сек <span id="essence-per-second">0</span> <!-- Поменял местами для лучшего чтения -->
-                </div>
-
-                <!-- НОВАЯ ВТОРИЧНАЯ ВАЛЮТА - Кристаллы -->
-                <div class="secondary-currency">
-                    <span class="gem-icon">💎</span> <!-- Иконка кристалла -->
-                    <span id="gem-count">0</span>   <!-- ID для обновления JS -->
+                <div id="per-second-display" class="per-second-display">
+                     <span id="essence-per-second">0</span> в сек
                 </div>
             </div>
-            <!-- ===== КОНЕЦ ИЗМЕНЕНИЙ ===== -->
 
             <!-- Колба -->
             <div id="cauldron" class="cauldron">
                 <div class="bubbles-container" id="bubbles-container">
-                    <!-- Сюда JS будет добавлять <div class="bubble"></div> -->
+                    <!-- Пузырьки добавляются через JS -->
                 </div>
             </div>
-            <!-- Контейнер для фидбека (+1) -->
+            <!-- Контейнер для фидбека кликов (+N) -->
             <div id="click-feedback-container"></div>
 
         </div>
 
+        <!-- Кнопки управления -->
         <div class="controls">
             <button id="open-upgrades-btn" class="control-button">Улучшения</button>
             <button id="invite-friend-btn" class="control-button telegram-feature">Друзья</button>
@@ -58,7 +62,7 @@
                 <button id="close-upgrades-btn" class="close-button">×</button>
             </div>
             <ul id="upgrades-list">
-                <!-- Улучшения будут добавлены сюда через JS -->
+                <!-- Улучшения добавляются через JS -->
             </ul>
         </div>
     </div>
