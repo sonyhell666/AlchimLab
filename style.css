@@ -82,7 +82,7 @@ html, body {
     user-select: none;
     transition: transform 0.1s ease-out;
     margin: 20px auto;
-    /* --- НОВЫЙ ВАРИАНТ CLIP-PATH --- */
+    /* --- ВОТ ЭТОТ БЛОК БЫЛ ИЗМЕНЕН --- */
     clip-path: polygon(
         /* Верхний ободок */
         45% 5%, 38% 5%, 35% 10%,
@@ -103,6 +103,7 @@ html, body {
         /* Правый ободок */
         65% 10%, 62% 5%, 55% 5%
     );
+    /* --- КОНЕЦ ИЗМЕНЕННОГО БЛОКА --- */
     overflow: hidden;
     border: none;
     border-radius: 0;
