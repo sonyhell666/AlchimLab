@@ -10,34 +10,34 @@
 </head>
 <body>
     <div class="app-container">
-        <div class="header">
-            <p id="user-greeting">Лаборатория Алхимика</p>
-        </div>
 
-        <!-- Кнопка настроек -->
-        <button id="settings-btn" class="settings-button control-button-icon">
-            <img src="gear-icon.png" alt="Настройки" /> <!-- Убедитесь, что файл gear-icon.png существует -->
-        </button>
+        <!-- === Верхняя часть === -->
+        <div class="top-area">
+            <!-- Кнопка настроек -->
+            <button id="settings-btn" class="control-button-icon settings-button">
+                <!-- УБЕДИТЕСЬ, ЧТО ФАЙЛ gear-icon.png ЕСТЬ В ТОЙ ЖЕ ПАПКЕ -->
+                <img src="gear-icon.png" alt="Настройки" />
+            </button>
 
-        <!-- Отображение Кристаллов (в правом верхнем углу) -->
-        <div class="secondary-currency">
-             <div class="gem-display">
-                 <span class="gem-icon">
-                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em">
-                         <path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/>
-                     </svg>
-                 </span>
-                 <span id="gem-count">0</span>
+            <!-- Заголовок -->
+            <div class="header">
+                <p id="user-greeting">Лаборатория Алхимика</p>
+            </div>
+
+            <!-- Отображение Кристаллов -->
+            <div class="secondary-currency">
+                 <div class="gem-display">
+                     <span class="gem-icon">
+                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em">
+                             <path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/>
+                         </svg>
+                     </span>
+                     <span id="gem-count">0</span>
+                </div>
             </div>
         </div>
 
-        <!-- КНОПКА МАГАЗИНА -->
-        <button id="shop-btn" class="shop-button control-button-icon" aria-label="Магазин">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28">
-                <path fill="currentColor" d="M17 6h-2c0-2.21-1.79-4-4-4S7 3.79 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm7 16H5V8h14v12zM12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-            </svg>
-        </button>
-
+        <!-- === Игровая зона === -->
         <div class="game-area">
             <!-- Отображение основной валюты и дохода -->
             <div class="essence-display">
@@ -56,16 +56,25 @@
             </div>
             <!-- Контейнер для фидбека кликов (+N) -->
             <div id="click-feedback-container"></div>
+
+             <!-- КНОПКА МАГАЗИНА -->
+            <button id="shop-btn" class="control-button-icon shop-button" aria-label="Магазин">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28">
+                    <path fill="currentColor" d="M17 6h-2c0-2.21-1.79-4-4-4S7 3.79 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm7 16H5V8h14v12zM12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>
+            </button>
         </div>
 
-        <!-- Кнопки управления -->
+        <!-- === Нижние кнопки управления === -->
         <div class="controls">
             <button id="open-upgrades-btn" class="control-button" data-translate="upgradesButton">Улучшения</button>
             <button id="invite-friend-btn" class="control-button telegram-feature" data-translate="inviteFriendsButton">Пригласить друзей</button>
         </div>
 
-        <!-- Панель улучшений (скрыта по умолчанию) -->
-        <div id="upgrades-panel" class="upgrades-panel hidden">
+        <!-- === Панели (скрыты по умолчанию) === -->
+
+        <!-- Панель улучшений -->
+        <div id="upgrades-panel" class="panel-base upgrades-panel hidden">
             <div class="panel-header">
                 <h2 data-translate="upgradesTitle">Улучшения</h2>
                 <button id="close-upgrades-btn" class="close-button">×</button>
@@ -73,8 +82,8 @@
             <ul id="upgrades-list"></ul>
         </div>
 
-        <!-- Панель настроек (скрыта по умолчанию, БЕЗ ЗВУКА) -->
-        <div id="settings-panel" class="settings-panel hidden">
+        <!-- Панель настроек (модальное окно) -->
+        <div id="settings-panel" class="panel-base settings-panel hidden">
              <div class="settings-box">
                  <div class="panel-header">
                      <h2 data-translate="settingsTitle">Настройки</h2>
@@ -92,8 +101,8 @@
              </div>
         </div>
 
-        <!-- Панель Магазина (скрыта по умолчанию) -->
-        <div id="shop-panel" class="shop-panel hidden">
+        <!-- Панель Магазина -->
+        <div id="shop-panel" class="panel-base shop-panel hidden">
             <div class="panel-header">
                 <h2 data-translate="shopTitle">Магазин</h2>
                 <button id="close-shop-btn" class="close-button">×</button>
@@ -112,7 +121,7 @@
             </ul>
         </div>
 
-    </div>
+    </div> <!-- Конец app-container -->
 
     <script src="script.js"></script>
 </body>
