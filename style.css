@@ -1,210 +1,755 @@
 /* Базовые стили и переменные */
 :root {
-    --primary-bg: #2e2a40;
-    --secondary-bg: #4a4466;
-    --accent-color: #76d7c4;
-    --text-color: #f0f0f0;
-    --bubble-color: #e8daef;
-    --button-bg: #5d5480;
-    --button-hover-bg: #71689a;
-    --disabled-color: #6c6c6c;
-    --flask-color: #00abc1; /* Фон скина по умолчанию */
-    --gem-color: #ff69b4;
-    --liquid-color: rgba(138, 43, 226, 0.35); /* Управляется JS, запасной цвет */
+    --primary-bg: #2e2a40;          /* Основной фон */
+    --secondary-bg: #4a4466;        /* Фон панелей */
+    --accent-color: #76d7c4;        /* Бирюзовый акцент (кнопки, цены) */
+    --text-color: #f0f0f0;          /* Основной текст */
+    --text-secondary-color: #b0b0b0;/* Второстепенный текст (описания) */
+    --bubble-color: rgba(232, 218, 239, 0.6); /* Цвет пузырьков с прозрачностью */
+    --button-bg: #5d5480;           /* Фон обычных кнопок */
+    --button-hover-bg: #71689a;     /* Фон кнопок при наведении */
+    --telegram-button-bg: #5093d1;  /* Фон кнопки "Пригласить" */
+    --telegram-button-hover-bg: #60a3e1; /* Фон кнопки "Пригласить" при наведении */
+    --disabled-color: #6c6c6c;      /* Цвет фона неактивных кнопок */
+    --disabled-text-color: #a0a0a0; /* Цвет текста неактивных кнопок */
+    --gem-color: #ff69b4;           /* Розовый цвет для кристаллов */
+    --error-color: #e74c3c;         /* Красный для ошибок */
+    --warning-color: #f39c12;       /* Оранжевый для предупреждений */
+    --success-color: #2ecc71;       /* Зеленый для успеха */
+    --info-color: #3498db;          /* Синий для информации */
 
-    /* Переменные для цвета обводки колбы */
+    /* Переменные для колбы */
+    --flask-color-default: #00abc1; /* Цвет фона стандартной колбы */
     --cauldron-border-color-default: #008b9a;
+    --flask-color-gold: #ffd700;
     --cauldron-border-color-gold: #b8860b;
-    --cauldron-border-color-crystal: #add8e6;
+    --flask-color-crystal: #add8e6;
+    --cauldron-border-color-crystal: #80c0d6; /* Чуть темнее фона */
+    --flask-color-obsidian: #333;
     --cauldron-border-color-obsidian: #1a1a1a;
-    /* Запасной цвет обводки */
-    --cauldron-border-color: var(--cauldron-border-color-default);
+
+    /* Переменные, управляемые JS */
+    --liquid-level: 10%;            /* Уровень жидкости */
+    --liquid-color: rgba(138, 43, 226, 0.35); /* Цвет жидкости (запасной) */
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* Сброс и базовые настройки */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent; /* Убираем подсветку при тапе на мобильных */
+}
 
-html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: var(--primary-bg); color: var(--text-color); overflow: hidden; -webkit-tap-highlight-color: transparent; }
-.app-container { display: flex; flex-direction: column; height: 100%; padding: 15px; position: relative; }
+html {
+    height: 100%;
+    font-size: 16px; /* Базовый размер шрифта */
+}
 
-/* --- Кнопки-иконки --- */
-.control-button-icon { background: rgba(0, 0, 0, 0.2); border: none; padding: 0; cursor: pointer; opacity: 0.8; transition: opacity 0.2s ease, background-color 0.2s ease; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; color: var(--text-color); overflow: hidden; }
-.control-button-icon:hover { opacity: 1; background-color: rgba(255, 255, 255, 0.1); }
-.control-button-icon img { display: block; width: 24px; height: 24px; max-width: 100%; max-height: 100%; object-fit: contain; }
-.settings-button { position: absolute; top: 15px; left: 15px; z-index: 51; background: none; border-radius: 50%; }
+body {
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+                 Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+    overflow: hidden; /* Запрещаем прокрутку основной страницы */
+    user-select: none; /* Запрещаем выделение текста */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
 
-/* --- Валюта/Магазин --- */
-.secondary-currency { position: absolute; top: 15px; right: 15px; z-index: 50; }
-.gem-display { display: flex; align-items: center; background-color: rgba(0, 0, 0, 0.2); padding: 5px 10px; border-radius: 8px; font-size: 1.2em; font-weight: bold; }
-.gem-icon { display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; line-height: 1; }
-.gem-icon svg { width: 1.1em; height: 1.1em; fill: var(--gem-color); vertical-align: middle; }
-#gem-count { font-weight: bold; color: var(--text-color); }
-.shop-button { position: absolute; right: 20px; top: 55%; transform: translateY(-50%); width: 48px; height: 48px; border-radius: 12px; z-index: 50; }
-.shop-button svg { width: 28px; height: 28px; }
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Растягиваем на весь viewport */
+    padding: 15px;
+    position: relative; /* Для абсолютного позиционирования дочерних элементов */
+}
 
-.header { text-align: center; margin-bottom: 15px; font-size: 1.1em; opacity: 0.8; }
-.game-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
-.essence-display { text-align: center; margin-bottom: 15px; margin-top: 30px; font-size: 2.5em; font-weight: bold; }
-.main-currency { margin-bottom: 3px; display: block; color: var(--text-color); font-size: 1em; font-weight: bold; }
-.essence-icon { display: inline-block; margin-right: 5px; font-size: 0.9em; }
-.per-second-display { display: block; font-size: 0.4em; font-weight: normal; opacity: 0.7; margin-top: 0; margin-bottom: 0; color: var(--text-color); }
+/* --- Верхние элементы --- */
+.header {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: 1.1rem; /* Используем rem для масштабируемости */
+    opacity: 0.8;
+    flex-shrink: 0; /* Заголовок не должен сжиматься */
+}
+
+/* Кнопки-иконки (Настройки, Магазин) */
+.control-button-icon {
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    display: inline-flex; /* Используем flex для центрирования иконки */
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    color: var(--text-color); /* Для SVG иконок */
+    position: absolute; /* Абсолютное позиционирование */
+    z-index: 51; /* Выше других элементов */
+}
+.control-button-icon:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+.control-button-icon img,
+.control-button-icon svg {
+    display: block;
+    width: 24px; /* Фиксированный размер иконки */
+    height: 24px;
+    object-fit: contain; /* Сохраняем пропорции для img */
+}
+
+.settings-button {
+    top: 15px;
+    left: 15px;
+    background: none; /* Убираем фон для иконки настроек */
+    border-radius: 50%; /* Круглая кнопка */
+}
+.settings-button img { /* Стили для иконки-шестеренки */
+    filter: invert(90%) sepia(10%) saturate(100%) hue-rotate(180deg) brightness(100%) contrast(90%); /* Делаем иконку светлой */
+}
+
+.shop-button {
+    /* Позиционирование изменено для лучшего вида на разных экранах */
+    top: calc(50% + 30px); /* Смещаем ниже центра */
+    right: 15px;
+    transform: translateY(-50%);
+    width: 44px; /* Немного меньше */
+    height: 44px;
+    border-radius: 12px;
+}
+
+/* Отображение кристаллов */
+.secondary-currency {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 50;
+}
+.gem-display {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 1.1rem; /* Используем rem */
+    font-weight: bold;
+}
+.gem-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    line-height: 1; /* Убираем лишнее пространство */
+}
+.gem-icon svg {
+    width: 1.1em; /* Относительно font-size родителя */
+    height: 1.1em;
+    fill: var(--gem-color);
+    vertical-align: middle; /* Выравниваем по вертикали */
+}
+#gem-count {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+
+/* --- Игровая зона --- */
+.game-area {
+    flex-grow: 1; /* Занимает все доступное пространство */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Центрируем колбу и счетчики */
+    position: relative; /* Для позиционирования фидбека */
+    min-height: 250px; /* Минимальная высота, чтобы колба не прилипала к кнопкам */
+    margin-bottom: 10px; /* Отступ от нижних кнопок */
+}
+
+/* Отображение эссенции и дохода */
+.essence-display {
+    text-align: center;
+    margin-bottom: 15px;
+    flex-shrink: 0; /* Не сжимаем дисплей */
+}
+.main-currency {
+    font-size: 2.5rem; /* Крупный шрифт для основного счетчика */
+    font-weight: bold;
+    color: var(--text-color);
+    margin-bottom: 3px;
+    display: block; /* Чтобы иконка и число были вместе */
+    line-height: 1.1; /* Слегка уменьшаем межстрочный интервал */
+}
+.essence-icon {
+    display: inline-block;
+    margin-right: 5px;
+    font-size: 0.9em; /* Иконка чуть меньше текста */
+    vertical-align: baseline; /* Выравниваем по базовой линии */
+}
+.per-second-display {
+    display: block; /* По умолчанию показываем, JS скроет если доход 0 */
+    font-size: 0.9rem; /* Размер текста дохода в секунду */
+    font-weight: normal;
+    opacity: 0.7;
+    margin-top: 0;
+    color: var(--text-secondary-color); /* Используем вторичный цвет текста */
+}
 
 /* --- Колба --- */
 .cauldron {
-    width: 180px; height: 200px; position: relative; cursor: pointer; user-select: none; margin: 20px auto;
+    width: 180px; /* Фиксированная ширина */
+    height: 200px; /* Фиксированная высота */
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    margin: 20px auto; /* Авто-отступы для центрирования */
+    flex-shrink: 0; /* Колба не должна сжиматься */
+    /* Форма колбы через clip-path */
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
-    border-radius: 0;
-    will-change: transform, background;
-    /* Устанавливаем базовый фон и рамку здесь */
-    background-color: var(--flask-color); /* Базовый фон (для skin-default) */
-    border: 3px solid var(--cauldron-border-color); /* Базовая рамка (для skin-default) */
-    /* Добавляем border-color в transition */
+    border-radius: 0; /* Убираем стандартное скругление */
+    will-change: transform, filter; /* Оптимизация для анимаций */
+    /* Базовый фон и рамка (переопределяются скинами) */
+    background-color: var(--flask-color-default);
+    border: 3px solid var(--cauldron-border-color-default);
+    /* Плавные переходы для анимаций и смены скинов */
     transition: transform 0.1s ease-out, filter 0.1s ease-out, background-color 0.3s ease, background-image 0.3s ease, border-color 0.3s ease;
-    overflow: hidden;
-    /* background-clip: padding-box; */ /* УДАЛЕНО на всякий случай */
+    overflow: hidden; /* Скрываем все, что выходит за clip-path */
 }
-.cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(70%); }
+.cauldron.blocked-cauldron {
+    cursor: not-allowed !important;
+    filter: grayscale(80%) brightness(0.8); /* Эффект блокировки */
+}
+.cauldron:active:not(.blocked-cauldron) {
+    transform: scale(0.95); /* Эффект нажатия */
+    filter: brightness(1.1); /* Небольшое осветление при клике */
+}
 
-.cauldron::before { /* Жидкость */
+/* Жидкость внутри колбы */
+.cauldron::before {
     content: '';
     position: absolute;
-    bottom: 3px; /* Учитываем толщину рамки */
-    left: 3px;   /* Учитываем толщину рамки */
-    right: 3px;  /* Учитываем толщину рамки */
+    bottom: 3px; /* Учитываем толщину рамки снизу */
+    left: 3px;   /* Учитываем толщину рамки слева */
+    right: 3px;  /* Учитываем толщину рамки справа */
     width: calc(100% - 6px); /* Ширина внутри рамки */
-    height: var(--liquid-level, 10%);
+    height: var(--liquid-level, 10%); /* Высота управляется JS */
     background-color: var(--liquid-color); /* Цвет управляется JS */
-    z-index: 1;
-    overflow: hidden;
-    transition: background-color 1s ease, height 0.1s linear;
-    border-radius: 5px 5px 0 0; /* Сглаживаем углы жидкости */
+    z-index: 1; /* Под пузырьками */
+    transition: background-color 1s ease, height 0.1s linear; /* Плавная смена цвета и уровня */
+    border-radius: 5px 5px 0 0; /* Небольшое скругление верха жидкости */
+    overflow: hidden; /* На всякий случай */
 }
 
-
-.bubbles-container { /* Пузырьки */
+/* Контейнер для пузырьков */
+.bubbles-container {
     position: absolute;
     bottom: 3px; /* Позиционируем относительно рамки */
-    left: 3px;   /* Позиционируем относительно рамки */
+    left: 3px;
     width: calc(100% - 6px); /* Ширина как у жидкости */
     height: var(--liquid-level, 10%); /* Высота как у жидкости */
-    z-index: 2;
-    pointer-events: none;
-    overflow: hidden;
-    transition: height 0.1s linear;
-    border-radius: 5px 5px 0 0; /* Сглаживаем углы */
+    z-index: 2; /* Над жидкостью */
+    pointer-events: none; /* Не мешает кликам по колбе */
+    overflow: hidden; /* Скрываем пузырьки выше уровня жидкости */
+    transition: height 0.1s linear; /* Синхронизируем высоту с жидкостью */
+    border-radius: 5px 5px 0 0; /* Скругляем так же, как жидкость */
 }
 
-.bubble { position: absolute; bottom: -20px; width: 8px; height: 8px; background-color: var(--bubble-color); border-radius: 50%; opacity: 0.6; animation: rise 3s infinite ease-in; }
-@keyframes rise { 0% { transform: translateY(0) scale(1); opacity: 0.6; } 50% { transform: scale(1.1); } 90% { opacity: 0.4; } 100% { transform: translateY(-220px) scale(0.8); opacity: 0; } }
-.cauldron:active:not(.blocked-cauldron) { transform: scale(0.95); }
+/* Отдельный пузырек */
+.bubble {
+    position: absolute;
+    bottom: -20px; /* Начинают движение из-под видимой области */
+    width: 8px;
+    height: 8px;
+    background-color: var(--bubble-color);
+    border-radius: 50%;
+    opacity: 0; /* Начинают невидимыми */
+    animation: rise 3s infinite ease-in; /* Анимация подъема */
+    will-change: transform, opacity; /* Оптимизация */
+}
+@keyframes rise {
+    0% { transform: translateY(0) scale(1); opacity: 0; } /* Начало */
+    10% { opacity: 1; } /* Появление */
+    50% { transform: translateY(-100px) scale(1.1); } /* Подъем и легкое увеличение */
+    90% { opacity: 0.6; } /* Начало исчезновения */
+    100% { transform: translateY(-220px) scale(0.8); opacity: 0; } /* Конец наверху */
+}
 
-/* --- Фидбек клика --- */
-#click-feedback-container { position: absolute; top: calc(50% - 150px); left: 50%; transform: translateX(-50%); width: 170px; height: 120px; pointer-events: none; z-index: 10; }
-.click-feedback { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.2em; font-weight: bold; color: var(--accent-color); opacity: 1; animation: fadeUp 1s ease-out forwards; white-space: nowrap; display: inline-flex; align-items: center; }
-@keyframes fadeUp { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); } }
 
-/* --- Кнопки управления --- */
-.controls { margin-top: 20px; display: flex; justify-content: space-around; padding: 10px 0; background-color: rgba(0, 0, 0, 0.1); border-radius: 8px; }
-.control-button { padding: 10px 20px; font-size: 1em; background-color: var(--button-bg); color: var(--text-color); border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease-out; }
-.control-button:hover:not(:disabled) { background-color: var(--button-hover-bg); }
-.control-button:active:not(:disabled) { transform: scale(0.98); }
-.telegram-feature { background-color: #5093d1; }
-.telegram-feature:hover:not(:disabled) { background-color: #60a3e1; }
+/* --- Фидбек клика (+N) --- */
+#click-feedback-container {
+    position: absolute;
+    /* Позиционируем относительно центра колбы */
+    top: calc(50% - 100px); /* Смещаем вверх от центра колбы */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 180px; /* Ширина примерно как у колбы */
+    height: 150px; /* Высота для разлета цифр */
+    pointer-events: none; /* Не мешает кликам */
+    z-index: 10; /* Над колбой */
+    overflow: visible; /* Чтобы цифры могли вылетать */
+}
+.click-feedback {
+    position: absolute;
+    top: 50%; /* Стартуют из центра контейнера */
+    left: 50%;
+    font-size: 1.2rem; /* Размер текста фидбека */
+    font-weight: bold;
+    opacity: 1;
+    animation: fadeUp 1s ease-out forwards;
+    white-space: nowrap; /* Предотвращаем перенос строки */
+    display: inline-flex; /* Для выравнивания иконки */
+    align-items: center;
+    will-change: transform, opacity;
+}
+@keyframes fadeUp {
+    0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1); /* Начало */
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -150%) scale(0.8); /* Движение вверх, уменьшение и исчезновение */
+    }
+}
 
-/* --- Панели --- */
-.upgrades-panel, .settings-panel .settings-box, .shop-panel { background-color: var(--secondary-bg); border-radius: 15px; box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2); padding: 15px; display: flex; flex-direction: column; color: var(--text-color); }
-.upgrades-panel, .shop-panel { position: fixed; bottom: 0; left: 0; width: 100%; border-bottom-left-radius: 0; border-bottom-right-radius: 0; transform: translateY(100%); transition: transform 0.3s ease-out; z-index: 100; }
+/* --- Нижние кнопки управления --- */
+.controls {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around; /* Равномерное распределение кнопок */
+    padding: 10px 0;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    flex-shrink: 0; /* Не сжимаем панель кнопок */
+}
+.control-button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease-out;
+    flex-grow: 1; /* Кнопки растягиваются */
+    margin: 0 5px; /* Небольшой отступ между кнопками */
+    max-width: 45%; /* Ограничиваем ширину кнопок */
+    text-align: center;
+}
+.control-button:hover:not(:disabled) {
+    background-color: var(--button-hover-bg);
+}
+.control-button:active:not(:disabled) {
+    transform: scale(0.98); /* Эффект нажатия */
+}
+.control-button:disabled {
+    background-color: var(--disabled-color);
+    color: var(--disabled-text-color);
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+.telegram-feature { /* Стиль для кнопки "Пригласить" */
+    background-color: var(--telegram-button-bg);
+}
+.telegram-feature:hover:not(:disabled) {
+    background-color: var(--telegram-button-hover-bg);
+}
+
+/* --- Стили общие для панелей (Улучшения, Настройки, Магазин) --- */
+.panel-base { /* Общий класс для панелей */
+    background-color: var(--secondary-bg);
+    border-radius: 15px;
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    color: var(--text-color);
+    position: fixed; /* Фиксированное позиционирование */
+    z-index: 100; /* Выше основного контента */
+    overflow: hidden; /* Скрываем выходящее содержимое */
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out; /* Анимация появления/скрытия */
+}
+.panel-base.hidden {
+    opacity: 0;
+    pointer-events: none; /* Игнорируем события мыши/тача */
+}
+
+/* Панели улучшений и магазина (снизу) */
+.upgrades-panel, .shop-panel {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    transform: translateY(100%); /* Скрыты под экраном */
+}
 .upgrades-panel { height: 60%; }
-.shop-panel { height: 70%; }
-.upgrades-panel:not(.hidden), .shop-panel:not(.hidden) { transform: translateY(0); }
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-.panel-header h2 { margin: 0; font-size: 1.4em; }
-.close-button { background: none; border: none; color: var(--text-color); font-size: 2em; line-height: 1; cursor: pointer; opacity: 0.7; transition: opacity 0.2s ease; padding: 0 5px; }
-.close-button:hover { opacity: 1; }
+.shop-panel { height: 70%; max-height: 500px; } /* Ограничиваем высоту магазина */
 
-/* --- Улучшения --- */
-#upgrades-list { list-style: none; overflow-y: auto; flex-grow: 1; padding-right: 5px; margin: 0; }
-#upgrades-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: opacity 0.3s ease, background-color 0.3s ease; }
+.upgrades-panel:not(.hidden),
+.shop-panel:not(.hidden) {
+    transform: translateY(0); /* Показываем */
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Панель настроек (по центру) */
+.settings-panel {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Полупрозрачный фон */
+    display: flex; /* Используем flex для центрирования */
+    align-items: center;
+    justify-content: center;
+    z-index: 200; /* Выше других панелей */
+    transform: scale(1); /* Не двигаем, управляем через opacity */
+}
+.settings-panel.hidden {
+     /* opacity: 0; уже есть в panel-base.hidden */
+     /* pointer-events: none; уже есть в panel-base.hidden */
+}
+.settings-box { /* Контейнер для содержимого настроек */
+    background-color: var(--secondary-bg);
+    border-radius: 15px;
+    padding: 15px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh; /* Ограничиваем высоту */
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Заголовок панелей */
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0; /* Заголовок не сжимается */
+}
+.panel-header h2 {
+    margin: 0;
+    font-size: 1.4rem;
+}
+.close-button {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    padding: 0 5px; /* Увеличиваем область клика */
+}
+.close-button:hover {
+    opacity: 1;
+}
+
+/* --- Панель улучшений --- */
+#upgrades-list {
+    list-style: none;
+    overflow-y: auto; /* Включаем скролл */
+    flex-grow: 1; /* Занимает доступное место */
+    padding-right: 5px; /* Отступ для скроллбара */
+    margin: 0;
+}
+/* Стилизация скроллбара (для Webkit браузеров) */
+#upgrades-list::-webkit-scrollbar { width: 6px; }
+#upgrades-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 3px; }
+#upgrades-list::-webkit-scrollbar-thumb { background-color: var(--button-bg); border-radius: 3px; }
+#upgrades-list::-webkit-scrollbar-thumb:hover { background-color: var(--button-hover-bg); }
+
+#upgrades-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 5px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: opacity 0.3s ease, background-color 0.3s ease;
+}
 #upgrades-list li:last-child { border-bottom: none; }
+
 .upgrade-info { flex-grow: 1; margin-right: 10px; }
-.upgrade-info h3 { font-size: 1em; margin-bottom: 3px; }
-.upgrade-info p { font-size: 0.8em; opacity: 0.7; margin: 0; }
-.upgrade-cost { font-size: 0.9em; font-weight: bold; color: var(--accent-color); margin-top: 4px; }
-.buy-upgrade-btn { padding: 8px 15px; font-size: 0.9em; background-color: var(--accent-color); color: var(--primary-bg); border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.2s ease, opacity 0.2s ease, color 0.2s ease; min-width: 90px; text-align: center; }
-.buy-upgrade-btn:hover:not(:disabled) { background-color: #88e8d8; }
-.buy-upgrade-btn:disabled:not(.locked .buy-upgrade-btn) { background-color: var(--disabled-color); color: #a0a0a0; cursor: not-allowed; opacity: 0.7; }
-#upgrades-list li.locked { opacity: 0.5; background-color: rgba(0, 0, 0, 0.15); }
-#upgrades-list li.locked .upgrade-info h3, #upgrades-list li.locked .upgrade-info p:not(.requirement-info) { color: #b0b0b0; opacity: 0.8; }
-#upgrades-list li.locked .buy-upgrade-btn { background-color: #555; border: 1px solid rgba(255, 255, 255, 0.1); color: var(--accent-color); font-size: 0.8em; opacity: 1; cursor: default; }
-.requirement-info { font-size: 0.75em; color: var(--accent-color); opacity: 1; margin-top: 5px; font-weight: bold; }
+.upgrade-info h3 { font-size: 1rem; margin-bottom: 3px; }
+.upgrade-info p { font-size: 0.8rem; opacity: 0.7; margin: 0; color: var(--text-secondary-color); }
+.upgrade-cost { font-size: 0.9rem; font-weight: bold; color: var(--accent-color); margin-top: 4px; }
+.requirement-info { font-size: 0.75rem; color: var(--warning-color); opacity: 1; margin-top: 5px; font-weight: bold; }
 
-/* --- Настройки (только язык) --- */
-.settings-panel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-out; }
-.settings-panel:not(.hidden) { opacity: 1; pointer-events: auto; }
-.settings-box { width: 90%; max-width: 400px; max-height: 80vh; border-radius: 15px; }
-.settings-content { padding: 15px; overflow-y: auto; flex-grow: 1; }
-.settings-content h3 { margin-bottom: 10px; font-size: 1.1em; opacity: 0.9; }
-.language-options { display: flex; gap: 10px; flex-wrap: wrap; }
-.lang-btn { padding: 8px 16px; font-size: 0.9em; background-color: var(--button-bg); color: var(--text-color); border: 2px solid transparent; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease; }
+.buy-upgrade-btn {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    background-color: var(--accent-color);
+    color: var(--primary-bg); /* Темный текст на светлой кнопке */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease, opacity 0.2s ease, color 0.2s ease;
+    min-width: 90px; /* Минимальная ширина */
+    text-align: center;
+    flex-shrink: 0; /* Кнопка не сжимается */
+}
+.buy-upgrade-btn:hover:not(:disabled) { background-color: #88e8d8; /* Светлее при наведении */ }
+
+/* Стили для неактивных состояний улучшений */
+#upgrades-list li.locked { /* Заблокировано по требованию */
+    opacity: 0.6;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+#upgrades-list li.locked .upgrade-info h3,
+#upgrades-list li.locked .upgrade-info p:not(.requirement-info) {
+    color: var(--text-secondary-color);
+    opacity: 0.8;
+}
+#upgrades-list li.locked .buy-upgrade-btn { /* Кнопка заблокированного улучшения */
+    background-color: var(--disabled-color);
+    border: none;
+    color: var(--warning-color); /* Показываем цвет требования */
+    font-size: 0.8rem;
+    opacity: 1; /* Полная непрозрачность, т.к. сама li уже затемнена */
+    cursor: default;
+}
+#upgrades-list li.cannot-afford .buy-upgrade-btn { /* Не хватает средств */
+     background-color: var(--disabled-color);
+     color: var(--disabled-text-color);
+     cursor: not-allowed;
+     opacity: 0.7;
+}
+
+/* --- Панель настроек --- */
+.settings-content {
+    padding: 15px 0 0 0; /* Отступ только сверху */
+    overflow-y: auto; /* Скролл, если настроек много */
+    flex-grow: 1;
+}
+.settings-content h3 {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    opacity: 0.9;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Разделитель */
+    padding-bottom: 5px;
+}
+.language-options {
+    display: flex;
+    gap: 10px; /* Пространство между кнопками */
+    flex-wrap: wrap; /* Перенос кнопок, если не влезают */
+}
+.lang-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: 2px solid transparent; /* Резервируем место для рамки */
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
 .lang-btn:hover { background-color: var(--button-hover-bg); }
-.lang-btn.active { background-color: var(--accent-color); color: var(--primary-bg); border-color: var(--text-color); font-weight: bold; }
+.lang-btn.active { /* Стиль активной кнопки языка */
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    border-color: var(--text-color); /* Белая рамка */
+    font-weight: bold;
+}
 
-/* --- Магазин --- */
-.shop-currency-display { text-align: right; margin-bottom: 15px; font-size: 1.1em; opacity: 0.9; display: flex; align-items: center; justify-content: flex-end; }
-.shop-currency-display .gem-icon { margin: 0 5px; vertical-align: middle; line-height: 1; }
+/* --- Панель магазина --- */
+.shop-currency-display {
+    text-align: right;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Выравниваем по правому краю */
+    flex-shrink: 0; /* Не сжимаем */
+}
+.shop-currency-display .gem-icon { margin: 0 5px; } /* Отступы у иконки */
 #shop-gem-count { font-weight: bold; }
-#skins-list { list-style: none; overflow-y: auto; flex-grow: 1; padding: 5px 5px 0 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
-#skins-list li { background-color: rgba(0, 0, 0, 0.15); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; text-align: center; border: 2px solid transparent; transition: border-color 0.2s ease, background-color 0.2s ease; }
-#skins-list li.active-skin { border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
-.skin-preview { width: 80px; height: 90px; margin-bottom: 10px; border-radius: 5px; background-color: #ccc; background-size: cover; background-position: center; position: relative; clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%); border: 1px solid rgba(255, 255, 255, 0.1); transition: border-color 0.3s ease; }
-.skin-preview.skin-default { background-color: var(--flask-color); }
-.skin-preview.skin-gold { background-color: #ffd700; background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080); }
-.skin-preview.skin-crystal { background-color: #add8e6; background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%); }
-.skin-preview.skin-obsidian { background-color: #333; background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d); }
-.skin-info { width: 100%; margin-top: 5px; }
-.skin-info h3 { font-size: 0.9em; margin-bottom: 5px; word-break: break-word; min-height: 2.2em; display: flex; align-items: center; justify-content: center; line-height: 1.1; }
-.skin-cost { display: flex; align-items: center; justify-content: center; font-size: 0.95em; margin-bottom: 8px; font-weight: bold; color: var(--gem-color); min-height: 1.2em; }
+
+#skins-list {
+    list-style: none;
+    overflow-y: auto; /* Включаем скролл */
+    flex-grow: 1; /* Занимает доступное место */
+    padding: 5px 5px 0 0; /* Отступ справа для скроллбара */
+    margin: 0;
+    display: grid; /* Используем грид для карточек */
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); /* Адаптивные колонки */
+    gap: 15px; /* Пространство между карточками */
+}
+/* Стилизация скроллбара (для Webkit браузеров) */
+#skins-list::-webkit-scrollbar { width: 6px; }
+#skins-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 3px; }
+#skins-list::-webkit-scrollbar-thumb { background-color: var(--button-bg); border-radius: 3px; }
+#skins-list::-webkit-scrollbar-thumb:hover { background-color: var(--button-hover-bg); }
+
+#skins-list li { /* Карточка скина */
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column; /* Элементы в столбик */
+    align-items: center; /* Центрируем по горизонтали */
+    text-align: center;
+    border: 2px solid transparent; /* Резервируем место под рамку активного скина */
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+#skins-list li.active-skin { /* Стиль активного скина */
+    border-color: var(--accent-color);
+    box-shadow: 0 0 8px var(--accent-color);
+}
+
+.skin-preview { /* Превью скина */
+    width: 80px;
+    height: 90px;
+    margin-bottom: 10px;
+    border-radius: 5px; /* Небольшое скругление */
+    background-size: cover; /* Масштабируем фон */
+    background-position: center;
+    position: relative;
+    clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%); /* Та же форма, что у колбы */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Тонкая рамка */
+    flex-shrink: 0; /* Не сжимаем превью */
+}
+.skin-info { width: 100%; margin-top: 5px; flex-grow: 1; display: flex; flex-direction: column; }
+.skin-info h3 { /* Название скина */
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    word-break: break-word; /* Перенос длинных слов */
+    min-height: 2.4em; /* Резервируем место под 2 строки */
+    display: flex;
+    align-items: center; /* Вертикальное выравнивание */
+    justify-content: center;
+    line-height: 1.2; /* Межстрочный интервал */
+    flex-grow: 1; /* Занимает доступное место по высоте */
+}
+.skin-cost { /* Цена скина */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--gem-color);
+    min-height: 1.2em; /* Резервируем место */
+    flex-shrink: 0;
+}
 .skin-cost .gem-icon { margin-right: 4px; line-height: 1; }
 .skin-cost .gem-icon svg { width: 0.9em; height: 0.9em; fill: var(--gem-color); vertical-align: middle; }
-.skin-action-btn { padding: 6px 12px; font-size: 0.85em; background-color: var(--button-bg); color: var(--text-color); border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.2s ease, opacity 0.2s ease; width: 100%; margin-top: auto; }
+
+.skin-action-btn { /* Кнопка действия со скином */
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    width: 100%; /* На всю ширину карточки */
+    margin-top: auto; /* Прижимаем кнопку к низу карточки */
+    flex-shrink: 0;
+}
 .skin-action-btn:hover:not(:disabled) { background-color: var(--button-hover-bg); }
+
 .skin-action-btn.buy-btn { background-color: var(--accent-color); color: var(--primary-bg); font-weight: bold; }
 .skin-action-btn.buy-btn:hover:not(:disabled) { background-color: #88e8d8; }
-.skin-action-btn.select-btn { background-color: #5093d1; }
-.skin-action-btn.select-btn:hover:not(:disabled) { background-color: #60a3e1; }
-.skin-action-btn.selected-btn { background-color: var(--primary-bg); border: 1px solid var(--accent-color); color: var(--accent-color); opacity: 0.8; cursor: default; }
-.skin-action-btn:disabled:not(.selected-btn) { background-color: var(--disabled-color); color: #a0a0a0; cursor: not-allowed; opacity: 0.7; }
+.skin-action-btn.buy-btn:disabled { background-color: var(--disabled-color); color: var(--disabled-text-color); opacity: 0.7; cursor: not-allowed; }
 
-/* --- Скины колбы (фон + обводка) --- */
-/* Базовые стили уже заданы в .cauldron, здесь только переопределяем */
-.cauldron.skin-default {
-    /* Можно оставить пустым, т.к. базовые стили .cauldron уже используют нужные переменные */
-    /* background-color: var(--flask-color); */
-    /* border-color: var(--cauldron-border-color-default); */
+.skin-action-btn.select-btn { background-color: var(--telegram-button-bg); } /* Используем синий для выбора */
+.skin-action-btn.select-btn:hover:not(:disabled) { background-color: var(--telegram-button-hover-bg); }
+
+.skin-action-btn.selected-btn { /* Стиль кнопки "Выбрано" */
+    background-color: var(--primary-bg);
+    border: 1px solid var(--accent-color);
+    color: var(--accent-color);
+    opacity: 0.8;
+    cursor: default;
 }
-.cauldron.skin-gold {
-    background-color: #ffd700;
+
+
+/* --- Стили для скинов колбы и их превью --- */
+.cauldron.skin-default,
+.skin-preview.skin-default {
+    background-color: var(--flask-color-default);
+    border-color: var(--cauldron-border-color-default);
+}
+.cauldron.skin-gold,
+.skin-preview.skin-gold {
+    background-color: var(--flask-color-gold);
     background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080);
     border-color: var(--cauldron-border-color-gold);
 }
-.cauldron.skin-crystal {
-    background-color: #add8e6;
+.cauldron.skin-crystal,
+.skin-preview.skin-crystal {
+    background-color: var(--flask-color-crystal);
     background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
     border-color: var(--cauldron-border-color-crystal);
 }
-.cauldron.skin-obsidian {
-    background-color: #333;
+.cauldron.skin-obsidian,
+.skin-preview.skin-obsidian {
+    background-color: var(--flask-color-obsidian);
     background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d);
     border-color: var(--cauldron-border-color-obsidian);
 }
 
-.hidden { display: none !important; }
-
-/* --- Адаптация --- */
-@media (min-width: 600px) { .upgrades-panel, .shop-panel { left: 50%; transform: translate(-50%, 100%); width: 80%; max-width: 500px; } .shop-panel { max-width: 600px; } .upgrades-panel:not(.hidden), .shop-panel:not(.hidden) { transform: translate(-50%, 0); } #skins-list { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
 
 /* --- Уведомления --- */
-.notification { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 8px; color: white; z-index: 1001; opacity: 0; transition: opacity 0.5s ease, bottom 0.3s ease; text-align: center; max-width: 80%; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; }
-.notification.info { background-color: #3498db; }
-.notification.error { background-color: #e74c3c; }
-.notification.warning { background-color: #f39c12; }
-.notification.success { background-color: #2ecc71; }
+.notification {
+    position: fixed; /* Фиксируем относительно viewport */
+    bottom: 20px; /* Отступ снизу */
+    left: 50%;
+    transform: translate(-50%, 10px); /* Начальное положение под экраном */
+    padding: 10px 20px;
+    border-radius: 8px;
+    color: white; /* Белый текст для всех типов */
+    z-index: 1001; /* Выше всего остального */
+    opacity: 0;
+    transition: opacity 0.5s ease, transform 0.3s ease; /* Анимация появления/исчезновения */
+    text-align: center;
+    max-width: 90%; /* Ограничиваем ширину */
+    font-size: 0.9rem;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    pointer-events: none; /* Не мешает кликам */
+    will-change: transform, opacity;
+}
+.notification.info { background-color: var(--info-color); }
+.notification.error { background-color: var(--error-color); }
+.notification.warning { background-color: var(--warning-color); }
+.notification.success { background-color: var(--success-color); }
+
+/* --- Адаптация для больших экранов --- */
+@media (min-width: 600px) {
+    /* Центрируем панели на больших экранах */
+    .upgrades-panel, .shop-panel {
+        left: 50%;
+        width: 80%;
+        max-width: 500px;
+        border-radius: 15px; /* Скругляем все углы */
+        /* Трансформация при показе/скрытии */
+        transform: translate(-50%, 100%);
+    }
+    .upgrades-panel:not(.hidden),
+    .shop-panel:not(.hidden) {
+        transform: translate(-50%, 0);
+    }
+    .shop-panel { max-width: 600px; } /* Магазин может быть шире */
+
+    /* Увеличиваем количество колонок в магазине */
+    #skins-list {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+```
