@@ -15,10 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const upgradesListElement = document.getElementById('upgrades-list');
     const userGreetingElement = document.getElementById('user-greeting');
     const inviteFriendBtn = document.getElementById('invite-friend-btn');
-
-    // === НОВОЕ: Получаем ссылку на контейнер пузырьков ===
     const bubblesContainer = document.getElementById('bubbles-container');
-    // === КОНЕЦ НОВОГО ===
 
     // Игровые переменные (состояние)
     let essence = 0;
@@ -27,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Переменные для защиты от автокликера ---
     let lastClickTime = 0;
-    const MIN_CLICK_INTERVAL = 67;
+    const MIN_CLICK_INTERVAL = 67; // ~15 clicks per second max allowed
     const MAX_WARNINGS = 3;
     let warningCount = 0;
     let isBlocked = false;
@@ -39,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Определения улучшений ---
     const upgrades = [
-        // ... (определения улучшений остаются без изменений) ...
         { id: 'click1', name: 'Улучшенный рецепт', description: '+1 к клику', baseCost: 15, costMultiplier: 1.4, type: 'click', value: 1, currentLevel: 0, requiredEssence: 0 },
         { id: 'auto1', name: 'Гомункул-Помощник', description: '+1 в секунду', baseCost: 60, costMultiplier: 1.6, type: 'auto', value: 1, currentLevel: 0, requiredEssence: 0 },
         { id: 'click2', name: 'Зачарованная ступка', description: '+5 к клику', baseCost: 300, costMultiplier: 1.5, type: 'click', value: 5, currentLevel: 0, requiredEssence: 500 },
@@ -54,39 +50,26 @@ document.addEventListener('DOMContentLoaded', () => {
          { id: 'auto7', name: 'Поток Чистой Магии', description: '+5000 в секунду', baseCost: 50000000, costMultiplier: 2.1, type: 'auto', value: 5000, currentLevel: 0, requiredEssence: 60000000 },
     ];
 
-    // === НОВЫЙ КОД: Функции для пузырьков и жидкости ===
+    // === Функции для пузырьков и жидкости ===
     function createBubble() {
-        // Проверяем, существует ли контейнер
         if (!bubblesContainer) return;
-
         const bubble = document.createElement('div');
         bubble.classList.add('bubble');
-
-        // Рандомизация для разнообразия
-        const size = Math.random() * 8 + 6; // Размер от 6px до 14px
-        const duration = Math.random() * 2.5 + 3; // Длительность анимации от 3s до 5.5s
-        const delay = Math.random() * 1.5;     // Задержка старта до 1.5s
-        const horizontalPosition = Math.random() * 90 + 5; // Позиция от 5% до 95% слева
-
+        const size = Math.random() * 8 + 6;
+        const duration = Math.random() * 2.5 + 3;
+        const delay = Math.random() * 1.5;
+        const horizontalPosition = Math.random() * 90 + 5;
         bubble.style.width = `${size}px`;
         bubble.style.height = `${size}px`;
         bubble.style.left = `${horizontalPosition}%`;
         bubble.style.animationDuration = `${duration}s`;
         bubble.style.animationDelay = `${delay}s`;
-
         bubblesContainer.appendChild(bubble);
-
-        // Удаление пузырька после завершения анимации (+ небольшая погрешность)
-        setTimeout(() => {
-            bubble.remove();
-        }, (duration + delay) * 1000 + 100); // Время в миллисекундах
+        setTimeout(() => { bubble.remove(); }, (duration + delay) * 1000 + 100);
     }
 
-    // Функция для обновления уровня жидкости (в процентах)
     function updateLiquidLevel(percentage) {
-        // Ограничиваем значение от 0 до 100
         const level = Math.max(0, Math.min(100, percentage));
-        // Устанавливаем CSS переменную --liquid-level на элементе колбы
         if (cauldronElement) {
             cauldronElement.style.setProperty('--liquid-level', `${level}%`);
         } else {
@@ -94,10 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Запускаем генерацию пузырьков каждые 500 мс
+    // Запускаем генерацию пузырьков
     setInterval(createBubble, 500);
-
-    // === КОНЕЦ НОВОГО КОДА ===
 
     // --- Функции обновления UI ---
     function updateEssenceDisplay() {
@@ -107,17 +88,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (essencePerSecondElement) {
             essencePerSecondElement.textContent = formatNumber(essencePerSecond);
         }
-        // === НОВОЕ: Обновляем уровень жидкости при обновлении эссенции ===
-        // Примерная логика: уровень зависит от эссенции, но растет медленнее,
-        // достигая максимума, например, при 1М эссенции. Подбери формулу.
-        const maxEssenceForFullLiquid = 1000000; // Примерное значение
-        const currentLiquidLevel = Math.min(100, (essence / maxEssenceForFullLiquid) * 90 + 10); // От 10% до 100%
+        // === ИЗМЕНЕНИЕ ЗДЕСЬ: Обновляем уровень жидкости при обновлении эссенции ===
+        // Уменьшаем значение, чтобы колба заполнялась визуально быстрее
+        const maxEssenceForFullLiquid = 50000; // <<< ИЗМЕНЕНО (было 1000000)
+        // Формула оставляет минимальный уровень 10% и добавляет до 90% в зависимости от прогресса
+        const currentLiquidLevel = Math.min(100, (essence / maxEssenceForFullLiquid) * 90 + 10);
         updateLiquidLevel(currentLiquidLevel);
-        // === КОНЕЦ НОВОГО ===
+        // === КОНЕЦ ИЗМЕНЕНИЯ ===
     }
 
     function formatNumber(num) {
-        // ... (функция formatNumber остается без изменений) ...
         if (isNaN(num) || !Number.isFinite(num)) { console.warn("formatNumber received invalid input:", num); return "ERR"; }
         if (num < 1000) return num.toString();
         if (num < 1000000) return (num / 1000).toFixed(1).replace('.0', '') + 'K';
@@ -142,7 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     lastClickTime = currentTime;
                 } else { console.error("Invalid essencePerClick value:", essencePerClick); }
             } else {
-                // ... (логика предупреждений об автокликере остается без изменений) ...
                 warningCount++;
                 console.warn(`Autoclicker warning ${warningCount}/${MAX_WARNINGS}`);
                 showTemporaryNotification(`Слишком частый клик! Предупреждение ${warningCount}/${MAX_WARNINGS}`, "warning");
@@ -160,7 +139,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Функция для отображения "+N" при клике ---
     function showClickFeedback(text) {
-        // ... (функция showClickFeedback остается без изменений) ...
         if (isBlocked || !clickFeedbackContainer) return;
         const feedback = document.createElement('div');
         feedback.className = 'click-feedback';
@@ -186,14 +164,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Логика улучшений ---
     function calculateCost(upgrade) {
-        // ... (функция calculateCost остается без изменений) ...
         if (!upgrade || typeof upgrade.baseCost !== 'number' || typeof upgrade.costMultiplier !== 'number' || typeof upgrade.currentLevel !== 'number') { console.error("Invalid upgrade data in calculateCost:", upgrade); return Infinity; }
         return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel));
     }
 
-    // ИСПРАВЛЕННАЯ ФУНКЦИЯ RENDERUPGRADES
     function renderUpgrades() {
-        // ... (функция renderUpgrades остается без изменений) ...
         if (!upgradesListElement) { console.error("Upgrades list element not found!"); return; }
         upgradesListElement.innerHTML = '';
         upgrades.sort((a, b) => (a.requiredEssence || 0) - (b.requiredEssence || 0));
@@ -231,7 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function buyUpgrade(upgradeId) {
-        // ... (функция buyUpgrade остается без изменений, но вызывает updateEssenceDisplay) ...
         if (isBlocked) { showTemporaryNotification("Действие заблокировано из-за подозрений.", "error"); return; }
         const upgrade = upgrades.find(u => u.id === upgradeId);
         if (!upgrade) { console.error("Upgrade not found:", upgradeId); return; }
@@ -253,7 +227,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function recalculateBonuses() {
-        // ... (функция recalculateBonuses остается без изменений) ...
         essencePerClick = 1; essencePerSecond = 0;
         upgrades.forEach(upgrade => {
             if (upgrade.currentLevel > 0 && Number.isFinite(upgrade.value) && typeof upgrade.type === 'string') {
@@ -276,7 +249,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- БЛОК: Логика реферальной системы ---
     function checkReferralAndBonus() {
-        // ... (функция checkReferralAndBonus остается без изменений) ...
         const startParam = tg.initDataUnsafe?.start_param;
         const urlParams = new URLSearchParams(window.location.search);
         const claimBonusParam = urlParams.get('claimBonus');
@@ -286,7 +258,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleNewReferral(inviterId) {
-        // ... (функция handleNewReferral остается без изменений) ...
         tg.CloudStorage.getItem('gameState', (error, value) => {
              if (error) { console.error("CloudStorage error checking gameState for referral:", error); return; }
              let isTrulyNew = true;
@@ -296,7 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleBonusClaim(referralId) {
-        // ... (функция handleBonusClaim остается без изменений, но вызывает updateEssenceDisplay) ...
         console.log(`Attempting to claim bonus for referral ID: ${referralId}`);
         if (!referralId || typeof referralId !== 'string' || referralId.trim() === '') { console.warn("Invalid or empty referralId received."); return; }
         tg.CloudStorage.getItem('claimed_bonuses', (error, value) => {
@@ -311,7 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Логика кнопки "Друзья" ---
     if (inviteFriendBtn) {
-        // ... (обработчик кнопки Друзья остается без изменений) ...
         inviteFriendBtn.addEventListener('click', () => {
             if (tg && tg.initDataUnsafe?.user?.id) { const botUsername = 'AlchimLaboratory_Bot'; const appName = 'AlchimLab'; const userId = tg.initDataUnsafe.user.id; const shareUrl = `https://t.me/${botUsername}/${appName}?start=${userId}`; const shareText = 'Заходи в мою Алхимическую Лабораторию в Telegram! 🧪⚗️ Кликай и создавай эликсиры!'; tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`); console.log('Предложено поделиться реферальной ссылкой:', shareUrl); }
             else { console.error('Cannot get user ID or Telegram API access for sharing.'); showTemporaryNotification('Не удалось создать ссылку для приглашения.', 'error'); }
@@ -320,7 +289,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Сохранение/Загрузка через CloudStorage ---
     function saveGame() {
-        // ... (функция saveGame остается без изменений) ...
         if (!tg || !tg.CloudStorage) { console.error("CloudStorage unavailable for saving."); return; }
         if (!Number.isFinite(essence)) { console.error("Invalid essence value:", essence); essence = 0; }
         const gameState = { essence: essence, upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel })) };
@@ -358,41 +326,51 @@ document.addEventListener('DOMContentLoaded', () => {
         if(cauldronElement) { cauldronElement.classList.remove('blocked-cauldron'); cauldronElement.style.cursor = 'pointer'; }
         essence = 0; upgrades.forEach(u => u.currentLevel = 0);
         recalculateBonuses(); console.log("Game data reset.");
-        // === НОВОЕ: Сбрасываем уровень жидкости при сбросе игры ===
+        // Сбрасываем уровень жидкости при сбросе игры
         updateLiquidLevel(10); // Устанавливаем минимальный базовый уровень
-        // === КОНЕЦ НОВОГО ===
     }
 
     // --- Функция для временных уведомлений ---
     function showTemporaryNotification(message, type = "info") {
-        // ... (функция showTemporaryNotification остается без изменений) ...
          const notification = document.createElement('div');
         notification.className = `notification ${type}`;
         notification.textContent = message;
-        notification.style.position = 'fixed'; notification.style.bottom = '70px';
-        notification.style.left = '50%'; notification.style.transform = 'translateX(-50%)';
-        notification.style.padding = '10px 20px'; notification.style.borderRadius = '8px';
-        notification.style.color = 'white'; notification.style.zIndex = '1000';
-        notification.style.opacity = '0'; notification.style.transition = 'opacity 0.5s ease, bottom 0.3s ease';
-        notification.style.textAlign = 'center'; notification.style.maxWidth = '80%';
-        if (type === 'error') notification.style.backgroundColor = '#e74c3c';
-        else if (type === 'warning') notification.style.backgroundColor = '#f39c12';
-        else if (type === 'success') notification.style.backgroundColor = '#2ecc71';
-        else notification.style.backgroundColor = '#3498db'; // info
+        // Используем CSS классы для стилей вместо инлайн-стилей где возможно
         document.body.appendChild(notification);
-        setTimeout(() => { notification.style.opacity = '1'; notification.style.bottom = '80px'; }, 10);
-        setTimeout(() => { notification.style.opacity = '0'; notification.style.bottom = '70px'; setTimeout(() => { notification.remove(); }, 500); }, 2500);
+        // Триггерим анимацию появления
+        setTimeout(() => {
+             notification.style.opacity = '1';
+             notification.style.bottom = '80px'; // Или другое значение, если нужно поднять
+         }, 10); // Небольшая задержка для срабатывания transition
+        // Запускаем таймер на исчезновение
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.bottom = '70px'; // Возвращаем исходную позицию для анимации
+            // Удаляем элемент из DOM после завершения анимации исчезновения
+            setTimeout(() => { notification.remove(); }, 500); // Должно совпадать с transition duration
+        }, 2500); // Время показа уведомления
     }
 
     // --- Первоначальная инициализация ---
     loadGame(); // Загружаем игру (асинхронно, вызовет updateEssenceDisplay и updateLiquidLevel)
 
     // --- Автосохранение и обработчики событий видимости/закрытия ---
-    setInterval(saveGame, 15000);
-    window.addEventListener('beforeunload', saveGame);
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveGame(); });
+    setInterval(saveGame, 15000); // Сохраняем каждые 15 секунд
+    window.addEventListener('beforeunload', saveGame); // Сохраняем при закрытии вкладки/окна
+    document.addEventListener('visibilitychange', () => { // Сохраняем при сворачивании или переключении вкладки
+        if (document.visibilityState === 'hidden') {
+             saveGame();
+         }
+     });
     if (tg && tg.onEvent) {
-        tg.onEvent('viewportChanged', (event) => { if (!event.isStateStable) saveGame(); });
+        // Дополнительное сохранение при изменении размера окна в Telegram
+        tg.onEvent('viewportChanged', (event) => {
+            if (!event.isStateStable) { // Сохраняем, когда изменение размера завершено
+                 saveGame();
+             }
+        });
+        // Попытка сохранить при закрытии Mini App (может не всегда срабатывать)
+        // tg.onEvent('close', saveGame); // Этого события официально нет, но можно попробовать оставить
     }
 
 }); // Конец DOMContentLoaded
