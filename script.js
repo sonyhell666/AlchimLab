@@ -3,6 +3,7 @@
 // Добавлено: Динамический цвет жидкости, Обводка колбы, Отладочные логи
 // Исправлено: Мигание кнопок
 // Упрощен конец файла для поиска SyntaxError
+// ЗАКОММЕНТИРОВАНЫ ПОСЛЕДНИЕ БЛОКИ ДЛЯ ПОИСКА ОШИБКИ
 document.addEventListener('DOMContentLoaded', () => {
     // Инициализация Telegram Web App
     const tg = window.Telegram.WebApp;
@@ -270,13 +271,11 @@ document.addEventListener('DOMContentLoaded', () => {
      }
 
     // --- Логика авто-клика ---
-    // Обернем в try-catch на всякий случай
     try {
         setInterval(() => { if (!isBlocked && essencePerSecond > 0 && Number.isFinite(essencePerSecond)) { const essenceToAdd = essencePerSecond / 10; if (Number.isFinite(essenceToAdd)) { essence += essenceToAdd; updateDisplay(); } else { console.warn("Рассчитана некорректная порция эссенции."); } } }, 100);
     } catch(e) { console.error("Ошибка в интервале автоклика:", e); }
 
     // --- Интервал для уменьшения уровня жидкости ---
-    // Обернем в try-catch на всякий случай
     try {
         setInterval(() => {
             const currentTime = Date.now();
@@ -733,17 +732,20 @@ document.addEventListener('DOMContentLoaded', () => {
     function showTemporaryNotification(message, type = "info") { const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); void notification.offsetWidth; requestAnimationFrame(() => { notification.style.opacity = '1'; notification.style.bottom = '80px'; }); setTimeout(() => { notification.style.opacity = '0'; notification.style.bottom = '70px'; setTimeout(() => { if (notification.parentNode) { notification.remove(); } }, 500); }, 2500); }
 
     // --- Первоначальная инициализация ---
-    // Убрали try...catch отсюда, чтобы видеть ошибки загрузки напрямую
     loadGame();
 
 
     // --- Автосохранение и обработчики событий ---
+    /* ЗАКОММЕНТИРОВАНО ДЛЯ ПОИСКА ОШИБКИ
     const autoSaveInterval = setInterval(saveGame, 15000);
     window.addEventListener('beforeunload', saveGame);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { saveGame(); } });
-    if (tg?.onEvent) { tg.onEvent('viewportChanged', (event) => { if (event.isStateStable) { /* console.log("Viewport stable, save."); */ saveGame(); } }); }
+    if (tg?.onEvent) { tg.onEvent('viewportChanged', (event) => { if (event.isStateStable) { console.log("Viewport stable, save."); saveGame(); } }); }
+    */
 
     // --- Интервал для обновления цвета жидкости ---
+    /* ЗАКОММЕНТИРОВАНО ДЛЯ ПОИСКА ОШИБКИ
     const liquidColorUpdateInterval = setInterval(updateLiquidColor, 5 * 60 * 1000); // Обновлять каждые 5 минут
+    */
 
-}); // Конец DOMContentLoaded - Строка ~721
+}); // Конец DOMContentLoaded - Строка ~749 (или около того)
