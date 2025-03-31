@@ -124,17 +124,17 @@ html, body {
     color: var(--text-color);
 }
 
-/* Кнопка Магазина - НОВОЕ ПОЗИЦИОНИРОВАНИЕ И РАЗМЕР */
+/* Кнопка Магазина - ПОЗИЦИОНИРОВАНИЕ И РАЗМЕР */
 .shop-button {
     position: absolute; /* Абсолютное позиционирование */
     right: 20px;        /* Отступ справа (можно изменить) */
-    top: 55%;           /* Смещаем верхний край ниже середины (можно изменить на 50%, 60% и т.д.) */
+    top: 55%;           /* Смещаем верхний край ниже середины (можно изменить) */
     transform: translateY(-50%); /* Центрируем кнопку вертикально относительно её top */
     width: 48px;        /* Новая увеличенная ширина кнопки */
     height: 48px;       /* Новая увеличенная высота кнопки */
     border-radius: 12px;/* Можно сделать скругление побольше */
     z-index: 50;        /* Тот же z-index, что и у гемов */
-    /* Наследует базовые стили из .control-button-icon, переопределяем только размер и позицию */
+    /* Наследует базовые стили из .control-button-icon */
 }
 
 /* Увеличиваем иконку внутри увеличенной кнопки */
@@ -142,9 +142,6 @@ html, body {
     width: 28px; /* Размер иконки, должен совпадать с width/height в HTML */
     height: 28px;
 }
-
-/* --- КОНЕЦ ИЗМЕНЕНИЙ --- */
-
 
 .header { text-align: center; margin-bottom: 15px; font-size: 1.1em; opacity: 0.8; }
 
@@ -160,23 +157,50 @@ html, body {
 .cauldron {
     width: 180px;
     height: 200px;
-    background-color: var(--flask-color);
     position: relative;
     cursor: pointer;
     user-select: none;
-    transition: transform 0.1s ease-out, filter 0.1s ease-out;
+    transition: transform 0.1s ease-out, filter 0.1s ease-out, background-color 0.3s ease, background-image 0.3s ease; /* Добавлены переходы для скинов */
     margin: 20px auto;
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
-    overflow: hidden;
-    border: none;
+    /* overflow: hidden; -> Убрано/перенесено */
+    border: none; /* Убедимся что нет базовой рамки */
     border-radius: 0;
     box-shadow: none;
     /* Подсказка для аппаратного ускорения */
-    will-change: transform;
+    will-change: transform, background; /* Добавили background */
+    overflow: visible; /* Позволяем border'у быть видимым, если скин его добавит */
 }
+
 .cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(70%); }
-.cauldron::before { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: var(--liquid-level, 10%); background-color: var(--liquid-color); z-index: 1; }
-.bubbles-container { position: absolute; bottom: 0; left: 0; width: 100%; height: var(--liquid-level, 10%); z-index: 2; overflow: hidden; pointer-events: none; }
+
+.cauldron::before { /* Жидкость */
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--liquid-level, 10%);
+    background-color: var(--liquid-color);
+    z-index: 1;
+    overflow: hidden; /* Ограничиваем жидкость */
+    /* Можно добавить тот же clip-path, если жидкость вылезает */
+    /* clip-path: inherit; ИЛИ скопировать polygon() */
+}
+
+.bubbles-container { /* Пузырьки */
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--liquid-level, 10%);
+    z-index: 2;
+    pointer-events: none;
+    overflow: hidden; /* Ограничиваем пузырьки */
+     /* Можно добавить тот же clip-path, если пузырьки вылезают */
+    /* clip-path: inherit; ИЛИ скопировать polygon() */
+}
+
 .bubble { position: absolute; bottom: -20px; width: 8px; height: 8px; background-color: var(--bubble-color); border-radius: 50%; opacity: 0.6; animation: rise 3s infinite ease-in; }
 @keyframes rise { 0% { transform: translateY(0) scale(1); opacity: 0.6; } 50% { transform: scale(1.1); } 90% { opacity: 0.4; } 100% { transform: translateY(-220px) scale(0.8); opacity: 0; } }
 .cauldron:active:not(.blocked-cauldron) { transform: scale(0.95); }
@@ -195,10 +219,22 @@ html, body {
 .telegram-feature:hover:not(:disabled) { background-color: #60a3e1; }
 
 /* Общие стили панелей */
-.upgrades-panel, .settings-panel .settings-box { background-color: var(--secondary-bg); border-radius: 15px; box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2); padding: 15px; display: flex; flex-direction: column; }
+.upgrades-panel, .settings-panel .settings-box, .shop-panel {
+    background-color: var(--secondary-bg);
+    border-radius: 15px;
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    color: var(--text-color); /* Цвет текста по умолчанию для панелей */
+}
 
 /* Панель улучшений */
-.upgrades-panel { position: fixed; bottom: 0; left: 0; width: 100%; height: 60%; border-bottom-left-radius: 0; border-bottom-right-radius: 0; transform: translateY(100%); transition: transform 0.3s ease-out; z-index: 100; }
+.upgrades-panel {
+    position: fixed; bottom: 0; left: 0; width: 100%; height: 60%;
+    border-bottom-left-radius: 0; border-bottom-right-radius: 0;
+    transform: translateY(100%); transition: transform 0.3s ease-out; z-index: 100;
+}
 .upgrades-panel:not(.hidden) { transform: translateY(0); }
 
 /* Заголовки панелей */
@@ -227,7 +263,7 @@ html, body {
 /* Панель настроек */
 .settings-panel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-out; }
 .settings-panel:not(.hidden) { opacity: 1; pointer-events: auto; }
-.settings-box { width: 90%; max-width: 400px; max-height: 80vh; } /* Стили фона, тени и т.д. наследуются */
+.settings-box { width: 90%; max-width: 400px; max-height: 80vh; border-radius: 15px; /* Наследует стили фона/тени из общего стиля панелей */ }
 .settings-content { padding: 10px 0; overflow-y: auto; flex-grow: 1; }
 .settings-content h3 { margin-bottom: 10px; font-size: 1.1em; opacity: 0.9; }
 .language-options { display: flex; gap: 10px; flex-wrap: wrap; }
@@ -235,16 +271,207 @@ html, body {
 .lang-btn:hover { background-color: var(--button-hover-bg); }
 .lang-btn.active { background-color: var(--accent-color); color: var(--primary-bg); border-color: var(--text-color); font-weight: bold; }
 
-.hidden { display: none; }
+
+/* --- Стили Магазина --- */
+.shop-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 70%; /* Можно настроить высоту */
+    border-radius: 15px 15px 0 0; /* Только верхние углы скруглены */
+    transform: translateY(100%);
+    transition: transform 0.3s ease-out;
+    z-index: 100; /* Такой же как у улучшений */
+    /* Наследует background, shadow, padding, display flex из общего стиля панелей */
+}
+
+.shop-panel:not(.hidden) {
+    transform: translateY(0);
+}
+
+.shop-currency-display {
+    text-align: right;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    opacity: 0.9;
+    display: flex; /* Используем flex для выравнивания */
+    align-items: center; /* Выравниваем по вертикали */
+    justify-content: flex-end; /* Прижимаем к правому краю */
+}
+
+.shop-currency-display .gem-icon {
+    margin: 0 5px; /* Небольшие отступы вокруг иконки */
+    vertical-align: middle; /* Выравнивание иконки */
+    line-height: 1;
+}
+.shop-currency-display .gem-icon svg {
+    /* Размеры уже заданы в HTML, наследует fill */
+}
+
+#shop-gem-count {
+    font-weight: bold;
+}
+
+#skins-list {
+    list-style: none;
+    overflow-y: auto;
+    flex-grow: 1;
+    padding: 0 5px 0 0; /* Отступ справа для скроллбара */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); /* Адаптивная сетка */
+    gap: 15px; /* Отступы между скинами */
+}
+
+#skins-list li {
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border: 2px solid transparent; /* Для рамки активного скина */
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+#skins-list li.active-skin {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 8px var(--accent-color);
+}
+
+.skin-preview {
+    width: 80px;
+    height: 90px; /* Соотношение примерно как у основной колбы */
+    margin-bottom: 10px;
+    border-radius: 5px; /* Небольшое скругление для превью */
+    background-color: #ccc; /* Placeholder цвет */
+    background-size: cover;
+    background-position: center;
+    position: relative; /* Для позиционирования внутренних элементов, если нужно */
+     /* Применяем такой же clip-path, как у основной колбы */
+    -webkit-clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
+    clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
+}
+
+/* Стили для разных скинов в превью (добавляются через JS) */
+.skin-preview.skin-default { background-color: var(--flask-color); }
+.skin-preview.skin-gold { background-color: #ffd700; background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080); }
+.skin-preview.skin-crystal { background-color: #add8e6; border: 1px solid rgba(255, 255, 255, 0.5); background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%); }
+.skin-preview.skin-obsidian { background-color: #333; background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d); }
+
+.skin-info {
+    width: 100%; /* Занимает всю ширину карточки */
+    margin-top: 5px; /* Отступ от превью */
+}
+.skin-info h3 {
+    font-size: 0.9em;
+    margin-bottom: 5px;
+    word-break: break-word; /* Перенос длинных названий */
+    min-height: 2.2em; /* Резервируем место под 2 строки названия */
+    display: flex; /* Центрируем текст, если он короткий */
+    align-items: center;
+    justify-content: center;
+}
+
+.skin-cost {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95em;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--gem-color); /* Цвет гемов */
+}
+
+.skin-cost .gem-icon {
+    margin-right: 4px;
+    line-height: 1;
+}
+.skin-cost .gem-icon svg {
+     width: 0.9em;
+     height: 0.9em;
+     fill: var(--gem-color); /* Убедимся, что иконка тоже красится */
+     vertical-align: middle;
+}
+
+.skin-action-btn {
+    padding: 6px 12px;
+    font-size: 0.85em;
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    width: 100%; /* Кнопка на всю ширину карточки */
+    margin-top: auto; /* Прижимает кнопку к низу карточки, если контент разной высоты */
+}
+
+.skin-action-btn:hover:not(:disabled) {
+    background-color: var(--button-hover-bg);
+}
+
+.skin-action-btn.buy-btn {
+    background-color: var(--accent-color);
+    color: var(--primary-bg);
+    font-weight: bold;
+}
+.skin-action-btn.buy-btn:hover:not(:disabled) {
+    background-color: #88e8d8;
+}
+
+.skin-action-btn.select-btn {
+    background-color: #5093d1; /* Синий для выбора */
+}
+.skin-action-btn.select-btn:hover:not(:disabled) {
+    background-color: #60a3e1;
+}
+
+.skin-action-btn.selected-btn {
+     background-color: var(--primary-bg); /* Темный фон для выбранной */
+     border: 1px solid var(--accent-color);
+     color: var(--accent-color);
+     opacity: 0.8;
+}
+
+
+.skin-action-btn:disabled:not(.selected-btn) { /* Не применяем стиль к "Выбрано" */
+    background-color: var(--disabled-color);
+    color: #a0a0a0;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Стили для самой колбы (добавляются через JS) */
+.cauldron.skin-default { background-color: var(--flask-color); background-image: none; border: none; }
+.cauldron.skin-gold { background-color: #ffd700; background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080); border: none; }
+.cauldron.skin-crystal { background-color: #add8e6; background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%); border: 1px solid rgba(255, 255, 255, 0.5); }
+.cauldron.skin-obsidian { background-color: #333; background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d); border: none; }
+/* Убедитесь, что clip-path остается на .cauldron, а не на классах скинов */
+
+
+.hidden { display: none !important; /* Более сильное скрытие */ }
 
 /* Адаптация */
 @media (min-width: 600px) {
-    .upgrades-panel { left: 50%; transform: translate(-50%, 100%); width: 80%; max-width: 500px; }
-    .upgrades-panel:not(.hidden) { transform: translate(-50%, 0); }
+    .upgrades-panel, .shop-panel {
+        left: 50%;
+        transform: translate(-50%, 100%);
+        width: 80%;
+        max-width: 500px; /* Или 600px для магазина */
+    }
+    .shop-panel { max-width: 600px; }
+    .upgrades-panel:not(.hidden), .shop-panel:not(.hidden) {
+        transform: translate(-50%, 0);
+    }
+     #skins-list {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Чуть больше на широких экранах */
+    }
 }
 
 /* Уведомления */
-.notification { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 8px; color: white; z-index: 1001; opacity: 0; transition: opacity 0.5s ease, bottom 0.3s ease; text-align: center; max-width: 80%; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.notification { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 8px; color: white; z-index: 1001; opacity: 0; transition: opacity 0.5s ease, bottom 0.3s ease; text-align: center; max-width: 80%; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; }
 .notification.info { background-color: #3498db; }
 .notification.error { background-color: #e74c3c; }
 .notification.warning { background-color: #f39c12; }
