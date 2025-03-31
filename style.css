@@ -34,30 +34,35 @@ html, body {
     position: relative;
 }
 
-/* Кнопка настроек */
-.settings-button {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background: none;
+/* --- ОБЩИЙ СТИЛЬ ДЛЯ КНОПОК-ИКОНОК (Настройки, Магазин и др.) --- */
+.control-button-icon {
+    background: rgba(0, 0, 0, 0.2); /* Полупрозрачный фон по умолчанию */
     border: none;
     padding: 0;
     cursor: pointer;
-    z-index: 51;
     opacity: 0.8;
     transition: opacity 0.2s ease, background-color 0.2s ease;
-    display: inline-flex; /* Важно для выравнивания */
+    display: inline-flex; /* Используем flex для центрирования иконки */
     align-items: center;
     justify-content: center;
-    width: 36px; /* Ширина самой кнопки */
-    height: 36px; /* Высота самой кнопки */
-    border-radius: 50%;
-    overflow: hidden; /* Добавлено, чтобы обрезать изображение, если оно все еще выходит за рамки */
+    width: 36px; /* Размер кнопки */
+    height: 36px; /* Размер кнопки */
+    border-radius: 8px; /* Слегка скругленные углы */
+    color: var(--text-color); /* Цвет иконки по умолчанию */
+    overflow: hidden; /* Обрезаем контент, если выходит за рамки */
 }
-.settings-button:hover { opacity: 1; background-color: rgba(255, 255, 255, 0.1); }
 
-/* ИЗМЕНЕНО: Стиль для IMG внутри кнопки (Вариант 1) */
-.settings-button img {
+.control-button-icon:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1); /* Легкая подсветка при наведении */
+}
+
+.control-button-icon svg {
+     /* Размеры иконки задаются в HTML (width/height) или здесь */
+     /* fill: currentColor; уже указан в SVG path, наследует цвет кнопки */
+}
+
+.control-button-icon img { /* Стили для IMG внутри такой кнопки */
     display: block;
     width: 24px;         /* Желаемая ширина */
     height: 24px;        /* Желаемая высота */
@@ -65,6 +70,71 @@ html, body {
     max-height: 100%;    /* Ограничиваем максимальную высоту размером родителя */
     object-fit: contain; /* Масштабирует изображение, сохраняя пропорции */
 }
+
+
+/* Кнопка настроек (уже имеет класс control-button-icon) */
+.settings-button {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    z-index: 51;
+    background: none; /* Убираем фон по умолчанию, чтобы был виден только при ховере */
+    border-radius: 50%; /* Делаем ее круглой */
+}
+
+
+/* --- ИЗМЕНЕНИЯ В СТИЛЯХ ВАЛЮТЫ/МАГАЗИНА --- */
+
+/* Кристаллы и Магазин в углу */
+.secondary-currency {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column; /* Ставим элементы вертикально */
+    align-items: flex-end; /* Выравниваем по правому краю */
+    gap: 8px; /* Добавляем небольшой отступ между гемами и кнопкой */
+}
+
+/* Контейнер для гемов */
+.gem-display {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 5px 10px;
+    border-radius: 8px;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.gem-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    line-height: 1;
+}
+.gem-icon svg {
+    width: 1.1em;
+    height: 1.1em;
+    fill: var(--gem-color);
+    vertical-align: middle;
+}
+#gem-count {
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+/* Специфичные стили для кнопки Магазина (уже имеет класс control-button-icon) */
+.shop-button {
+     /* Тут можно добавить уникальные стили, если потребуется */
+     /* Например, другой цвет иконки */
+     /* color: var(--accent-color); */
+     /* Background уже задан в .control-button-icon, здесь переопределять не нужно */
+}
+
+/* --- КОНЕЦ ИЗМЕНЕНИЙ --- */
 
 
 .header { text-align: center; margin-bottom: 15px; font-size: 1.1em; opacity: 0.8; }
@@ -76,12 +146,6 @@ html, body {
 .main-currency { margin-bottom: 3px; display: block; color: var(--text-color); font-size: 1em; font-weight: bold; }
 .essence-icon { display: inline-block; margin-right: 5px; font-size: 0.9em; }
 .per-second-display { display: block; font-size: 0.4em; font-weight: normal; opacity: 0.7; margin-top: 0; margin-bottom: 0; color: var(--text-color); }
-
-/* Кристаллы в углу */
-.secondary-currency { position: absolute; top: 15px; right: 15px; z-index: 50; display: flex; align-items: center; font-size: 1.2em; font-weight: bold; background-color: rgba(0, 0, 0, 0.2); padding: 5px 10px; border-radius: 8px; }
-.gem-icon { display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; line-height: 1; }
-.gem-icon svg { width: 1.1em; height: 1.1em; fill: var(--gem-color); vertical-align: middle; }
-#gem-count { font-weight: bold; color: var(--text-color); }
 
 /* Колба */
 .cauldron {

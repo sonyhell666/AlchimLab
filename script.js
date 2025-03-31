@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsPanel = document.getElementById('settings-panel');
     const closeSettingsBtn = document.getElementById('close-settings-btn');
     const languageOptionsContainer = settingsPanel ? settingsPanel.querySelector('.language-options') : null;
+    const shopBtn = document.getElementById('shop-btn'); // <-- Добавлено
 
     // --- Игровые переменные (состояние) ---
     let essence = 0;
@@ -62,6 +63,28 @@ document.addEventListener('DOMContentLoaded', () => {
         buyButton: { ru: "Купить", en: "Buy" },
         requirementPrefix: { ru: "Нужно", en: "Need" },
         requirementInfoPrefix: { ru: "Требуется", en: "Requires" },
+        // --- Добавленные ключи для ошибок/уведомлений ---
+        tooFastClick: { ru: "Слишком быстро!", en: "Clicking too fast!" },
+        autoclickerBlocked: { ru: "Автокликер обнаружен! Клики заблокированы.", en: "Autoclicker detected! Clicking blocked." },
+        actionBlocked: { ru: "Действие заблокировано.", en: "Action blocked." },
+        needMoreEssence: { ru: "Нужно больше эссенции!", en: "Need more essence!" },
+        invalidCostError: { ru: "Ошибка: Неверная стоимость улучшения!", en: "Error: Invalid upgrade cost!" },
+        notEnoughEssence: { ru: "Недостаточно эссенции!", en: "Not enough essence!" },
+        loadErrorStartNew: { ru: "Ошибка загрузки прогресса. Начинаем новую игру.", en: "Failed to load progress. Starting new game." },
+        loadError: { ru: "Ошибка загрузки прогресса!", en: "Error loading progress!" },
+        readError: { ru: "Ошибка чтения данных сохранения!", en: "Error reading save data!" },
+        saveCritError: { ru: "Критическая ошибка сохранения!", en: "Critical save error!" },
+        welcomeReferral: { ru: "Добро пожаловать! Ваш пригласитель получит бонус.", en: "Welcome! Your inviter gets a bonus." },
+        referralRegErrorBot: { ru: "Не удалось зарегистрировать приглашение (ошибка бота).", en: "Could not register invite (bot error)." },
+        referralRegErrorFunc: { ru: "Не удалось зарегистрировать приглашение (функция недоступна).", en: "Could not register invite (feature unavailable)." },
+        bonusCheckError: { ru: "Ошибка проверки бонуса!", en: "Bonus check error!" },
+        bonusAlreadyClaimed: { ru: "Бонус уже получен.", en: "Bonus already claimed." },
+        bonusReasonFriend: { ru: "за приглашенного друга!", en: "for invited friend!" },
+        bonusAddError: { ru: "Ошибка добавления бонуса!", en: "Bonus add error!" },
+        inviteLinkError: { ru: "Не удалось создать ссылку-приглашение.", en: "Failed to create invite link." },
+        shareText: { ru: 'Присоединяйся к моей Алхимической Лаборатории в Telegram! 🧪⚗️ Кликай и создавай эликсиры!', en: 'Join my Alchemy Lab in Telegram! 🧪⚗️ Click and create elixirs!' },
+        comingSoon: { ru: "Скоро...", en: "Coming Soon..." }, // <-- Добавлено
+        // --- Названия и описания улучшений ---
         upgrade_click1_name: { ru: "Улучшенный рецепт", en: "Improved Recipe" },
         upgrade_click1_desc: { ru: "+1 к клику", en: "+1 per click" },
         upgrade_auto1_name: { ru: "Гомункул-Помощник", en: "Homunculus Helper" },
@@ -109,68 +132,787 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(createBubble, 500);
 
     // --- Функция обновления визуала жидкости и пузырьков ---
-    function updateLiquidLevelVisual(percentage) { const l = Math.max(LIQUID_MIN_LEVEL, Math.min(LIQUID_MAX_LEVEL, percentage)); if (cauldronElement) { cauldronElement.style.setProperty('--liquid-level', `${l}%`); if(bubblesContainer) { bubblesContainer.style.height = `${l}%`; } } else { console.warn("Cauldron !found."); } }
+    function updateLiquidLevelVisual(percentage) { const l = Math.max(LIQUID_MIN_LEVEL, Math.min(LIQUID_MAX_LEVEL, percentage)); if (cauldronElement) { cauldronElement.style.setProperty('--liquid-level', `${l}%`); if(bubblesContainer) { bubblesContainer.style.height = `${l}%`; } } else { console.warn("Cauldron element not found for liquid update."); } }
 
     // --- Общая функция обновления UI ---
     function updateDisplay() { if (essenceCountElement) essenceCountElement.textContent = formatNumber(Math.floor(essence)); if (essencePerSecondElement && perSecondDisplayDiv) { essencePerSecondElement.textContent = formatNumber(essencePerSecond); perSecondDisplayDiv.style.display = essencePerSecond > 0 ? 'block' : 'none'; } if (gemCountElement) gemCountElement.textContent = formatNumber(gems); if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) renderUpgrades(); }
 
     // --- Функция форматирования чисел ---
-    function formatNumber(num) { if (isNaN(num)||!Number.isFinite(num)) { console.warn("formatNum invalid:", num); return "ERR"; } if (num < 1000) return num.toString(); if (num < 1e6) return (num/1e3).toFixed(1).replace('.0','')+'K'; if (num < 1e9) return (num/1e6).toFixed(1).replace('.0','')+'M'; return (num/1e9).toFixed(1).replace('.0','')+'B'; }
+    function formatNumber(num) { if (isNaN(num) || !Number.isFinite(num)) { console.warn("formatNumber received invalid input:", num); return "ERR"; } if (num < 1000) return num.toString(); if (num < 1e6) return (num / 1e3).toFixed(1).replace('.0', '') + 'K'; if (num < 1e9) return (num / 1e6).toFixed(1).replace('.0', '') + 'M'; return (num / 1e9).toFixed(1).replace('.0', '') + 'B'; }
 
     // --- Функция для отображения "+N" при клике ---
-    function showClickFeedback(amount, type = 'essence') { if (isBlocked||!clickFeedbackContainer) return; const f=document.createElement('div'); f.className='click-feedback'; const fmt=formatNumber(amount); if (type==='gem'){ const i=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="var(--gem-color)" style="vertical-align:middle;margin-left:4px;"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/></svg>`; f.innerHTML=`+${fmt}${i}`; f.style.fontSize='1.3em'; f.style.fontWeight='bold'; f.style.color='#f0f0f0';} else { f.textContent=`+${fmt} 🧪`; f.style.color='var(--accent-color)';} const ox=Math.random()*60-30; const oy=(type==='gem')?(Math.random()*20+15):(Math.random()*20-10); f.style.left=`calc(50% + ${ox}px)`; f.style.top=`calc(50% + ${oy}px)`; clickFeedbackContainer.appendChild(f); setTimeout(()=>{f.remove();},950); }
+    function showClickFeedback(amount, type = 'essence') { if (isBlocked || !clickFeedbackContainer) return; const f = document.createElement('div'); f.className = 'click-feedback'; const fmt = formatNumber(amount); if (type === 'gem') { const i = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="var(--gem-color)" style="vertical-align:middle;margin-left:4px;"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/></svg>`; f.innerHTML = `+${fmt}${i}`; f.style.fontSize = '1.3em'; f.style.fontWeight = 'bold'; f.style.color = '#f0f0f0'; } else { f.textContent = `+${fmt} 🧪`; f.style.color = 'var(--accent-color)'; } const ox = Math.random() * 60 - 30; const oy = (type === 'gem') ? (Math.random() * 20 + 15) : (Math.random() * 20 - 10); f.style.left = `calc(50% + ${ox}px)`; f.style.top = `calc(50% + ${oy}px)`; clickFeedbackContainer.appendChild(f); setTimeout(() => { f.remove(); }, 950); }
 
     // --- Логика клика по котлу ---
-    if (cauldronElement) { cauldronElement.addEventListener('click', ()=>{ const cT=Date.now(); if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); if (isBlocked) { showTemporaryNotification(translations.autoclickerBlocked?.[currentLanguage]||"Autoclicker detected! Clicking blocked.", "error"); return; } if(cT-lastClickTime>=MIN_CLICK_INTERVAL){ warningCount=0; lastInteractionTime=cT; let clA=essencePerClick; if(Number.isFinite(clA)){ essence+=clA; if(clickFeedbackContainer) showClickFeedback(clA,'essence');} else { console.error("Invalid E/Click:", essencePerClick);} if(Math.random()<GEM_AWARD_CHANCE){ gems+=GEMS_PER_AWARD; console.log(`Got gem! Total: ${gems}`); if(clickFeedbackContainer) showClickFeedback(GEMS_PER_AWARD,'gem'); if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');} visualLiquidLevel+=LIQUID_INCREASE_PER_CLICK; visualLiquidLevel=Math.min(visualLiquidLevel,LIQUID_MAX_LEVEL); updateLiquidLevelVisual(visualLiquidLevel); updateDisplay(); cauldronElement.style.transform='scale(0.95)'; setTimeout(()=>{if(cauldronElement) cauldronElement.style.transform='scale(1)';},80); lastClickTime=cT;} else { warningCount++; lastInteractionTime=cT; console.warn(`Warn ${warningCount}/${MAX_WARNINGS}`); showTemporaryNotification(`${translations.tooFastClick?.[currentLanguage]||"Clicking too fast!"} Warn ${warningCount}/${MAX_WARNINGS}`, "warning"); if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); if(warningCount>=MAX_WARNINGS){ isBlocked=true; console.error("Blocked."); showTemporaryNotification(translations.autoclickerBlocked?.[currentLanguage]||"Autoclicker detected! Clicking blocked.", "error"); if(tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error'); if(cauldronElement) cauldronElement.classList.add('blocked-cauldron');}}}); } else { console.error("Cauldron !found!"); }
+    if (cauldronElement) {
+         cauldronElement.addEventListener('click', () => {
+             const currentTime = Date.now();
+             if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('light'); }
+
+             if (isBlocked) {
+                 showTemporaryNotification(translations.autoclickerBlocked?.[currentLanguage] || "Autoclicker detected! Clicking blocked.", "error");
+                 return;
+             }
+
+             if (currentTime - lastClickTime >= MIN_CLICK_INTERVAL) {
+                 warningCount = 0; // Reset warning count on valid click
+                 lastInteractionTime = currentTime;
+
+                 let clickAmount = essencePerClick;
+                 if (Number.isFinite(clickAmount)) {
+                     essence += clickAmount;
+                     if (clickFeedbackContainer) showClickFeedback(clickAmount, 'essence');
+                 } else {
+                     console.error("Invalid essence per click value:", essencePerClick);
+                 }
+
+
+                 if (Math.random() < GEM_AWARD_CHANCE) {
+                     gems += GEMS_PER_AWARD;
+                     console.log(`Awarded ${GEMS_PER_AWARD} gem(s)! Total: ${gems}`);
+                     if (clickFeedbackContainer) showClickFeedback(GEMS_PER_AWARD, 'gem');
+                     if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('medium'); }
+                 }
+
+                 // Update liquid level
+                 visualLiquidLevel += LIQUID_INCREASE_PER_CLICK;
+                 visualLiquidLevel = Math.min(visualLiquidLevel, LIQUID_MAX_LEVEL); // Clamp to max
+                 updateLiquidLevelVisual(visualLiquidLevel);
+
+                 updateDisplay();
+
+                 // Visual feedback for click
+                 cauldronElement.style.transform = 'scale(0.95)';
+                 setTimeout(() => { if (cauldronElement) cauldronElement.style.transform = 'scale(1)'; }, 80);
+
+                 lastClickTime = currentTime;
+
+             } else {
+                 // Clicked too fast
+                 warningCount++;
+                 lastInteractionTime = currentTime; // Still update interaction time
+                 console.warn(`Clicking too fast warning ${warningCount}/${MAX_WARNINGS}`);
+                 showTemporaryNotification(`${translations.tooFastClick?.[currentLanguage] || "Clicking too fast!"} (${warningCount}/${MAX_WARNINGS})`, "warning");
+                 if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('medium'); }
+
+
+                 if (warningCount >= MAX_WARNINGS) {
+                     isBlocked = true;
+                     console.error("Autoclicker detected and blocked.");
+                     showTemporaryNotification(translations.autoclickerBlocked?.[currentLanguage] || "Autoclicker detected! Clicking blocked.", "error");
+                     if (tg?.HapticFeedback) { tg.HapticFeedback.notificationOccurred('error'); }
+                     if (cauldronElement) cauldronElement.classList.add('blocked-cauldron'); // Add visual block
+                 }
+             }
+         });
+     } else {
+         console.error("Cauldron element not found!");
+     }
 
     // --- Логика авто-клика ---
-    setInterval(() => { if (!isBlocked && essencePerSecond > 0 && Number.isFinite(essencePerSecond)) { const eA = essencePerSecond / 10; if (Number.isFinite(eA)) { essence += eA; updateDisplay(); } else { console.warn("..."); } } }, 100);
+    setInterval(() => {
+        if (!isBlocked && essencePerSecond > 0 && Number.isFinite(essencePerSecond)) {
+             const essenceToAdd = essencePerSecond / 10; // Add 1/10th every 100ms
+             if (Number.isFinite(essenceToAdd)) {
+                 essence += essenceToAdd;
+                 updateDisplay();
+             } else {
+                 console.warn("Calculated invalid essence per second portion.");
+             }
+         }
+     }, 100);
 
     // --- Интервал для уменьшения уровня жидкости ---
-    setInterval(() => { const cT = Date.now(); if (cT - lastInteractionTime > IDLE_TIMEOUT && visualLiquidLevel > LIQUID_MIN_LEVEL) { visualLiquidLevel -= LIQUID_DECAY_RATE; visualLiquidLevel = Math.max(visualLiquidLevel, LIQUID_MIN_LEVEL); } updateLiquidLevelVisual(visualLiquidLevel); }, LIQUID_UPDATE_INTERVAL);
+    setInterval(() => {
+        const currentTime = Date.now();
+        // Only decay if idle and above minimum
+        if (currentTime - lastInteractionTime > IDLE_TIMEOUT && visualLiquidLevel > LIQUID_MIN_LEVEL) {
+            visualLiquidLevel -= LIQUID_DECAY_RATE;
+            visualLiquidLevel = Math.max(visualLiquidLevel, LIQUID_MIN_LEVEL); // Clamp to min
+        }
+        updateLiquidLevelVisual(visualLiquidLevel); // Update visual regardless
+    }, LIQUID_UPDATE_INTERVAL);
+
 
     // --- Логика улучшений ---
-    function calculateCost(u) { if(!u||typeof u.baseCost!=='number'||typeof u.costMultiplier!=='number'||typeof u.currentLevel!=='number'){console.error("Invalid calcCost:",u);return Infinity;} return Math.floor(u.baseCost*Math.pow(u.costMultiplier,u.currentLevel));}
-    function renderUpgrades() { if(!upgradesListElement){console.error("Upgrades list !found!");return;} upgradesListElement.innerHTML=''; upgrades.sort((a,b)=>(a.requiredEssence||0)-(b.requiredEssence||0)); if(upgrades.length===0){upgradesListElement.innerHTML=`<li><p>No upgrades defined.</p></li>`;return;} const cEF=Math.floor(essence); upgrades.forEach(u=>{ const cost=calculateCost(u); if(!Number.isFinite(cost)){console.error("Skip render invalid cost:",u.id);return;} const req=u.requiredEssence||0; const isL=cEF<req; const canA=cEF>=cost; const li=document.createElement('li'); if(isL)li.classList.add('locked'); else if(!canA)li.classList.add('cannot-afford'); const tN=translations[u.nameKey]?.[currentLanguage]||u.nameKey; const tD=translations[u.descKey]?.[currentLanguage]||u.descKey; const bT=translations.buyButton?.[currentLanguage]||"Buy"; const rP=translations.requirementPrefix?.[currentLanguage]||"Need"; const rIP=translations.requirementInfoPrefix?.[currentLanguage]||"Requires"; let btnTxt=bT; let btnDis=false; if(isL){btnDis=true;btnTxt=`${rP} ${formatNumber(req)} 🧪`;}else if(!canA){btnDis=true;} li.innerHTML=`<div class="upgrade-info"><h3>${tN} (Lv. ${u.currentLevel})</h3><p>${tD}</p><p class="upgrade-cost">Cost: ${formatNumber(cost)} 🧪</p>${isL?`<p class="requirement-info">${rIP}: ${formatNumber(req)} 🧪</p>`:''}</div><button class="buy-upgrade-btn" data-upgrade-id="${u.id}">${btnTxt}</button>`; const btn=li.querySelector('.buy-upgrade-btn'); if(btn){btn.disabled=btnDis; if(!isL){btn.addEventListener('click',(e)=>{e.stopPropagation(); if(!btn.disabled)buyUpgrade(u.id);});}} upgradesListElement.appendChild(li);});}
-    function buyUpgrade(id) { if(isBlocked){showTemporaryNotification(translations.actionBlocked?.[currentLanguage]||"Action blocked.", "error");return;} const u=upgrades.find(up=>up.id===id); if(!u){console.error("Upgrade !found:",id);return;} const req=u.requiredEssence||0; if(Math.floor(essence)<req){showTemporaryNotification(`${translations.needMoreEssence?.[currentLanguage]||"Need more essence!"} ${formatNumber(req)} 🧪`, "error");return;} const cost=calculateCost(u); if(!Number.isFinite(cost)){showTemporaryNotification(translations.invalidCostError?.[currentLanguage]||"Error: Invalid upgrade cost!", "error");return;} if(essence>=cost){essence-=cost; u.currentLevel++; recalculateBonuses(); updateDisplay(); if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');} else {showTemporaryNotification(translations.notEnoughEssence?.[currentLanguage]||"Not enough essence!", "error"); if(tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');}}
-    function recalculateBonuses() { essencePerClick=1; essencePerSecond=0; upgrades.forEach(u=>{ if(u.currentLevel>0 && Number.isFinite(u.value) && typeof u.type==='string'){ if(u.type==='click')essencePerClick+=u.value*u.currentLevel; else if(u.type==='auto')essencePerSecond+=u.value*u.currentLevel;} else if(u.currentLevel>0){console.warn("Invalid bonus data:",u);}}); if(!Number.isFinite(essencePerClick)){console.error("Invalid E/Click");essencePerClick=1;} if(!Number.isFinite(essencePerSecond)){console.error("Invalid E/Sec");essencePerSecond=0;} }
+    function calculateCost(upgrade) {
+        if (!upgrade || typeof upgrade.baseCost !== 'number' || typeof upgrade.costMultiplier !== 'number' || typeof upgrade.currentLevel !== 'number') {
+             console.error("Invalid upgrade data for cost calculation:", upgrade);
+             return Infinity; // Return Infinity to prevent purchase
+        }
+        return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel));
+    }
+
+    function renderUpgrades() {
+        if (!upgradesListElement) {
+            console.error("Upgrades list element not found!");
+            return;
+        }
+        upgradesListElement.innerHTML = ''; // Clear previous list
+
+        // Sort upgrades, e.g., by required essence or cost
+        upgrades.sort((a, b) => (a.requiredEssence || 0) - (b.requiredEssence || 0));
+
+        if (upgrades.length === 0) {
+             upgradesListElement.innerHTML = `<li><p>No upgrades defined.</p></li>`;
+             return;
+        }
+
+        const currentEssenceFloored = Math.floor(essence); // Floor once for comparison
+
+        upgrades.forEach(upgrade => {
+            const cost = calculateCost(upgrade);
+            if (!Number.isFinite(cost)) {
+                console.error("Skipping render for upgrade with invalid cost:", upgrade.id);
+                return; // Skip rendering this upgrade
+            }
+
+            const required = upgrade.requiredEssence || 0;
+            const isLocked = currentEssenceFloored < required;
+            const canAfford = currentEssenceFloored >= cost;
+
+            const listItem = document.createElement('li');
+            if (isLocked) {
+                listItem.classList.add('locked');
+            } else if (!canAfford) {
+                listItem.classList.add('cannot-afford');
+            }
+
+            // Get translated texts
+            const translatedName = translations[upgrade.nameKey]?.[currentLanguage] || upgrade.nameKey;
+            const translatedDesc = translations[upgrade.descKey]?.[currentLanguage] || upgrade.descKey;
+            const buyButtonText = translations.buyButton?.[currentLanguage] || "Buy";
+            const requirementPrefix = translations.requirementPrefix?.[currentLanguage] || "Need";
+            const requirementInfoPrefix = translations.requirementInfoPrefix?.[currentLanguage] || "Requires";
+
+            let buttonText = buyButtonText;
+            let isButtonDisabled = false;
+
+            if (isLocked) {
+                isButtonDisabled = true;
+                 // Show requirement on the button itself for locked items
+                 buttonText = `${requirementPrefix} ${formatNumber(required)} 🧪`;
+            } else if (!canAfford) {
+                isButtonDisabled = true;
+                // Button text remains "Buy", but it's disabled
+            }
+
+            listItem.innerHTML = `
+                <div class="upgrade-info">
+                    <h3>${translatedName} (Lv. ${upgrade.currentLevel})</h3>
+                    <p>${translatedDesc}</p>
+                    <p class="upgrade-cost">Cost: ${formatNumber(cost)} 🧪</p>
+                    ${isLocked ? `<p class="requirement-info">${requirementInfoPrefix}: ${formatNumber(required)} 🧪</p>` : ''}
+                </div>
+                <button class="buy-upgrade-btn" data-upgrade-id="${upgrade.id}">${buttonText}</button>
+            `;
+
+            const buyButton = listItem.querySelector('.buy-upgrade-btn');
+            if (buyButton) {
+                 buyButton.disabled = isButtonDisabled;
+                 if (!isLocked) { // Only add click listener if not fundamentally locked by requirement
+                     buyButton.addEventListener('click', (event) => {
+                         event.stopPropagation(); // Prevent clicks bubbling up if needed
+                         if (!buyButton.disabled) { // Double check disabled status
+                             buyUpgrade(upgrade.id);
+                         }
+                     });
+                 }
+            }
+
+            upgradesListElement.appendChild(listItem);
+        });
+    }
+
+
+    function buyUpgrade(upgradeId) {
+        if (isBlocked) {
+            showTemporaryNotification(translations.actionBlocked?.[currentLanguage] || "Action blocked.", "error");
+            return;
+        }
+
+        const upgrade = upgrades.find(up => up.id === upgradeId);
+        if (!upgrade) {
+            console.error("Upgrade not found:", upgradeId);
+            return;
+        }
+
+        // Check requirement first
+         const required = upgrade.requiredEssence || 0;
+         if (Math.floor(essence) < required) {
+             showTemporaryNotification(`${translations.needMoreEssence?.[currentLanguage] || "Need more essence!"} ${formatNumber(required)} 🧪`, "error");
+             if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+             return;
+         }
+
+
+        const cost = calculateCost(upgrade);
+         if (!Number.isFinite(cost)) {
+             showTemporaryNotification(translations.invalidCostError?.[currentLanguage] || "Error: Invalid upgrade cost!", "error");
+             return; // Prevent purchase if cost calculation failed
+         }
+
+        if (essence >= cost) {
+            essence -= cost;
+            upgrade.currentLevel++;
+            recalculateBonuses();
+            updateDisplay(); // Update numbers
+            renderUpgrades(); // Re-render the upgrade list with new costs/levels
+            if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('light'); }
+        } else {
+            showTemporaryNotification(translations.notEnoughEssence?.[currentLanguage] || "Not enough essence!", "error");
+             if (tg?.HapticFeedback) { tg.HapticFeedback.notificationOccurred('warning'); }
+        }
+    }
+
+    function recalculateBonuses() {
+        essencePerClick = 1; // Start with base click value
+        essencePerSecond = 0; // Start with base auto value
+
+        upgrades.forEach(upgrade => {
+            if (upgrade.currentLevel > 0 && Number.isFinite(upgrade.value) && typeof upgrade.type === 'string') {
+                if (upgrade.type === 'click') {
+                    essencePerClick += upgrade.value * upgrade.currentLevel;
+                } else if (upgrade.type === 'auto') {
+                    essencePerSecond += upgrade.value * upgrade.currentLevel;
+                }
+            } else if (upgrade.currentLevel > 0) {
+                 // Log if an active upgrade has invalid data, but don't stop calculation
+                 console.warn("Upgrade has level > 0 but invalid bonus data:", upgrade);
+            }
+        });
+
+        // Sanity checks after calculation
+        if (!Number.isFinite(essencePerClick) || essencePerClick < 1) {
+             console.error("Recalculation resulted in invalid essencePerClick:", essencePerClick);
+             essencePerClick = 1; // Reset to minimum safe value
+        }
+        if (!Number.isFinite(essencePerSecond) || essencePerSecond < 0) {
+             console.error("Recalculation resulted in invalid essencePerSecond:", essencePerSecond);
+             essencePerSecond = 0; // Reset to minimum safe value
+        }
+
+        // No need to call updateDisplay() here, it's called after buyUpgrade or loadGame
+    }
+
 
     // --- Открытие/Закрытие панелей ---
-    if(openUpgradesBtn&&upgradesPanel){openUpgradesBtn.addEventListener('click',()=>{renderUpgrades();upgradesPanel.classList.remove('hidden');});}else{console.error("...");}
-    if(closeUpgradesBtn&&upgradesPanel){closeUpgradesBtn.addEventListener('click',()=>{upgradesPanel.classList.add('hidden');});}else{console.error("...");}
-    if(settingsBtn){settingsBtn.addEventListener('click', openSettings);} else {console.error("...");}
-    if(closeSettingsBtn){closeSettingsBtn.addEventListener('click', closeSettings);} else {console.error("...");}
-    if(settingsPanel){settingsPanel.addEventListener('click',(e)=>{if(e.target===settingsPanel)closeSettings();});}
+    if (openUpgradesBtn && upgradesPanel) {
+        openUpgradesBtn.addEventListener('click', () => {
+            renderUpgrades(); // Render/update list when opening
+            upgradesPanel.classList.remove('hidden');
+        });
+    } else { console.error("Upgrade open button or panel not found."); }
+
+    if (closeUpgradesBtn && upgradesPanel) {
+        closeUpgradesBtn.addEventListener('click', () => {
+            upgradesPanel.classList.add('hidden');
+        });
+    } else { console.error("Upgrade close button or panel not found."); }
+
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', openSettings);
+    } else { console.error("Settings button not found."); }
+
+    if (closeSettingsBtn) {
+        closeSettingsBtn.addEventListener('click', closeSettings);
+    } else { console.error("Settings close button not found."); }
+
+    // Close settings panel if clicking outside the box
+    if (settingsPanel) {
+        settingsPanel.addEventListener('click', (e) => {
+            if (e.target === settingsPanel) { // Check if the click was directly on the overlay
+                closeSettings();
+            }
+        });
+    }
 
     // --- Логика настроек ---
-    function openSettings() { if (settingsPanel) { updateActiveLangButton(); settingsPanel.classList.remove('hidden'); } }
-    function closeSettings() { if (settingsPanel) { settingsPanel.classList.add('hidden'); } }
-    function setLanguage(lang) { if (translations.greetingBase[lang]) { currentLanguage = lang; console.log(`Lang: ${currentLanguage}`); applyTranslations(); updateActiveLangButton(); saveGame(); if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) { renderUpgrades(); } } else { console.warn(`Lang "${lang}" !found.`); } }
-    function applyTranslations() { if (userGreetingElement) { let g = translations.greetingBase[currentLanguage] || "Laboratory"; if (userName) { g += ` ${userName}`; } userGreetingElement.textContent = g; } document.querySelectorAll('[data-translate]').forEach(el => { const k = el.dataset.translate; if (translations[k]?.[currentLanguage]) { if(el.tagName === 'BUTTON' || el.tagName === 'H2' || el.tagName === 'H3' || el.parentElement?.id === 'per-second-display') { el.textContent = translations[k][currentLanguage]; } else { el.textContent = translations[k][currentLanguage]; } } else { console.warn(`Trans key "${k}"/${currentLanguage} !found.`); } }); }
-    function updateActiveLangButton() { if (!languageOptionsContainer) return; languageOptionsContainer.querySelectorAll('.lang-btn').forEach(b => { b.classList.toggle('active', b.dataset.lang === currentLanguage); }); }
-    if (languageOptionsContainer) { languageOptionsContainer.addEventListener('click', (e) => { if (e.target.classList.contains('lang-btn')) { const l = e.target.dataset.lang; if (l) setLanguage(l); } }); } else { console.error("..."); }
+    function openSettings() {
+        if (settingsPanel) {
+            updateActiveLangButton(); // Ensure correct button is highlighted
+            settingsPanel.classList.remove('hidden');
+        }
+    }
+    function closeSettings() {
+        if (settingsPanel) {
+            settingsPanel.classList.add('hidden');
+        }
+    }
+    function setLanguage(lang) {
+        if (translations.greetingBase[lang]) { // Check if language is supported
+            currentLanguage = lang;
+            console.log(`Language changed to: ${currentLanguage}`);
+            applyTranslations(); // Update all text elements
+            updateActiveLangButton(); // Update button highlight
+            saveGame(); // Save the new language setting
+            // If upgrades panel is open, re-render it with new translations
+             if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) {
+                 renderUpgrades();
+             }
+        } else {
+            console.warn(`Language "${lang}" not found in translations.`);
+        }
+    }
+
+    function applyTranslations() {
+        // Update user greeting
+        if (userGreetingElement) {
+            let greeting = translations.greetingBase[currentLanguage] || "Laboratory";
+            if (userName) {
+                greeting += ` ${userName}`;
+            }
+            userGreetingElement.textContent = greeting;
+        }
+
+        // Update all elements with data-translate attribute
+        document.querySelectorAll('[data-translate]').forEach(element => {
+            const key = element.dataset.translate;
+            const translation = translations[key]?.[currentLanguage];
+            if (translation) {
+                // Simple text update for most elements
+                element.textContent = translation;
+            } else {
+                 console.warn(`Translation key "${key}" for language "${currentLanguage}" not found.`);
+                 // Optionally leave the original text or set a default
+            }
+        });
+        // Explicitly update dynamic parts if needed (e.g., button text in upgrades is handled by renderUpgrades)
+    }
+
+
+    function updateActiveLangButton() {
+        if (!languageOptionsContainer) return;
+        languageOptionsContainer.querySelectorAll('.lang-btn').forEach(button => {
+            button.classList.toggle('active', button.dataset.lang === currentLanguage);
+        });
+    }
+
+    // Add event listener for language buttons
+    if (languageOptionsContainer) {
+        languageOptionsContainer.addEventListener('click', (event) => {
+            if (event.target.classList.contains('lang-btn')) {
+                const lang = event.target.dataset.lang;
+                if (lang) {
+                    setLanguage(lang);
+                }
+            }
+        });
+    } else { console.error("Language options container not found."); }
 
     // --- Логика реферальной системы ---
-    function checkReferralAndBonus() { const sP=tg.initDataUnsafe?.start_param; const uP=new URLSearchParams(window.location.search); const cBP=uP.get('claimBonus'); console.log("Params:",window.location.search,"Start:",sP); if(sP&&!isNaN(parseInt(sP))){handleNewReferral(sP);} else if(cBP){handleBonusClaim(cBP);}}
-    function handleNewReferral(invId) { tg.CloudStorage.getItem('gameState',(err,val)=>{ if(err){console.error("CS err referral:",err);return;} let isNew=true; if(val){try{const sS=JSON.parse(val);if((sS.essence&&sS.essence>0)||(sS.upgrades&&sS.upgrades.some(u=>u.level>0))||(sS.gems&&sS.gems>0)){isNew=false;console.log("Old player.");}}catch(e){console.error("Parse err ref check",e);}}else{console.log("New player.");} if(isNew){console.log(`New! Inviter: ${invId}. Send...`);saveGame();if(tg.sendData){const dS=JSON.stringify({type:'referral_registered',inviter_id:invId});try{tg.sendData(dS);console.log("Sent ref data:",dS);showTemporaryNotification(translations.welcomeReferral?.[currentLanguage]||"Welcome! Inviter gets bonus.", "success");}catch(sendErr){console.error("Send data err:",sendErr);showTemporaryNotification(translations.referralRegErrorBot?.[currentLanguage]||"Could not register invite (bot error).", "error");}}else{console.error("tg.sendData N/A.");showTemporaryNotification(translations.referralRegErrorFunc?.[currentLanguage]||"Could not register invite (N/A).", "error");}}else{console.log("Not new, no bonus.");}}); }
-    function handleBonusClaim(refId) { console.log(`Claim bonus: ${refId}`); if(!refId||typeof refId!=='string'||refId.trim()===''){console.warn("Invalid refId.");return;} tg.CloudStorage.getItem('claimed_bonuses',(err,val)=>{ if(err){console.error("CS err get claimed:",err);showTemporaryNotification(translations.bonusCheckError?.[currentLanguage]||"Bonus check error!", "error");return;} let cB=[]; if(val){try{cB=JSON.parse(val);if(!Array.isArray(cB))cB=[];}catch(e){console.error("Parse claimed:",e);cB=[];}} if(cB.includes(refId)){console.log(`Bonus ${refId} claimed.`);showTemporaryNotification(translations.bonusAlreadyClaimed?.[currentLanguage]||"Bonus already claimed.", "warning");} else { const bA=50000; if(Number.isFinite(essence)){essence+=bA;console.log(`Claimed ${refId}! +${bA} E.`);showTemporaryNotification(`+${formatNumber(bA)} 🧪 ${translations.bonusReasonFriend?.[currentLanguage]||"for invited friend!"}`, "success");updateDisplay();cB.push(refId);tg.CloudStorage.setItem('claimed_bonuses',JSON.stringify(cB),(setErr)=>{if(setErr)console.error("Save claimed err:",setErr);else{console.log("Claimed updated.");saveGame();}}); } else { console.error("Cannot add bonus, essence invalid:",essence);showTemporaryNotification(translations.bonusAddError?.[currentLanguage]||"Bonus add error!", "error");}} try{const url=new URL(window.location);url.searchParams.delete('claimBonus');window.history.replaceState({},document.title,url.toString());}catch(e){console.warn("Could not clean URL",e);}}); }
-    if (inviteFriendBtn) { inviteFriendBtn.addEventListener('click', () => { if (tg?.initDataUnsafe?.user?.id) { const bot='AlchimLaboratory_Bot'; const app='AlchimLab'; const uid=tg.initDataUnsafe.user.id; const url=`https://t.me/${bot}/${app}?start=${uid}`; const txt=translations.shareText?.[currentLanguage]||'Join my Alchemy Lab in Telegram! 🧪⚗️ Click and create elixirs!'; tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(txt)}`); console.log('Share link:',url); } else { console.error('Cannot get user ID/API.'); showTemporaryNotification(translations.inviteLinkError?.[currentLanguage]||'Failed to create invite link.', 'error'); } }); } else { console.error("..."); }
+    function checkReferralAndBonus() {
+        const startParam = tg.initDataUnsafe?.start_param;
+        const urlParams = new URLSearchParams(window.location.search);
+        const claimBonusParam = urlParams.get('claimBonus');
+
+        console.log("Start Param:", startParam, "Claim Bonus Param:", claimBonusParam);
+
+        if (startParam && !isNaN(parseInt(startParam))) {
+            // Found a potential inviter ID in start_param
+            handleNewReferral(startParam);
+        } else if (claimBonusParam) {
+            // Found a bonus claim ID in URL parameters
+            handleBonusClaim(claimBonusParam);
+        }
+    }
+
+    function handleNewReferral(inviterId) {
+        // Check if the user is actually new (minimal progress)
+        tg.CloudStorage.getItem('gameState', (error, value) => {
+            if (error) {
+                 console.error("CloudStorage error checking for referral:", error);
+                 // Proceed without sending data, maybe notify user?
+                 return;
+             }
+
+            let isConsideredNew = true;
+            if (value) {
+                 try {
+                     const savedState = JSON.parse(value);
+                     // Define "new": less than X essence, no significant upgrades, few gems?
+                     const thresholdEssence = 100; // Example threshold
+                     const nonBaseUpgrades = savedState.upgrades?.some(u => u.level > 0 && u.id !== 'click1'); // Check if any non-basic upgrade bought
+                     if ((savedState.essence && savedState.essence > thresholdEssence) ||
+                         nonBaseUpgrades ||
+                         (savedState.gems && savedState.gems > 0))
+                     {
+                         isConsideredNew = false;
+                         console.log("Referral check: User is not considered new.");
+                     } else {
+                         console.log("Referral check: User is considered new (or existing with minimal progress).");
+                     }
+                 } catch (parseError) {
+                     console.error("Error parsing gameState during referral check", parseError);
+                     // Treat as potentially new if data is corrupt
+                 }
+             } else {
+                 console.log("Referral check: No gameState found, user is new.");
+             }
+
+            if (isConsideredNew) {
+                 console.log(`Processing referral: User is new or has minimal progress. Inviter ID: ${inviterId}. Sending data to bot...`);
+                 // Save the game state immediately *before* sending data, might include initial state
+                 saveGame();
+                 // Send data to the bot about the registration
+                 if (tg.sendData) {
+                     const dataToSend = JSON.stringify({
+                         type: 'referral_registered',
+                         inviter_id: inviterId
+                     });
+                     try {
+                         tg.sendData(dataToSend);
+                         console.log("Referral registration data sent:", dataToSend);
+                         showTemporaryNotification(translations.welcomeReferral?.[currentLanguage] || "Welcome! Your inviter gets a bonus.", "success");
+                     } catch (sendError) {
+                         console.error("Error sending referral data via tg.sendData:", sendError);
+                          showTemporaryNotification(translations.referralRegErrorBot?.[currentLanguage] || "Could not register invite (bot error).", "error");
+                     }
+                 } else {
+                     console.error("tg.sendData is not available to send referral info.");
+                     showTemporaryNotification(translations.referralRegErrorFunc?.[currentLanguage] || "Could not register invite (feature unavailable).", "error");
+                 }
+             } else {
+                 console.log("User is not new, referral registration skipped.");
+             }
+        });
+    }
+
+
+    function handleBonusClaim(referralId) {
+        console.log(`Attempting to claim bonus for referral ID: ${referralId}`);
+        if (!referralId || typeof referralId !== 'string' || referralId.trim() === '') {
+             console.warn("Invalid referral ID for bonus claim.");
+             return;
+         }
+
+        // Check if this bonus has already been claimed
+        tg.CloudStorage.getItem('claimed_bonuses', (error, value) => {
+             if (error) {
+                 console.error("CloudStorage error getting claimed bonuses:", error);
+                 showTemporaryNotification(translations.bonusCheckError?.[currentLanguage] || "Bonus check error!", "error");
+                 return;
+             }
+
+            let claimedBonuses = [];
+            if (value) {
+                 try {
+                     claimedBonuses = JSON.parse(value);
+                     if (!Array.isArray(claimedBonuses)) {
+                         console.warn("Claimed bonuses data is not an array, resetting.");
+                         claimedBonuses = [];
+                     }
+                 } catch (parseError) {
+                     console.error("Error parsing claimed_bonuses:", parseError);
+                     claimedBonuses = []; // Reset if data is corrupt
+                 }
+             }
+
+            if (claimedBonuses.includes(referralId)) {
+                 console.log(`Bonus for referral ID ${referralId} has already been claimed.`);
+                 showTemporaryNotification(translations.bonusAlreadyClaimed?.[currentLanguage] || "Bonus already claimed.", "warning");
+             } else {
+                 // Award the bonus
+                 const bonusAmount = 50000; // Define bonus amount
+                 if (Number.isFinite(essence)) {
+                     essence += bonusAmount;
+                     console.log(`Bonus claimed successfully for ${referralId}! Added ${bonusAmount} essence.`);
+                     const reasonText = translations.bonusReasonFriend?.[currentLanguage] || "for invited friend!";
+                     showTemporaryNotification(`+${formatNumber(bonusAmount)} 🧪 ${reasonText}`, "success");
+                     updateDisplay();
+
+                     // Add this ID to the list of claimed bonuses and save
+                     claimedBonuses.push(referralId);
+                     tg.CloudStorage.setItem('claimed_bonuses', JSON.stringify(claimedBonuses), (setError) => {
+                         if (setError) {
+                             console.error("CloudStorage error saving updated claimed bonuses:", setError);
+                         } else {
+                             console.log("Claimed bonuses list updated in CloudStorage.");
+                             // Save the main game state as well, since essence changed
+                             saveGame();
+                         }
+                     });
+                 } else {
+                      console.error("Cannot add bonus, current essence is not a valid number:", essence);
+                      showTemporaryNotification(translations.bonusAddError?.[currentLanguage] || "Bonus add error!", "error");
+                 }
+            }
+
+            // Clean the 'claimBonus' parameter from the URL to prevent re-claiming on refresh
+             try {
+                 const currentUrl = new URL(window.location);
+                 currentUrl.searchParams.delete('claimBonus');
+                 window.history.replaceState({}, document.title, currentUrl.toString());
+                 console.log("Cleaned claimBonus URL parameter.");
+             } catch (urlError) {
+                 console.warn("Could not clean claimBonus URL parameter:", urlError);
+             }
+        });
+    }
+
+
+    // Invite Friend Button Logic
+    if (inviteFriendBtn) {
+        inviteFriendBtn.addEventListener('click', () => {
+            if (tg?.initDataUnsafe?.user?.id) {
+                const botUsername = 'AlchimLaboratory_Bot'; // Replace with your bot's username
+                const appName = 'AlchimLab'; // The app name used in botfather for the Mini App link (optional but good practice)
+                const userId = tg.initDataUnsafe.user.id;
+                // Construct the referral link: t.me/YourBot/YourApp?start=referrer_user_id
+                 const referralLink = `https://t.me/${botUsername}/${appName}?start=${userId}`; // Use appName if you set one
+
+                // Construct the share text
+                const shareText = translations.shareText?.[currentLanguage] || 'Join my Alchemy Lab in Telegram! 🧪⚗️ Click and create elixirs!';
+
+                // Construct the Telegram share URL
+                 const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText)}`;
+
+                // Open the share link
+                tg.openTelegramLink(shareUrl);
+                console.log('Generated share link:', referralLink);
+                if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+            } else {
+                console.error('Cannot generate invite link: User ID or Telegram WebApp context unavailable.');
+                showTemporaryNotification(translations.inviteLinkError?.[currentLanguage] || 'Failed to create invite link.', 'error');
+                 if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+            }
+        });
+    } else { console.error("Invite friend button not found."); }
+
 
     // --- Сохранение/Загрузка ---
-    function saveGame() { if (!tg?.CloudStorage) { console.error("..."); return; } if (!Number.isFinite(essence)) essence = 0; if (!Number.isFinite(gems)) gems = 0; const gS = { essence: essence, gems: gems, upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel })), language: currentLanguage }; try { const gSS = JSON.stringify(gS); tg.CloudStorage.setItem('gameState', gSS, (err) => { if (err) console.error("Save err:", err); }); } catch (e) { console.error("Stringify err:", e); showTemporaryNotification(translations.saveCritError?.[currentLanguage]||"Critical save error!", "error"); } }
-    function loadGame() { isBlocked=false; warningCount=0; if(cauldronElement) cauldronElement.classList.remove('blocked-cauldron'); if (!tg?.CloudStorage) { console.error("..."); resetGameData(); applyTranslations(); updateDisplay(); updateLiquidLevelVisual(LIQUID_MIN_LEVEL); showTemporaryNotification(translations.loadErrorStartNew?.[currentLanguage]||"Failed to load progress. Starting new game.", "warning"); return; } console.log("Loading..."); tg.CloudStorage.getItem('gameState', (err, val) => { let loadedOk = false; if (err) { console.error("Load err:", err); showTemporaryNotification(translations.loadError?.[currentLanguage]||"Error loading progress!", "error"); resetGameData(); } else if (val) { console.log("Data recv:", val.length); try { const gS = JSON.parse(val); essence = Number(gS.essence) || 0; if (!Number.isFinite(essence)) essence = 0; gems = Number(gS.gems) || 0; if (!Number.isFinite(gems)) gems = 0; currentLanguage = gS.language || 'ru'; if (!translations.greetingBase[currentLanguage]) { console.warn(`Lang "${currentLanguage}" !supported, -> 'ru'.`); currentLanguage = 'ru'; } upgrades.forEach(u => { const s = gS.upgrades?.find(su => su.id === u.id); u.currentLevel = (s && Number.isFinite(Number(s.level))) ? Number(s.level) : 0; }); recalculateBonuses(); console.log("Loaded OK."); loadedOk = true; } catch (e) { console.error("Parse err:", e); showTemporaryNotification(translations.readError?.[currentLanguage]||"Error reading data!", "error"); resetGameData(); } } else { console.log("No save data."); resetGameData(); } checkReferralAndBonus(); applyTranslations(); updateDisplay(); visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel); }); }
-    function resetGameData() { isBlocked=false; warningCount=0; if(cauldronElement) cauldronElement.classList.remove('blocked-cauldron'); essence=0; gems=0; upgrades.forEach(u=>u.currentLevel=0); currentLanguage='ru'; recalculateBonuses(); visualLiquidLevel=LIQUID_MIN_LEVEL; lastInteractionTime=Date.now(); console.log("Reset OK."); }
+    function saveGame() {
+        if (!tg?.CloudStorage) {
+            console.error("CloudStorage is not available for saving.");
+            return; // Cannot save
+        }
+
+        // Ensure numeric values are valid before saving
+         if (!Number.isFinite(essence)) {
+             console.warn(`Invalid essence value (${essence}) detected during save. Resetting to 0.`);
+             essence = 0;
+         }
+         if (!Number.isFinite(gems)) {
+             console.warn(`Invalid gems value (${gems}) detected during save. Resetting to 0.`);
+             gems = 0;
+         }
+
+        const gameState = {
+            essence: essence,
+            gems: gems,
+            upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel })),
+            language: currentLanguage
+            // Add any other state variables here (e.g., last online time, boost end times)
+        };
+
+        try {
+            const gameStateString = JSON.stringify(gameState);
+            tg.CloudStorage.setItem('gameState', gameStateString, (error) => {
+                if (error) {
+                    console.error("CloudStorage setItem error:", error);
+                    // Maybe show a non-critical notification?
+                } else {
+                    // console.log("Game state saved successfully."); // Optional: uncomment for debugging
+                }
+            });
+        } catch (stringifyError) {
+             console.error("Error stringifying game state:", stringifyError);
+             // This is a critical error, maybe notify the user
+             showTemporaryNotification(translations.saveCritError?.[currentLanguage] || "Critical save error!", "error");
+        }
+    }
+
+    function loadGame() {
+        // Reset potential blocking from previous session
+         isBlocked = false;
+         warningCount = 0;
+         if (cauldronElement) cauldronElement.classList.remove('blocked-cauldron');
+
+
+        if (!tg?.CloudStorage) {
+            console.error("CloudStorage is not available for loading.");
+            resetGameData(); // Start fresh if storage unavailable
+            applyTranslations(); // Apply default translations
+            updateDisplay();
+             updateLiquidLevelVisual(LIQUID_MIN_LEVEL);
+            showTemporaryNotification(translations.loadErrorStartNew?.[currentLanguage] || "Failed to load progress. Starting new game.", "warning");
+            return; // Cannot load
+        }
+
+        console.log("Attempting to load game state...");
+        tg.CloudStorage.getItem('gameState', (error, value) => {
+            let loadedSuccessfully = false;
+            if (error) {
+                console.error("CloudStorage getItem error:", error);
+                showTemporaryNotification(translations.loadError?.[currentLanguage] || "Error loading progress!", "error");
+                resetGameData(); // Reset on load error
+            } else if (value) {
+                console.log("Received game state data from CloudStorage:", value.length, "bytes");
+                try {
+                    const savedState = JSON.parse(value);
+
+                    // Load essence, ensuring it's a valid number
+                     essence = Number(savedState.essence) || 0;
+                     if (!Number.isFinite(essence)) {
+                         console.warn("Loaded invalid essence value, resetting to 0.");
+                         essence = 0;
+                     }
+
+                    // Load gems, ensuring it's a valid number
+                     gems = Number(savedState.gems) || 0;
+                     if (!Number.isFinite(gems)) {
+                         console.warn("Loaded invalid gems value, resetting to 0.");
+                         gems = 0;
+                     }
+
+
+                    // Load language, falling back to 'ru' if invalid/missing
+                    currentLanguage = savedState.language || 'ru';
+                    if (!translations.greetingBase[currentLanguage]) { // Validate language
+                        console.warn(`Loaded unsupported language "${currentLanguage}", falling back to 'ru'.`);
+                        currentLanguage = 'ru';
+                    }
+
+                    // Load upgrade levels
+                    if (Array.isArray(savedState.upgrades)) {
+                        upgrades.forEach(upgrade => {
+                            const savedUpgrade = savedState.upgrades.find(su => su.id === upgrade.id);
+                            upgrade.currentLevel = (savedUpgrade && Number.isFinite(Number(savedUpgrade.level))) ? Number(savedUpgrade.level) : 0;
+                            if (upgrade.currentLevel < 0) upgrade.currentLevel = 0; // Sanity check
+                        });
+                    } else {
+                         // If no upgrades array in save, reset all levels
+                         upgrades.forEach(upgrade => upgrade.currentLevel = 0);
+                    }
+
+                    recalculateBonuses(); // Calculate bonuses based on loaded levels
+                    console.log("Game state loaded successfully.");
+                    loadedSuccessfully = true;
+
+                } catch (parseError) {
+                    console.error("Error parsing loaded game state:", parseError);
+                    showTemporaryNotification(translations.readError?.[currentLanguage] || "Error reading save data!", "error");
+                    resetGameData(); // Reset if data is corrupt
+                }
+            } else {
+                // No saved data found
+                console.log("No saved game state found. Starting fresh.");
+                resetGameData(); // Initialize a fresh game state
+            }
+
+            // After loading or resetting:
+            checkReferralAndBonus(); // Check for referrals/bonuses regardless of load success
+            applyTranslations(); // Apply loaded or default language
+            updateDisplay(); // Update UI with loaded/reset values
+            visualLiquidLevel = LIQUID_MIN_LEVEL; // Reset visual liquid level
+            lastInteractionTime = Date.now(); // Reset idle timer
+            updateLiquidLevelVisual(visualLiquidLevel);
+
+            // Optional: Save immediately after load to ensure CloudStorage has the sanitized/reset state
+             if (loadedSuccessfully || !value) { // Save if loaded ok or if it was a fresh start
+                 // saveGame(); // Consider if needed - might be redundant with auto-save
+             }
+        });
+    }
+
+    // Function to reset all game variables to default state
+    function resetGameData() {
+        console.log("Resetting game data to defaults.");
+        isBlocked = false;
+        warningCount = 0;
+        if (cauldronElement) cauldronElement.classList.remove('blocked-cauldron');
+
+        essence = 0;
+        gems = 0;
+        upgrades.forEach(upgrade => upgrade.currentLevel = 0);
+        currentLanguage = 'ru'; // Reset language to default
+        recalculateBonuses(); // Recalculate bonuses (will be base values)
+        visualLiquidLevel = LIQUID_MIN_LEVEL;
+        lastInteractionTime = Date.now();
+    }
+
 
     // --- Функция уведомлений ---
-    function showTemporaryNotification(message, type = "info") { const n=document.createElement('div'); n.className=`notification ${type}`; n.textContent=message; document.body.appendChild(n); setTimeout(()=>{n.style.opacity='1'; n.style.bottom='80px';},10); setTimeout(()=>{n.style.opacity='0'; n.style.bottom='70px'; setTimeout(()=>{n.remove();},500);},2500); }
+    function showTemporaryNotification(message, type = "info") {
+        const notification = document.createElement('div');
+        notification.className = `notification ${type}`; // Add type class (info, error, warning, success)
+        notification.textContent = message;
+
+        document.body.appendChild(notification);
+
+        // Trigger fade-in and slide-up
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            notification.style.bottom = '80px'; // Final position
+        }, 10); // Short delay to allow element rendering before transition starts
+
+        // Start fade-out and removal after a delay
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.bottom = '70px'; // Slightly slide down on fade out
+            // Remove the element after the fade-out transition completes
+            setTimeout(() => {
+                notification.remove();
+            }, 500); // Match transition duration in CSS for opacity
+        }, 2500); // How long the notification stays visible
+    }
+
+
+    // --- ДОБАВЛЕНО: Обработчик клика по кнопке Магазина ---
+    if (shopBtn) {
+        shopBtn.addEventListener('click', () => {
+            // Используем текст из переводов
+            const message = translations.comingSoon[currentLanguage] || "Coming Soon..."; // Fallback text
+            showTemporaryNotification(message, "info"); // Показываем уведомление типа 'info'
+             if (tg?.HapticFeedback) {
+                 tg.HapticFeedback.impactOccurred('light'); // Легкая вибрация при клике
+             }
+        });
+    } else {
+        console.error("Shop button element not found!"); // Log error if button isn't found
+    }
+
 
     // --- Первоначальная инициализация ---
-    loadGame();
+    loadGame(); // Load saved state or initialize new game
+
 
     // --- Автосохранение и обработчики событий ---
-    setInterval(saveGame, 15000);
+    const autoSaveInterval = setInterval(saveGame, 15000); // Save every 15 seconds
+
+    // Save before the user leaves the page/app
     window.addEventListener('beforeunload', saveGame);
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveGame(); });
-    if (tg?.onEvent) { tg.onEvent('viewportChanged', (e) => { if (!e.isStateStable) saveGame(); }); }
+
+    // Save when the app becomes hidden (e.g., user switches tabs/apps)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            saveGame();
+        }
+    });
+
+    // Save when the Telegram viewport changes state (e.g., resizing)
+    if (tg?.onEvent) {
+        tg.onEvent('viewportChanged', (event) => {
+            // The event might fire rapidly during resize, save only when it stabilizes
+            if (!event.isStateStable) {
+                 // Debounce or throttle this if it causes too many saves
+                 // For now, just save when it's potentially changing
+                 // saveGame(); // Might be too frequent, consider debouncing
+            } else {
+                 // Save when viewport stabilizes after changes
+                 saveGame();
+            }
+        });
+
+        // Optional: Handle main button clicks if you enable it
+        // tg.MainButton.setText("SAVE");
+        // tg.MainButton.show();
+        // tg.onEvent('mainButtonClicked', () => {
+        //     saveGame();
+        //     tg.MainButton.hide(); // Hide after click for example
+        // });
+    }
+
 
 }); // Конец DOMContentLoaded
