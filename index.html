@@ -15,30 +15,39 @@
         </div>
 
         <div class="game-area">
+            <!-- ===== ИЗМЕНЕНИЯ ЗДЕСЬ ===== -->
             <div class="essence-display">
-                <span class="essence-icon">🧪</span>
-                <span id="essence-count">0</span>
-                <div class="per-second-display">
-                    <span id="essence-per-second">0</span> Эссенции / сек
+                <!-- Основная валюта - Эссенция -->
+                <div class="main-currency">
+                    <span class="essence-icon">🧪</span> <!-- Иконка изменена на 🧪 -->
+                    <span id="essence-count">0</span>
+                </div>
+                <!-- Отображение дохода в секунду -->
+                <div id="per-second-display" class="per-second-display"> <!-- ID добавлен сюда -->
+                     / сек <span id="essence-per-second">0</span> <!-- Поменял местами для лучшего чтения -->
+                </div>
+
+                <!-- НОВАЯ ВТОРИЧНАЯ ВАЛЮТА - Кристаллы -->
+                <div class="secondary-currency">
+                    <span class="gem-icon">💎</span> <!-- Иконка кристалла -->
+                    <span id="gem-count">0</span>   <!-- ID для обновления JS -->
                 </div>
             </div>
+            <!-- ===== КОНЕЦ ИЗМЕНЕНИЙ ===== -->
 
-            <!-- Обновленная колба -->
+            <!-- Колба -->
             <div id="cauldron" class="cauldron">
-                <!-- Удален старый div для жидкости (теперь используется ::before) -->
-                <!-- Добавлен новый пустой контейнер для пузырьков (будут добавлены через JS) -->
                 <div class="bubbles-container" id="bubbles-container">
                     <!-- Сюда JS будет добавлять <div class="bubble"></div> -->
                 </div>
             </div>
-            <!-- Контейнер для фидбека (+1) перемещен СНАРУЖИ колбы -->
+            <!-- Контейнер для фидбека (+1) -->
             <div id="click-feedback-container"></div>
 
         </div>
 
         <div class="controls">
             <button id="open-upgrades-btn" class="control-button">Улучшения</button>
-             <!-- Позже можно добавить кнопку для друзей -->
             <button id="invite-friend-btn" class="control-button telegram-feature">Друзья</button>
         </div>
 

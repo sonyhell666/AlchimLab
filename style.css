@@ -10,7 +10,6 @@
     --button-hover-bg: #71689a;
     --disabled-color: #6c6c6c;
     --flask-color: #00abc1; /* Цвет для clip-path колбы */
-    /* --- ИЗМЕНЕНО ЗНАЧЕНИЕ УРОВНЯ ЖИДКОСТИ --- */
     --liquid-level: 45%; /* Уровень жидкости (можно менять через JS) */
 }
 
@@ -53,10 +52,19 @@ html, body {
     position: relative;
 }
 
+/* Стили отображения валют */
 .essence-display {
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: 15px;
     font-size: 2.5em;
+    font-weight: bold;
+}
+
+.main-currency {
+    margin-bottom: 3px;
+    display: block;
+    color: var(--text-color);
+    font-size: 1em;
     font-weight: bold;
 }
 
@@ -67,126 +75,132 @@ html, body {
 }
 
 .per-second-display {
+    display: block;
     font-size: 0.4em;
     font-weight: normal;
     opacity: 0.7;
-    margin-top: 5px;
+    margin-top: 0;
+    margin-bottom: 8px;
+    color: var(--text-color);
 }
 
-/* --- Новая Колба с использованием clip-path --- */
+.secondary-currency {
+    display: block;
+    font-size: 1.1em;
+    font-weight: normal;
+    opacity: 0.9;
+    margin-top: 10px;
+    color: var(--accent-color);
+}
+
+.gem-icon {
+     display: inline-block;
+     margin-right: 5px;
+     font-size: 0.9em;
+}
+
+#gem-count {
+     font-weight: bold;
+     color: #f1c40f;
+}
+
+/* --- ИЗМЕНЕНИЯ В КОЛБЕ --- */
 .cauldron {
-    width: 140px; /* Можно подстроить для лучшего вида */
-    height: 200px; /* Можно подстроить для лучшего вида */
+    width: 180px; /* <<< Увеличена ширина */
+    height: 200px; /* <<< Высота оставлена прежней для эффекта расширения */
     background-color: var(--flask-color);
     position: relative;
     cursor: pointer;
     user-select: none;
     transition: transform 0.1s ease-out;
     margin: 20px auto;
+    /* <<< Скорректирован clip-path для ширины и объема >>> */
     clip-path: polygon(
-        /* Верхний ободок */
-        45% 5%, 38% 5%, 35% 10%,
-        /* Левое горлышко */
-        38% 15%, 35% 30%,
-        /* Левый переход к телу */
-        25% 50%,
-        /* Левое тело (округление) */
-        20% 65%, 22% 75%, 25% 80%, 32% 90%, 40% 94%,
-        /* Дно (округление) */
-        50% 95%,
-        /* Правое тело (симметрично) */
-        60% 94%, 68% 90%, 75% 80%, 78% 75%, 80% 65%,
-        /* Правый переход к горлышку */
-        75% 50%,
-        /* Правое горлышко */
-        65% 30%, 62% 15%,
-        /* Правый ободок */
-        65% 10%, 62% 5%, 55% 5%
+        /* Top rim */ 46% 5%, 36% 5%, 34% 10%,
+        /* Left neck */ 36% 15%, 33% 30%,
+        /* Left shoulder */ 22% 50%,
+        /* Left body (wider) */ 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%,
+        /* Bottom */ 50% 97%,
+        /* Right body (wider) */ 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%,
+        /* Right shoulder */ 78% 50%,
+        /* Right neck */ 67% 30%, 64% 15%,
+        /* Right rim */ 66% 10%, 64% 5%, 54% 5%
     );
     overflow: hidden;
     border: none;
     border-radius: 0;
     box-shadow: none;
 }
+/* --- КОНЕЦ ИЗМЕНЕНИЙ В КОЛБЕ --- */
 
+/* Стиль для заблокированной колбы */
+.cauldron.blocked-cauldron {
+    cursor: not-allowed !important;
+    filter: grayscale(70%);
+}
 
-/* Слой жидкости (псевдо-элемент ::before) */
+/* Слой жидкости */
 .cauldron::before {
     content: '';
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: var(--liquid-level, 45%); /* Высота контролируется переменной */
+    height: var(--liquid-level, 45%);
     background-color: var(--liquid-color);
-    z-index: 1; /* Находится под пузырьками */
-    transition: height 0.5s ease; /* Плавное изменение уровня */
+    z-index: 1;
+    transition: height 0.5s ease;
 }
 
-/* Контейнер для пузырьков (должен быть добавлен в HTML внутрь .cauldron) */
+/* Контейнер для пузырьков */
 .bubbles-container {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: var(--liquid-level, 45%); /* Высота совпадает с уровнем жидкости */
-    z-index: 2; /* Находится над слоем жидкости */
-    overflow: hidden; /* Обрезает пузырьки, выходящие за верхнюю границу контейнера */
-    pointer-events: none; /* Не перехватывает клики, предназначенные для колбы */
-    transition: height 0.5s ease; /* Синхронизируем изменение высоты с жидкостью */
+    height: var(--liquid-level, 45%);
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+    transition: height 0.5s ease;
 }
 
-/* Стиль для отдельных пузырьков (создаются через JavaScript) */
+/* Стиль для пузырьков */
 .bubble {
     position: absolute;
-    bottom: -20px; /* Начинают движение из-под видимой области */
+    bottom: -20px;
     width: 8px;
     height: 8px;
     background-color: var(--bubble-color);
     border-radius: 50%;
     opacity: 0.6;
     animation: rise 3s infinite ease-in;
-    /* Разные размеры, скорость и задержку можно задавать через JS */
 }
 
-/* Анимация подъема пузырьков */
+/* Анимация пузырьков */
 @keyframes rise {
-    0% {
-        transform: translateY(0) scale(1);
-        opacity: 0.6;
-    }
-    50% {
-        transform: scale(1.1); /* Небольшая пульсация */
-    }
-    90% {
-         opacity: 0.4;
-    }
-    100% {
-        /* Поднимаются выше видимой области контейнера пузырьков */
-        transform: translateY(-220px) scale(0.8); /* translateY должен быть больше высоты колбы */
-        opacity: 0;
-    }
+    0% { transform: translateY(0) scale(1); opacity: 0.6; }
+    50% { transform: scale(1.1); }
+    90% { opacity: 0.4; }
+    100% { transform: translateY(-220px) scale(0.8); opacity: 0; }
 }
 
 /* Анимация клика */
-.cauldron:active {
+.cauldron:active:not(.blocked-cauldron) {
     transform: scale(0.95);
 }
 
 /* --- Фидбек при клике --- */
-/* Контейнер для чисел, вылетающих при клике */
 #click-feedback-container {
     position: absolute;
-    top: calc(50% - 150px); /* Подбирайте значение, чтобы было над колбой */
+    top: calc(50% - 150px);
     left: 50%;
     transform: translateX(-50%);
-    width: 150px;
-    height: 100px;
+    width: 170px;
+    height: 120px;
     pointer-events: none;
     z-index: 10;
-    /* border: 1px dashed red; */
 }
-
 
 .click-feedback {
     position: absolute;
@@ -198,13 +212,13 @@ html, body {
     color: var(--accent-color);
     opacity: 1;
     animation: fadeUp 1s ease-out forwards;
+    white-space: nowrap;
 }
 
 @keyframes fadeUp {
     0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); }
 }
-
 
 /* --- Кнопки управления --- */
 .controls {
@@ -296,7 +310,7 @@ html, body {
     list-style: none;
     overflow-y: auto;
     flex-grow: 1;
-    padding-right: 5px; /* Небольшой отступ для скроллбара */
+    padding-right: 5px;
 }
 
 #upgrades-list li {
@@ -330,7 +344,7 @@ html, body {
     font-size: 0.9em;
     font-weight: bold;
     color: var(--accent-color);
-    margin-top: 4px; /* Добавлен небольшой отступ сверху */
+    margin-top: 4px;
 }
 
 .buy-upgrade-btn {
@@ -343,15 +357,15 @@ html, body {
     cursor: pointer;
     font-weight: bold;
     transition: background-color 0.2s ease, opacity 0.2s ease, color 0.2s ease;
-    min-width: 90px; /* Минимальная ширина для выравнивания */
+    min-width: 90px;
     text-align: center;
 }
 
 .buy-upgrade-btn:hover:not(:disabled) {
-    background-color: #88e8d8; /* Чуть светлее при наведении */
+    background-color: #88e8d8;
 }
 
-.buy-upgrade-btn:disabled {
+.buy-upgrade-btn:disabled:not(.locked .buy-upgrade-btn) {
     background-color: var(--disabled-color);
     color: #a0a0a0;
     cursor: not-allowed;
@@ -360,45 +374,43 @@ html, body {
 
 .hidden { display: none; }
 
-/* Адаптация панели улучшений для больших экранов */
 @media (min-width: 600px) {
     .upgrades-panel {
         left: 50%;
         transform: translate(-50%, 100%);
         width: 80%;
-        max-width: 500px; /* Ограничение ширины */
+        max-width: 500px;
     }
      .upgrades-panel:not(.hidden) {
-        transform: translate(-50%, 0); /* Появление снизу по центру */
+        transform: translate(-50%, 0);
     }
 }
 
 /* Стили для заблокированных улучшений */
 #upgrades-list li.locked {
     opacity: 0.5;
-    background-color: rgba(0, 0, 0, 0.15); /* Немного темнее фон */
+    background-color: rgba(0, 0, 0, 0.15);
 }
 
 #upgrades-list li.locked .upgrade-info h3,
-#upgrades-list li.locked .upgrade-info p:not(.requirement-info) { /* Не затрагиваем текст требований */
-    color: #b0b0b0; /* Более тусклый текст */
+#upgrades-list li.locked .upgrade-info p:not(.requirement-info) {
+    color: #b0b0b0;
     opacity: 0.8;
 }
 
 #upgrades-list li.locked .buy-upgrade-btn {
-    background-color: #555; /* Темно-серая кнопка */
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Тонкая рамка */
-    color: var(--accent-color); /* Цвет текста требований */
-    font-size: 0.8em; /* Меньший шрифт */
-    opacity: 1; /* Непрозрачная */
-    cursor: default; /* Стандартный курсор */
+    background-color: #555;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--accent-color);
+    font-size: 0.8em;
+    opacity: 1;
+    cursor: default;
 }
 
-/* Стиль для текста с требованиями */
 .requirement-info {
     font-size: 0.75em;
-    color: var(--accent-color); /* Яркий акцентный цвет */
-    opacity: 1; /* Полная непрозрачность */
+    color: var(--accent-color);
+    opacity: 1;
     margin-top: 5px;
     font-weight: bold;
 }
@@ -406,13 +418,13 @@ html, body {
 /* Уведомления */
 .notification {
     position: fixed;
-    bottom: 70px; /* Над панелью улучшений или кнопками */
+    bottom: 70px;
     left: 50%;
     transform: translateX(-50%);
     padding: 10px 20px;
     border-radius: 8px;
     color: white;
-    z-index: 1001; /* Выше всего, кроме, возможно, модальных окон */
+    z-index: 1001;
     opacity: 0;
     transition: opacity 0.5s ease, bottom 0.3s ease;
     text-align: center;
@@ -424,3 +436,8 @@ html, body {
 .notification.error { background-color: #e74c3c; }
 .notification.warning { background-color: #f39c12; }
 .notification.success { background-color: #2ecc71; }
+
+/* Класс для <li>, если улучшение нельзя купить */
+#upgrades-list li.cannot-afford {
+    /* Стили применяются к кнопке через :disabled */
+}
