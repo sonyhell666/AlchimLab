@@ -121,7 +121,43 @@ document.addEventListener('DOMContentLoaded', () => {
         return (num / 1000000000).toFixed(1).replace('.0', '') + 'B';
     }
 
-    // Логика клика по котлу
+    // --- Обновленная Функция для отображения "+N" при клике ---
+    function showClickFeedback(amount, type = 'essence') {
+        if (isBlocked || !clickFeedbackContainer) return;
+
+        const feedback = document.createElement('div');
+        feedback.className = 'click-feedback'; // Общий класс
+
+        const formattedAmount = formatNumber(amount); // Форматируем число
+
+        // Формируем содержимое в зависимости от типа
+        if (type === 'gem') {
+            // Генерируем SVG иконку кристалла
+            const gemSvgIcon = `
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="var(--gem-color)" style="vertical-align: middle; margin-left: 4px;">
+                    <path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/>
+                </svg>`;
+            feedback.innerHTML = `+${formattedAmount}${gemSvgIcon}`; // Текст + иконка
+            feedback.style.fontSize = '1.3em';
+            feedback.style.fontWeight = 'bold';
+            feedback.style.color = '#f0f0f0'; // Белый цвет для числа рядом с розовой иконкой
+
+        } else { // type === 'essence'
+            feedback.textContent = `+${formattedAmount} 🧪`; // Добавили иконку 🧪
+            feedback.style.color = 'var(--accent-color)'; // Стандартный цвет для эссенции
+        }
+
+        // Позиционирование
+        const offsetX = Math.random() * 60 - 30;
+        const offsetY = (type === 'gem') ? (Math.random() * 20 + 15) : (Math.random() * 20 - 10);
+        feedback.style.left = `calc(50% + ${offsetX}px)`;
+        feedback.style.top = `calc(50% + ${offsetY}px)`;
+
+        clickFeedbackContainer.appendChild(feedback);
+        setTimeout(() => { feedback.remove(); }, 950); // Время жизни элемента
+    }
+
+    // --- Обновленная Логика клика по котлу ---
     if (cauldronElement) {
         cauldronElement.addEventListener('click', () => {
             if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
@@ -132,16 +168,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 warningCount = 0;
 
                 // 1. Добавляем эссенцию за клик
-                if (Number.isFinite(essencePerClick)) {
-                    essence += essencePerClick;
-                    if (clickFeedbackContainer) showClickFeedback(`+${formatNumber(essencePerClick)}`, 'essence');
+                let clickAmount = essencePerClick;
+                if (Number.isFinite(clickAmount)) {
+                    essence += clickAmount;
+                    if (clickFeedbackContainer) showClickFeedback(clickAmount, 'essence'); // Передаем ЧИСЛО и тип
                 } else { console.error("Invalid essencePerClick value:", essencePerClick); }
 
                 // 2. Проверяем шанс получения кристалла
                 if (Math.random() < GEM_AWARD_CHANCE) {
                     gems += GEMS_PER_AWARD;
                     console.log(`Получен кристалл! Всего: ${gems}`);
-                    if (clickFeedbackContainer) showClickFeedback(`+${formatNumber(GEMS_PER_AWARD)} 💎`, 'gem');
+                    if (clickFeedbackContainer) showClickFeedback(GEMS_PER_AWARD, 'gem'); // Передаем ЧИСЛО и тип
                     if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
                 }
 
@@ -169,35 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     } else { console.error("Cauldron element not found!"); }
-
-    // Функция для отображения "+N" при клике
-    function showClickFeedback(text, type = 'essence') {
-        if (isBlocked || !clickFeedbackContainer) return;
-
-        const feedback = document.createElement('div');
-        feedback.className = 'click-feedback';
-        feedback.textContent = text;
-
-        if (type === 'gem') {
-            feedback.style.color = '#f1c40f'; // Золотой для кристаллов
-            feedback.style.fontSize = '1.3em';
-            feedback.style.fontWeight = 'bold';
-            // Можно добавить SVG иконку кристалла и сюда, если нужно
-            // feedback.innerHTML = `<svg...></svg> +${formatNumber(GEMS_PER_AWARD)}`;
-        } else {
-            feedback.style.color = 'var(--accent-color)'; // Стандартный цвет для эссенции
-        }
-
-        const offsetX = Math.random() * 60 - 30;
-        const offsetY = (type === 'gem') ? (Math.random() * 20 + 15) : (Math.random() * 20 - 10);
-
-        feedback.style.left = `calc(50% + ${offsetX}px)`;
-        feedback.style.top = `calc(50% + ${offsetY}px)`;
-
-        clickFeedbackContainer.appendChild(feedback);
-        setTimeout(() => { feedback.remove(); }, 950);
-    }
-
 
     // Логика авто-клика (пассивный доход)
     setInterval(() => {
@@ -259,9 +267,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const buyButton = li.querySelector('.buy-upgrade-btn');
             if (buyButton) {
                 buyButton.disabled = buttonDisabled;
-                if (!isLocked) { // Добавляем обработчик только если не заблокировано требованием
+                if (!isLocked) {
                      buyButton.addEventListener('click', (e) => {
-                         e.stopPropagation(); // Предотвращаем всплытие, если нужно
+                         e.stopPropagation();
                          if (!buyButton.disabled) { buyUpgrade(upgrade.id); }
                      });
                 }
@@ -283,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
             essence -= cost;
             upgrade.currentLevel++;
             recalculateBonuses();
-            updateDisplay(); // Обновит все (включая состояние кнопок, т.к. вызовет renderUpgrades)
+            updateDisplay();
             if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         } else {
             showTemporaryNotification("Недостаточно эссенции!", "error");
@@ -388,7 +396,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const gameState = JSON.parse(value);
                     essence = Number(gameState.essence) || 0; if (!Number.isFinite(essence)) essence = 0;
-                    gems = Number(gameState.gems) || 0; if (!Number.isFinite(gems)) gems = 0; // Загружаем кристаллы
+                    gems = Number(gameState.gems) || 0; // Загружаем кристаллы
                     upgrades.forEach(upgrade => {
                         const saved = gameState.upgrades?.find(su => su.id === upgrade.id);
                         upgrade.currentLevel = (saved && Number.isFinite(Number(saved.level))) ? Number(saved.level) : 0;
