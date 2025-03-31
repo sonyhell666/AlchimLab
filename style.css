@@ -57,23 +57,47 @@ body {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
+    /* Добавим безопасные зоны для мобильных устройств */
+    padding-top: constant(safe-area-inset-top);
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: constant(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 .app-container {
     display: flex;
     flex-direction: column;
     height: 100%; /* Растягиваем на весь viewport */
-    padding: 15px;
+    /* Уберем padding из app-container, чтобы safe-area работала на body */
+    /* padding: 15px; */
     position: relative; /* Для абсолютного позиционирования дочерних элементов */
 }
 
-/* --- Верхние элементы --- */
-.header {
+/* --- Верхняя область (Заголовок, Настройки, Кристаллы) --- */
+.top-bar { /* Новый контейнер для верхних элементов */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px; /* Внутренние отступы */
+    position: relative; /* Чтобы z-index работал */
+    flex-shrink: 0;
+    z-index: 50; /* Выше игровой зоны */
+    min-height: 50px; /* Минимальная высота */
+}
+
+.header { /* Теперь заголовок - часть top-bar */
+    /* Удаляем абсолютное позиционирование */
     text-align: center;
-    margin-bottom: 15px;
-    font-size: 1.1rem; /* Используем rem для масштабируемости */
+    /* margin-bottom: 15px; Убрано, управляется top-bar */
+    font-size: 1.1rem;
     opacity: 0.8;
-    flex-shrink: 0; /* Заголовок не должен сжиматься */
+    /* Добавляем flex-grow, чтобы он занимал центр */
+    flex-grow: 1;
+    margin: 0 10px; /* Отступы от боковых иконок */
+    line-height: 1.2;
+    overflow: hidden; /* Обрезаем текст, если не влезает */
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 /* Кнопки-иконки (Настройки, Магазин) */
@@ -84,15 +108,17 @@ body {
     cursor: pointer;
     opacity: 0.8;
     transition: opacity 0.2s ease, background-color 0.2s ease;
-    display: inline-flex; /* Используем flex для центрирования иконки */
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    color: var(--text-color); /* Для SVG иконок */
-    position: absolute; /* Абсолютное позиционирование */
-    z-index: 51; /* Выше других элементов */
+    color: var(--text-color);
+    /* Убираем position: absolute для кнопок в .top-bar */
+    /* position: absolute; */
+    z-index: 51;
+    flex-shrink: 0; /* Не сжимаем кнопки */
 }
 .control-button-icon:hover {
     opacity: 1;
@@ -101,37 +127,31 @@ body {
 .control-button-icon img,
 .control-button-icon svg {
     display: block;
-    width: 24px; /* Фиксированный размер иконки */
+    width: 24px;
     height: 24px;
-    object-fit: contain; /* Сохраняем пропорции для img */
+    object-fit: contain;
 }
 
 .settings-button {
-    top: 15px;
-    left: 15px;
-    background: none; /* Убираем фон для иконки настроек */
-    border-radius: 50%; /* Круглая кнопка */
+    /* Убираем позиционирование */
+    /* top: 15px; */
+    /* left: 15px; */
+    background: none;
+    border-radius: 50%;
+    margin-right: 10px; /* Отступ справа от заголовка */
+    order: -1; /* Ставим кнопку настроек слева */
 }
-.settings-button img { /* Стили для иконки-шестеренки */
-    filter: invert(90%) sepia(10%) saturate(100%) hue-rotate(180deg) brightness(100%) contrast(90%); /* Делаем иконку светлой */
-}
-
-.shop-button {
-    /* Позиционирование изменено для лучшего вида на разных экранах */
-    top: calc(50% + 30px); /* Смещаем ниже центра */
-    right: 15px;
-    transform: translateY(-50%);
-    width: 44px; /* Немного меньше */
-    height: 44px;
-    border-radius: 12px;
+.settings-button img {
+    filter: invert(90%) sepia(10%) saturate(100%) hue-rotate(180deg) brightness(100%) contrast(90%);
 }
 
-/* Отображение кристаллов */
 .secondary-currency {
-    position: absolute;
-    top: 15px;
-    right: 15px;
+    /* Убираем позиционирование */
+    /* position: absolute; */
+    /* top: 15px; */
+    /* right: 15px; */
     z-index: 50;
+    margin-left: 10px; /* Отступ слева от заголовка */
 }
 .gem-display {
     display: flex;
@@ -139,246 +159,146 @@ body {
     background-color: rgba(0, 0, 0, 0.2);
     padding: 5px 10px;
     border-radius: 8px;
-    font-size: 1.1rem; /* Используем rem */
+    font-size: 1.1rem;
     font-weight: bold;
 }
-.gem-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 8px;
-    line-height: 1; /* Убираем лишнее пространство */
-}
-.gem-icon svg {
-    width: 1.1em; /* Относительно font-size родителя */
-    height: 1.1em;
-    fill: var(--gem-color);
-    vertical-align: middle; /* Выравниваем по вертикали */
-}
-#gem-count {
-    font-weight: bold;
-    color: var(--text-color);
+.gem-icon { display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; line-height: 1; }
+.gem-icon svg { width: 1.1em; height: 1.1em; fill: var(--gem-color); vertical-align: middle; }
+#gem-count { font-weight: bold; color: var(--text-color); }
+
+/* Кнопка Магазина - позиционируем абсолютно относительно app-container */
+.shop-button {
+    position: absolute; /* Возвращаем абсолютное позиционирование */
+    top: calc(50% + 30px); /* Примерное положение, можно подстроить */
+    right: 15px;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    z-index: 50; /* Ниже кнопок в top-bar, но выше game-area */
 }
 
 
 /* --- Игровая зона --- */
 .game-area {
-    flex-grow: 1; /* Занимает все доступное пространство */
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* Центрируем колбу и счетчики */
-    position: relative; /* Для позиционирования фидбека */
-    min-height: 250px; /* Минимальная высота, чтобы колба не прилипала к кнопкам */
-    margin-bottom: 10px; /* Отступ от нижних кнопок */
+    justify-content: center; /* Центрируем содержимое */
+    position: relative;
+    padding: 10px 15px; /* Отступы внутри игровой зоны */
+    min-height: 250px;
+    /* Убран margin-bottom, т.к. .controls позиционируются */
 }
 
 /* Отображение эссенции и дохода */
 .essence-display {
     text-align: center;
-    margin-bottom: 15px;
-    flex-shrink: 0; /* Не сжимаем дисплей */
+    margin-bottom: 5px; /* Уменьшаем отступ */
+    flex-shrink: 0;
+    position: relative; /* Чтобы z-index работал */
+    z-index: 1; /* Выше колбы, если вдруг наедет */
 }
 .main-currency {
-    font-size: 2.5rem; /* Крупный шрифт для основного счетчика */
+    font-size: 2.5rem;
     font-weight: bold;
     color: var(--text-color);
-    margin-bottom: 3px;
-    display: block; /* Чтобы иконка и число были вместе */
-    line-height: 1.1; /* Слегка уменьшаем межстрочный интервал */
+    margin-bottom: 0; /* Уменьшаем отступ */
+    display: block;
+    line-height: 1.1;
 }
-.essence-icon {
-    display: inline-block;
-    margin-right: 5px;
-    font-size: 0.9em; /* Иконка чуть меньше текста */
-    vertical-align: baseline; /* Выравниваем по базовой линии */
-}
+.essence-icon { display: inline-block; margin-right: 5px; font-size: 0.9em; vertical-align: baseline; }
 .per-second-display {
-    display: block; /* По умолчанию показываем, JS скроет если доход 0 */
-    font-size: 0.9rem; /* Размер текста дохода в секунду */
+    display: block;
+    font-size: 0.9rem;
     font-weight: normal;
     opacity: 0.7;
     margin-top: 0;
-    color: var(--text-secondary-color); /* Используем вторичный цвет текста */
+    color: var(--text-secondary-color);
 }
 
 /* --- Колба --- */
 .cauldron {
-    width: 180px; /* Фиксированная ширина */
-    height: 200px; /* Фиксированная высота */
+    width: clamp(160px, 40vw, 200px); /* Адаптивная ширина */
+    height: clamp(180px, 45vw, 220px); /* Адаптивная высота */
     position: relative;
     cursor: pointer;
     user-select: none;
-    margin: 20px auto; /* Авто-отступы для центрирования */
-    flex-shrink: 0; /* Колба не должна сжиматься */
-    /* Форма колбы через clip-path */
+    margin: 15px auto; /* Уменьшаем вертикальные отступы */
+    flex-shrink: 0;
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
-    border-radius: 0; /* Убираем стандартное скругление */
-    will-change: transform, filter; /* Оптимизация для анимаций */
-    /* Базовый фон и рамка (переопределяются скинами) */
+    border-radius: 0;
+    will-change: transform, filter;
     background-color: var(--flask-color-default);
     border: 3px solid var(--cauldron-border-color-default);
-    /* Плавные переходы для анимаций и смены скинов */
     transition: transform 0.1s ease-out, filter 0.1s ease-out, background-color 0.3s ease, background-image 0.3s ease, border-color 0.3s ease;
-    overflow: hidden; /* Скрываем все, что выходит за clip-path */
+    overflow: hidden;
+    z-index: 0; /* Ниже счетчика */
 }
-.cauldron.blocked-cauldron {
-    cursor: not-allowed !important;
-    filter: grayscale(80%) brightness(0.8); /* Эффект блокировки */
-}
-.cauldron:active:not(.blocked-cauldron) {
-    transform: scale(0.95); /* Эффект нажатия */
-    filter: brightness(1.1); /* Небольшое осветление при клике */
-}
-
-/* Жидкость внутри колбы */
-.cauldron::before {
-    content: '';
-    position: absolute;
-    bottom: 3px; /* Учитываем толщину рамки снизу */
-    left: 3px;   /* Учитываем толщину рамки слева */
-    right: 3px;  /* Учитываем толщину рамки справа */
-    width: calc(100% - 6px); /* Ширина внутри рамки */
-    height: var(--liquid-level, 10%); /* Высота управляется JS */
-    background-color: var(--liquid-color); /* Цвет управляется JS */
-    z-index: 1; /* Под пузырьками */
-    transition: background-color 1s ease, height 0.1s linear; /* Плавная смена цвета и уровня */
-    border-radius: 5px 5px 0 0; /* Небольшое скругление верха жидкости */
-    overflow: hidden; /* На всякий случай */
-}
-
-/* Контейнер для пузырьков */
-.bubbles-container {
-    position: absolute;
-    bottom: 3px; /* Позиционируем относительно рамки */
-    left: 3px;
-    width: calc(100% - 6px); /* Ширина как у жидкости */
-    height: var(--liquid-level, 10%); /* Высота как у жидкости */
-    z-index: 2; /* Над жидкостью */
-    pointer-events: none; /* Не мешает кликам по колбе */
-    overflow: hidden; /* Скрываем пузырьки выше уровня жидкости */
-    transition: height 0.1s linear; /* Синхронизируем высоту с жидкостью */
-    border-radius: 5px 5px 0 0; /* Скругляем так же, как жидкость */
-}
-
-/* Отдельный пузырек */
-.bubble {
-    position: absolute;
-    bottom: -20px; /* Начинают движение из-под видимой области */
-    width: 8px;
-    height: 8px;
-    background-color: var(--bubble-color);
-    border-radius: 50%;
-    opacity: 0; /* Начинают невидимыми */
-    animation: rise 3s infinite ease-in; /* Анимация подъема */
-    will-change: transform, opacity; /* Оптимизация */
-}
-@keyframes rise {
-    0% { transform: translateY(0) scale(1); opacity: 0; } /* Начало */
-    10% { opacity: 1; } /* Появление */
-    50% { transform: translateY(-100px) scale(1.1); } /* Подъем и легкое увеличение */
-    90% { opacity: 0.6; } /* Начало исчезновения */
-    100% { transform: translateY(-220px) scale(0.8); opacity: 0; } /* Конец наверху */
-}
+/* Остальные стили колбы, жидкости, пузырьков без изменений */
+.cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(80%) brightness(0.8); }
+.cauldron:active:not(.blocked-cauldron) { transform: scale(0.95); filter: brightness(1.1); }
+.cauldron::before { content: ''; position: absolute; bottom: 3px; left: 3px; right: 3px; width: calc(100% - 6px); height: var(--liquid-level, 10%); background-color: var(--liquid-color); z-index: 1; transition: background-color 1s ease, height 0.1s linear; border-radius: 5px 5px 0 0; overflow: hidden; }
+.bubbles-container { position: absolute; bottom: 3px; left: 3px; width: calc(100% - 6px); height: var(--liquid-level, 10%); z-index: 2; pointer-events: none; overflow: hidden; transition: height 0.1s linear; border-radius: 5px 5px 0 0; }
+.bubble { position: absolute; bottom: -20px; width: 8px; height: 8px; background-color: var(--bubble-color); border-radius: 50%; opacity: 0; animation: rise 3s infinite ease-in; will-change: transform, opacity; }
+@keyframes rise { 0% { transform: translateY(0) scale(1); opacity: 0; } 10% { opacity: 1; } 50% { transform: translateY(-100px) scale(1.1); } 90% { opacity: 0.6; } 100% { transform: translateY(-220px) scale(0.8); opacity: 0; } }
 
 
 /* --- Фидбек клика (+N) --- */
 #click-feedback-container {
     position: absolute;
     /* Позиционируем относительно центра колбы */
-    top: calc(50% - 100px); /* Смещаем вверх от центра колбы */
+    top: 50%; /* Центрируем по вертикали game-area */
     left: 50%;
-    transform: translateX(-50%);
-    width: 180px; /* Ширина примерно как у колбы */
-    height: 150px; /* Высота для разлета цифр */
-    pointer-events: none; /* Не мешает кликам */
-    z-index: 10; /* Над колбой */
-    overflow: visible; /* Чтобы цифры могли вылетать */
+    transform: translate(-50%, -60%); /* Смещаем чуть выше центра колбы */
+    width: 180px;
+    height: 150px;
+    pointer-events: none;
+    z-index: 10; /* Выше колбы */
+    overflow: visible;
 }
-.click-feedback {
-    position: absolute;
-    top: 50%; /* Стартуют из центра контейнера */
-    left: 50%;
-    font-size: 1.2rem; /* Размер текста фидбека */
-    font-weight: bold;
-    opacity: 1;
-    animation: fadeUp 1s ease-out forwards;
-    white-space: nowrap; /* Предотвращаем перенос строки */
-    display: inline-flex; /* Для выравнивания иконки */
-    align-items: center;
-    will-change: transform, opacity;
-}
-@keyframes fadeUp {
-    0% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1); /* Начало */
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -150%) scale(0.8); /* Движение вверх, уменьшение и исчезновение */
-    }
-}
+.click-feedback { position: absolute; top: 50%; left: 50%; font-size: 1.2rem; font-weight: bold; opacity: 1; animation: fadeUp 1s ease-out forwards; white-space: nowrap; display: inline-flex; align-items: center; will-change: transform, opacity; }
+@keyframes fadeUp { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); } }
 
 /* --- Нижние кнопки управления --- */
 .controls {
-    margin-top: 20px;
+    /* margin-top: 20px; Убираем, т.к. отступы управляются иначе */
     display: flex;
-    justify-content: space-around; /* Равномерное распределение кнопок */
-    padding: 10px 0;
-    background-color: rgba(0, 0, 0, 0.1);
+    justify-content: space-around;
+    padding: 10px 15px; /* Добавляем горизонтальные отступы */
+    /* background-color: rgba(0, 0, 0, 0.1); Можно оставить или убрать */
     border-radius: 8px;
-    flex-shrink: 0; /* Не сжимаем панель кнопок */
+    flex-shrink: 0;
+    position: relative; /* Чтобы z-index работал */
+    z-index: 1; /* На одном уровне с игровой зоной */
+    margin-bottom: 10px; /* Отступ снизу */
 }
-.control-button {
-    padding: 10px 20px;
-    font-size: 1rem;
-    background-color: var(--button-bg);
-    color: var(--text-color);
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s ease, transform 0.1s ease-out;
-    flex-grow: 1; /* Кнопки растягиваются */
-    margin: 0 5px; /* Небольшой отступ между кнопками */
-    max-width: 45%; /* Ограничиваем ширину кнопок */
-    text-align: center;
-}
-.control-button:hover:not(:disabled) {
-    background-color: var(--button-hover-bg);
-}
-.control-button:active:not(:disabled) {
-    transform: scale(0.98); /* Эффект нажатия */
-}
-.control-button:disabled {
-    background-color: var(--disabled-color);
-    color: var(--disabled-text-color);
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-.telegram-feature { /* Стиль для кнопки "Пригласить" */
-    background-color: var(--telegram-button-bg);
-}
-.telegram-feature:hover:not(:disabled) {
-    background-color: var(--telegram-button-hover-bg);
-}
+.control-button { padding: 10px 15px; font-size: 1rem; background-color: var(--button-bg); color: var(--text-color); border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease-out; flex-grow: 1; margin: 0 5px; max-width: 48%; /* Немного увеличим макс ширину */ text-align: center; line-height: 1.4; /* Улучшаем читаемость в 2 строки */ }
+.control-button:hover:not(:disabled) { background-color: var(--button-hover-bg); }
+.control-button:active:not(:disabled) { transform: scale(0.98); }
+.control-button:disabled { background-color: var(--disabled-color); color: var(--disabled-text-color); cursor: not-allowed; opacity: 0.7; }
+.telegram-feature { background-color: var(--telegram-button-bg); }
+.telegram-feature:hover:not(:disabled) { background-color: var(--telegram-button-hover-bg); }
 
-/* --- Стили общие для панелей (Улучшения, Настройки, Магазин) --- */
-.panel-base { /* Общий класс для панелей */
+/* --- Стили общие для панелей --- */
+.panel-base {
     background-color: var(--secondary-bg);
-    border-radius: 15px;
     box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
     padding: 15px;
-    display: flex;
+    display: flex; /* Используем flex */
     flex-direction: column;
     color: var(--text-color);
-    position: fixed; /* Фиксированное позиционирование */
-    z-index: 100; /* Выше основного контента */
-    overflow: hidden; /* Скрываем выходящее содержимое */
-    transition: transform 0.3s ease-out, opacity 0.3s ease-out; /* Анимация появления/скрытия */
+    position: fixed;
+    z-index: 100;
+    overflow: hidden;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s step-end; /* Добавляем visibility */
 }
 .panel-base.hidden {
     opacity: 0;
-    pointer-events: none; /* Игнорируем события мыши/тача */
+    visibility: hidden; /* Скрываем полностью */
+    pointer-events: none;
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s step-start; /* Обратная анимация visibility */
 }
 
 /* Панели улучшений и магазина (снизу) */
@@ -386,370 +306,141 @@ body {
     bottom: 0;
     left: 0;
     width: 100%;
+    border-top-left-radius: 15px; /* Скругление сверху */
+    border-top-right-radius: 15px;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     transform: translateY(100%); /* Скрыты под экраном */
 }
 .upgrades-panel { height: 60%; }
-.shop-panel { height: 70%; max-height: 500px; } /* Ограничиваем высоту магазина */
+.shop-panel { height: 70%; max-height: 550px; } /* Увеличим макс высоту */
 
 .upgrades-panel:not(.hidden),
 .shop-panel:not(.hidden) {
     transform: translateY(0); /* Показываем */
     opacity: 1;
+    visibility: visible; /* Делаем видимыми */
     pointer-events: auto;
 }
 
 /* Панель настроек (по центру) */
 .settings-panel {
+    /* Используем display: flex для центрирования .settings-box */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6); /* Полупрозрачный фон */
-    display: flex; /* Используем flex для центрирования */
+    background-color: rgba(0, 0, 0, 0.6);
+    /* display: flex; Уже есть в .panel-base */
     align-items: center;
     justify-content: center;
-    z-index: 200; /* Выше других панелей */
-    transform: scale(1); /* Не двигаем, управляем через opacity */
+    z-index: 200;
+    /* Убираем transform, управляем через opacity/visibility */
+    /* transform: scale(1); */
+    border-radius: 0; /* Убираем скругление у фона */
+    padding: 0; /* Убираем паддинг у фона */
 }
 .settings-panel.hidden {
-     /* opacity: 0; уже есть в panel-base.hidden */
-     /* pointer-events: none; уже есть в panel-base.hidden */
+     /* opacity: 0; visibility: hidden; pointer-events: none; унаследовано */
 }
-.settings-box { /* Контейнер для содержимого настроек */
+.settings-box {
     background-color: var(--secondary-bg);
     border-radius: 15px;
-    padding: 15px;
+    padding: 15px; /* Паддинг внутри бокса */
     width: 90%;
     max-width: 400px;
-    max-height: 80vh; /* Ограничиваем высоту */
+    max-height: 80vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    /* Добавляем анимацию появления для бокса */
+    transform: scale(0.95);
+    opacity: 0;
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
 }
-
-/* Заголовок панелей */
-.panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    flex-shrink: 0; /* Заголовок не сжимается */
-}
-.panel-header h2 {
-    margin: 0;
-    font-size: 1.4rem;
-}
-.close-button {
-    background: none;
-    border: none;
-    color: var(--text-color);
-    font-size: 2rem;
-    line-height: 1;
-    cursor: pointer;
-    opacity: 0.7;
-    transition: opacity 0.2s ease;
-    padding: 0 5px; /* Увеличиваем область клика */
-}
-.close-button:hover {
+.settings-panel:not(.hidden) .settings-box {
+    transform: scale(1);
     opacity: 1;
 }
 
-/* --- Панель улучшений --- */
-#upgrades-list {
-    list-style: none;
-    overflow-y: auto; /* Включаем скролл */
-    flex-grow: 1; /* Занимает доступное место */
-    padding-right: 5px; /* Отступ для скроллбара */
-    margin: 0;
-}
-/* Стилизация скроллбара (для Webkit браузеров) */
+
+/* Заголовок панелей */
+.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0; }
+.panel-header h2 { margin: 0; font-size: 1.4rem; }
+.close-button { background: none; border: none; color: var(--text-color); font-size: 2rem; line-height: 1; cursor: pointer; opacity: 0.7; transition: opacity 0.2s ease; padding: 0 5px; }
+.close-button:hover { opacity: 1; }
+
+/* --- Панель улучшений (скролл и элементы) --- */
+#upgrades-list { list-style: none; overflow-y: auto; flex-grow: 1; padding-right: 5px; margin: 0; }
 #upgrades-list::-webkit-scrollbar { width: 6px; }
 #upgrades-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 3px; }
 #upgrades-list::-webkit-scrollbar-thumb { background-color: var(--button-bg); border-radius: 3px; }
 #upgrades-list::-webkit-scrollbar-thumb:hover { background-color: var(--button-hover-bg); }
-
-#upgrades-list li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 5px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    transition: opacity 0.3s ease, background-color 0.3s ease;
-}
+#upgrades-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: opacity 0.3s ease, background-color 0.3s ease; }
 #upgrades-list li:last-child { border-bottom: none; }
-
 .upgrade-info { flex-grow: 1; margin-right: 10px; }
 .upgrade-info h3 { font-size: 1rem; margin-bottom: 3px; }
 .upgrade-info p { font-size: 0.8rem; opacity: 0.7; margin: 0; color: var(--text-secondary-color); }
 .upgrade-cost { font-size: 0.9rem; font-weight: bold; color: var(--accent-color); margin-top: 4px; }
 .requirement-info { font-size: 0.75rem; color: var(--warning-color); opacity: 1; margin-top: 5px; font-weight: bold; }
+.buy-upgrade-btn { padding: 8px 15px; font-size: 0.9rem; background-color: var(--accent-color); color: var(--primary-bg); border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.2s ease, opacity 0.2s ease, color 0.2s ease; min-width: 90px; text-align: center; flex-shrink: 0; }
+.buy-upgrade-btn:hover:not(:disabled) { background-color: #88e8d8; }
+#upgrades-list li.locked { opacity: 0.6; background-color: rgba(0, 0, 0, 0.1); }
+#upgrades-list li.locked .upgrade-info h3, #upgrades-list li.locked .upgrade-info p:not(.requirement-info) { color: var(--text-secondary-color); opacity: 0.8; }
+#upgrades-list li.locked .buy-upgrade-btn { background-color: var(--disabled-color); border: none; color: var(--warning-color); font-size: 0.8rem; opacity: 1; cursor: default; }
+#upgrades-list li.cannot-afford .buy-upgrade-btn { background-color: var(--disabled-color); color: var(--disabled-text-color); cursor: not-allowed; opacity: 0.7; }
 
-.buy-upgrade-btn {
-    padding: 8px 15px;
-    font-size: 0.9rem;
-    background-color: var(--accent-color);
-    color: var(--primary-bg); /* Темный текст на светлой кнопке */
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.2s ease, opacity 0.2s ease, color 0.2s ease;
-    min-width: 90px; /* Минимальная ширина */
-    text-align: center;
-    flex-shrink: 0; /* Кнопка не сжимается */
-}
-.buy-upgrade-btn:hover:not(:disabled) { background-color: #88e8d8; /* Светлее при наведении */ }
-
-/* Стили для неактивных состояний улучшений */
-#upgrades-list li.locked { /* Заблокировано по требованию */
-    opacity: 0.6;
-    background-color: rgba(0, 0, 0, 0.1);
-}
-#upgrades-list li.locked .upgrade-info h3,
-#upgrades-list li.locked .upgrade-info p:not(.requirement-info) {
-    color: var(--text-secondary-color);
-    opacity: 0.8;
-}
-#upgrades-list li.locked .buy-upgrade-btn { /* Кнопка заблокированного улучшения */
-    background-color: var(--disabled-color);
-    border: none;
-    color: var(--warning-color); /* Показываем цвет требования */
-    font-size: 0.8rem;
-    opacity: 1; /* Полная непрозрачность, т.к. сама li уже затемнена */
-    cursor: default;
-}
-#upgrades-list li.cannot-afford .buy-upgrade-btn { /* Не хватает средств */
-     background-color: var(--disabled-color);
-     color: var(--disabled-text-color);
-     cursor: not-allowed;
-     opacity: 0.7;
-}
-
-/* --- Панель настроек --- */
-.settings-content {
-    padding: 15px 0 0 0; /* Отступ только сверху */
-    overflow-y: auto; /* Скролл, если настроек много */
-    flex-grow: 1;
-}
-.settings-content h3 {
-    margin-bottom: 10px;
-    font-size: 1.1rem;
-    opacity: 0.9;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Разделитель */
-    padding-bottom: 5px;
-}
-.language-options {
-    display: flex;
-    gap: 10px; /* Пространство между кнопками */
-    flex-wrap: wrap; /* Перенос кнопок, если не влезают */
-}
-.lang-btn {
-    padding: 8px 16px;
-    font-size: 0.9rem;
-    background-color: var(--button-bg);
-    color: var(--text-color);
-    border: 2px solid transparent; /* Резервируем место для рамки */
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.2s ease, border-color 0.2s ease;
-}
+/* --- Панель настроек (содержимое) --- */
+.settings-content { padding: 15px 0 0 0; overflow-y: auto; flex-grow: 1; }
+.settings-content h3 { margin-bottom: 10px; font-size: 1.1rem; opacity: 0.9; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 5px; }
+.language-options { display: flex; gap: 10px; flex-wrap: wrap; }
+.lang-btn { padding: 8px 16px; font-size: 0.9rem; background-color: var(--button-bg); color: var(--text-color); border: 2px solid transparent; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease; }
 .lang-btn:hover { background-color: var(--button-hover-bg); }
-.lang-btn.active { /* Стиль активной кнопки языка */
-    background-color: var(--accent-color);
-    color: var(--primary-bg);
-    border-color: var(--text-color); /* Белая рамка */
-    font-weight: bold;
-}
+.lang-btn.active { background-color: var(--accent-color); color: var(--primary-bg); border-color: var(--text-color); font-weight: bold; }
 
-/* --- Панель магазина --- */
-.shop-currency-display {
-    text-align: right;
-    margin-bottom: 15px;
-    font-size: 1.1rem;
-    opacity: 0.9;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end; /* Выравниваем по правому краю */
-    flex-shrink: 0; /* Не сжимаем */
-}
-.shop-currency-display .gem-icon { margin: 0 5px; } /* Отступы у иконки */
+/* --- Панель магазина (содержимое) --- */
+.shop-currency-display { text-align: right; margin-bottom: 15px; font-size: 1.1rem; opacity: 0.9; display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0; }
+.shop-currency-display .gem-icon { margin: 0 5px; }
 #shop-gem-count { font-weight: bold; }
-
-#skins-list {
-    list-style: none;
-    overflow-y: auto; /* Включаем скролл */
-    flex-grow: 1; /* Занимает доступное место */
-    padding: 5px 5px 0 0; /* Отступ справа для скроллбара */
-    margin: 0;
-    display: grid; /* Используем грид для карточек */
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); /* Адаптивные колонки */
-    gap: 15px; /* Пространство между карточками */
-}
-/* Стилизация скроллбара (для Webkit браузеров) */
+#skins-list { list-style: none; overflow-y: auto; flex-grow: 1; padding: 5px 5px 0 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; }
 #skins-list::-webkit-scrollbar { width: 6px; }
 #skins-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 3px; }
 #skins-list::-webkit-scrollbar-thumb { background-color: var(--button-bg); border-radius: 3px; }
 #skins-list::-webkit-scrollbar-thumb:hover { background-color: var(--button-hover-bg); }
-
-#skins-list li { /* Карточка скина */
-    background-color: rgba(0, 0, 0, 0.15);
-    border-radius: 10px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column; /* Элементы в столбик */
-    align-items: center; /* Центрируем по горизонтали */
-    text-align: center;
-    border: 2px solid transparent; /* Резервируем место под рамку активного скина */
-    transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-#skins-list li.active-skin { /* Стиль активного скина */
-    border-color: var(--accent-color);
-    box-shadow: 0 0 8px var(--accent-color);
-}
-
-.skin-preview { /* Превью скина */
-    width: 80px;
-    height: 90px;
-    margin-bottom: 10px;
-    border-radius: 5px; /* Небольшое скругление */
-    background-size: cover; /* Масштабируем фон */
-    background-position: center;
-    position: relative;
-    clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%); /* Та же форма, что у колбы */
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Тонкая рамка */
-    flex-shrink: 0; /* Не сжимаем превью */
-}
+#skins-list li { background-color: rgba(0, 0, 0, 0.15); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; align-items: center; text-align: center; border: 2px solid transparent; transition: border-color 0.2s ease, background-color 0.2s ease; }
+#skins-list li.active-skin { border-color: var(--accent-color); box-shadow: 0 0 8px var(--accent-color); }
+.skin-preview { width: 80px; height: 90px; margin-bottom: 10px; border-radius: 5px; background-size: cover; background-position: center; position: relative; clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%); border: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0; }
 .skin-info { width: 100%; margin-top: 5px; flex-grow: 1; display: flex; flex-direction: column; }
-.skin-info h3 { /* Название скина */
-    font-size: 0.9rem;
-    margin-bottom: 5px;
-    word-break: break-word; /* Перенос длинных слов */
-    min-height: 2.4em; /* Резервируем место под 2 строки */
-    display: flex;
-    align-items: center; /* Вертикальное выравнивание */
-    justify-content: center;
-    line-height: 1.2; /* Межстрочный интервал */
-    flex-grow: 1; /* Занимает доступное место по высоте */
-}
-.skin-cost { /* Цена скина */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.95rem;
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: var(--gem-color);
-    min-height: 1.2em; /* Резервируем место */
-    flex-shrink: 0;
-}
+.skin-info h3 { font-size: 0.9rem; margin-bottom: 5px; word-break: break-word; min-height: 2.4em; display: flex; align-items: center; justify-content: center; line-height: 1.2; flex-grow: 1; }
+.skin-cost { display: flex; align-items: center; justify-content: center; font-size: 0.95rem; margin-bottom: 8px; font-weight: bold; color: var(--gem-color); min-height: 1.2em; flex-shrink: 0; }
 .skin-cost .gem-icon { margin-right: 4px; line-height: 1; }
 .skin-cost .gem-icon svg { width: 0.9em; height: 0.9em; fill: var(--gem-color); vertical-align: middle; }
-
-.skin-action-btn { /* Кнопка действия со скином */
-    padding: 6px 12px;
-    font-size: 0.85rem;
-    background-color: var(--button-bg);
-    color: var(--text-color);
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s ease, opacity 0.2s ease;
-    width: 100%; /* На всю ширину карточки */
-    margin-top: auto; /* Прижимаем кнопку к низу карточки */
-    flex-shrink: 0;
-}
+.skin-action-btn { padding: 6px 12px; font-size: 0.85rem; background-color: var(--button-bg); color: var(--text-color); border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.2s ease, opacity 0.2s ease; width: 100%; margin-top: auto; flex-shrink: 0; }
 .skin-action-btn:hover:not(:disabled) { background-color: var(--button-hover-bg); }
-
 .skin-action-btn.buy-btn { background-color: var(--accent-color); color: var(--primary-bg); font-weight: bold; }
 .skin-action-btn.buy-btn:hover:not(:disabled) { background-color: #88e8d8; }
 .skin-action-btn.buy-btn:disabled { background-color: var(--disabled-color); color: var(--disabled-text-color); opacity: 0.7; cursor: not-allowed; }
-
-.skin-action-btn.select-btn { background-color: var(--telegram-button-bg); } /* Используем синий для выбора */
+.skin-action-btn.select-btn { background-color: var(--telegram-button-bg); }
 .skin-action-btn.select-btn:hover:not(:disabled) { background-color: var(--telegram-button-hover-bg); }
+.skin-action-btn.selected-btn { background-color: var(--primary-bg); border: 1px solid var(--accent-color); color: var(--accent-color); opacity: 0.8; cursor: default; }
 
-.skin-action-btn.selected-btn { /* Стиль кнопки "Выбрано" */
-    background-color: var(--primary-bg);
-    border: 1px solid var(--accent-color);
-    color: var(--accent-color);
-    opacity: 0.8;
-    cursor: default;
-}
+/* --- Стили для скинов колбы и их превью (без изменений) --- */
+.cauldron.skin-default, .skin-preview.skin-default { background-color: var(--flask-color-default); border-color: var(--cauldron-border-color-default); }
+.cauldron.skin-gold, .skin-preview.skin-gold { background-color: var(--flask-color-gold); background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080); border-color: var(--cauldron-border-color-gold); }
+.cauldron.skin-crystal, .skin-preview.skin-crystal { background-color: var(--flask-color-crystal); background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%); border-color: var(--cauldron-border-color-crystal); }
+.cauldron.skin-obsidian, .skin-preview.skin-obsidian { background-color: var(--flask-color-obsidian); background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d); border-color: var(--cauldron-border-color-obsidian); }
 
-
-/* --- Стили для скинов колбы и их превью --- */
-.cauldron.skin-default,
-.skin-preview.skin-default {
-    background-color: var(--flask-color-default);
-    border-color: var(--cauldron-border-color-default);
-}
-.cauldron.skin-gold,
-.skin-preview.skin-gold {
-    background-color: var(--flask-color-gold);
-    background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080);
-    border-color: var(--cauldron-border-color-gold);
-}
-.cauldron.skin-crystal,
-.skin-preview.skin-crystal {
-    background-color: var(--flask-color-crystal);
-    background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
-    border-color: var(--cauldron-border-color-crystal);
-}
-.cauldron.skin-obsidian,
-.skin-preview.skin-obsidian {
-    background-color: var(--flask-color-obsidian);
-    background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d);
-    border-color: var(--cauldron-border-color-obsidian);
-}
-
-
-/* --- Уведомления --- */
-.notification {
-    position: fixed; /* Фиксируем относительно viewport */
-    bottom: 20px; /* Отступ снизу */
-    left: 50%;
-    transform: translate(-50%, 10px); /* Начальное положение под экраном */
-    padding: 10px 20px;
-    border-radius: 8px;
-    color: white; /* Белый текст для всех типов */
-    z-index: 1001; /* Выше всего остального */
-    opacity: 0;
-    transition: opacity 0.5s ease, transform 0.3s ease; /* Анимация появления/исчезновения */
-    text-align: center;
-    max-width: 90%; /* Ограничиваем ширину */
-    font-size: 0.9rem;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    pointer-events: none; /* Не мешает кликам */
-    will-change: transform, opacity;
-}
+/* --- Уведомления (без изменений) --- */
+.notification { position: fixed; bottom: 20px; left: 50%; transform: translate(-50%, 10px); padding: 10px 20px; border-radius: 8px; color: white; z-index: 1001; opacity: 0; transition: opacity 0.5s ease, transform 0.3s ease; text-align: center; max-width: 90%; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; will-change: transform, opacity; }
 .notification.info { background-color: var(--info-color); }
 .notification.error { background-color: var(--error-color); }
 .notification.warning { background-color: var(--warning-color); }
 .notification.success { background-color: var(--success-color); }
 
-/* --- Адаптация для больших экранов --- */
+/* --- Адаптация для больших экранов (без изменений) --- */
 @media (min-width: 600px) {
-    /* Центрируем панели на больших экранах */
-    .upgrades-panel, .shop-panel {
-        left: 50%;
-        width: 80%;
-        max-width: 500px;
-        border-radius: 15px; /* Скругляем все углы */
-        /* Трансформация при показе/скрытии */
-        transform: translate(-50%, 100%);
-    }
-    .upgrades-panel:not(.hidden),
-    .shop-panel:not(.hidden) {
-        transform: translate(-50%, 0);
-    }
-    .shop-panel { max-width: 600px; } /* Магазин может быть шире */
-
-    /* Увеличиваем количество колонок в магазине */
-    #skins-list {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    }
+    .upgrades-panel, .shop-panel { left: 50%; width: 80%; max-width: 500px; border-radius: 15px; transform: translate(-50%, 100%); }
+    .upgrades-panel:not(.hidden), .shop-panel:not(.hidden) { transform: translate(-50%, 0); }
+    .shop-panel { max-width: 600px; }
+    #skins-list { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
 }
-```
