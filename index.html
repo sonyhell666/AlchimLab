@@ -87,6 +87,20 @@
                          <button class="lang-btn" data-lang="en">English</button>
                          <!-- Добавить другие языки по необходимости -->
                      </div>
+
+                     <!-- === НАЧАЛО: ВОССТАНОВЛЕН БЛОК НАСТРОЕК ЗВУКА === -->
+                     <h3 data-translate="soundTitle">Звук</h3>
+                     <div class="setting-item sound-toggle-container">
+                         <label for="sound-toggle-checkbox" data-translate="soundEnableLabel">Включить звук:</label>
+                         <input type="checkbox" id="sound-toggle-checkbox" class="settings-checkbox">
+                     </div>
+                     <div class="setting-item sound-volume-container">
+                         <label for="volume-slider" data-translate="volumeLabel">Громкость:</label>
+                         <input type="range" id="volume-slider" min="0" max="100" step="1" class="settings-slider">
+                         <span id="volume-value-display" class="volume-percentage">50%</span>
+                     </div>
+                    <!-- === КОНЕЦ: ВОССТАНОВЛЕН БЛОК НАСТРОЕК ЗВУКА === -->
+
                      <!-- Сюда можно добавить другие настройки -->
                  </div>
              </div>
