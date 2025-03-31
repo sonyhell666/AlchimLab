@@ -10,7 +10,8 @@
     --button-hover-bg: #71689a;
     --disabled-color: #6c6c6c;
     --flask-color: #00abc1; /* Цвет для clip-path колбы */
-    --liquid-level: 50%; /* Уровень жидкости (можно менять через JS) */
+    /* --- ИЗМЕНЕНО ЗНАЧЕНИЕ УРОВНЯ ЖИДКОСТИ --- */
+    --liquid-level: 45%; /* Уровень жидкости (можно менять через JS) */
 }
 
 * {
@@ -82,7 +83,6 @@ html, body {
     user-select: none;
     transition: transform 0.1s ease-out;
     margin: 20px auto;
-    /* --- ВОТ ЭТОТ БЛОК БЫЛ ИЗМЕНЕН --- */
     clip-path: polygon(
         /* Верхний ободок */
         45% 5%, 38% 5%, 35% 10%,
@@ -103,7 +103,6 @@ html, body {
         /* Правый ободок */
         65% 10%, 62% 5%, 55% 5%
     );
-    /* --- КОНЕЦ ИЗМЕНЕННОГО БЛОКА --- */
     overflow: hidden;
     border: none;
     border-radius: 0;
@@ -118,7 +117,7 @@ html, body {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: var(--liquid-level, 50%); /* Высота контролируется переменной */
+    height: var(--liquid-level, 45%); /* Высота контролируется переменной */
     background-color: var(--liquid-color);
     z-index: 1; /* Находится под пузырьками */
     transition: height 0.5s ease; /* Плавное изменение уровня */
@@ -130,7 +129,7 @@ html, body {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: var(--liquid-level, 50%); /* Высота совпадает с уровнем жидкости */
+    height: var(--liquid-level, 45%); /* Высота совпадает с уровнем жидкости */
     z-index: 2; /* Находится над слоем жидкости */
     overflow: hidden; /* Обрезает пузырьки, выходящие за верхнюю границу контейнера */
     pointer-events: none; /* Не перехватывает клики, предназначенные для колбы */
