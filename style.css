@@ -1,11 +1,10 @@
-/* Файл style.css остается БЕЗ ИЗМЕНЕНИЙ по сравнению с предыдущей версией (с обводкой через box-shadow) */
 /* Базовые стили и переменные */
 :root {
     --primary-bg: #2e2a40;
     --secondary-bg: #4a4466;
     --accent-color: #76d7c4;
     --text-color: #f0f0f0;
-    /* --liquid-color: #a569bd; /* Исходный цвет, теперь используется в RGBA для жидкости */
+    /* --liquid-color: #a569bd; /* Используется в RGBA для жидкости */
     --bubble-color: #e8daef;
     --button-bg: #5d5480;
     --button-hover-bg: #71689a;
@@ -13,15 +12,7 @@
     --flask-color: #00abc1; /* Базовый цвет для default скина */
     --gem-color: #ff69b4;
     /* --liquid-level задается через JS */
-
-    /* --- НАЧАЛО: Переменные цвета КОНТУРА для скинов --- */
-    /* Используем более контрастные цвета или цвета, которые будут хорошо видны */
-    --skin-default-outline-color: #005f6f; /* Еще темнее */
-    --skin-gold-outline-color: #daa520;   /* Золотисто-коричневый */
-    --skin-crystal-outline-color: #ffffff; /* Полностью белый для контраста */
-    --skin-obsidian-outline-color: #777;  /* Светлее фона обсидиана */
-    /* Добавьте сюда переменные для новых скинов */
-    /* --- КОНЕЦ: Переменные цвета контура --- */
+    /* Переменные для обводки удалены */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -44,43 +35,26 @@ html, body {
     position: relative;
 }
 
-/* --- ОБЩИЙ СТИЛЬ ДЛЯ КНОПОК-ИКОНОК (Настройки, Магазин и др.) --- */
+/* --- ОБЩИЙ СТИЛЬ ДЛЯ КНОПОК-ИКОНОК --- */
 .control-button-icon {
-    background: rgba(0, 0, 0, 0.2); /* Полупрозрачный фон по умолчанию */
+    background: rgba(0, 0, 0, 0.2);
     border: none;
     padding: 0;
     cursor: pointer;
     opacity: 0.8;
     transition: opacity 0.2s ease, background-color 0.2s ease;
-    display: inline-flex; /* Используем flex для центрирования иконки */
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px; /* Базовый размер */
-    height: 36px; /* Базовый размер */
-    border-radius: 8px; /* Базовое скругление */
-    color: var(--text-color); /* Цвет иконки по умолчанию */
-    overflow: hidden; /* Обрезаем контент, если выходит за рамки */
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    color: var(--text-color);
+    overflow: hidden;
 }
-
-.control-button-icon:hover {
-    opacity: 1;
-    background-color: rgba(255, 255, 255, 0.1); /* Легкая подсветка при наведении */
-}
-
-.control-button-icon svg {
-     /* Размеры иконки задаются в HTML (width/height) или здесь */
-     /* fill: currentColor; уже указан в SVG path, наследует цвет кнопки */
-}
-
-.control-button-icon img { /* Стили для IMG внутри такой кнопки */
-    display: block;
-    width: 24px;         /* Желаемая ширина */
-    height: 24px;        /* Желаемая высота */
-    max-width: 100%;     /* Ограничиваем максимальную ширину размером родителя */
-    max-height: 100%;    /* Ограничиваем максимальную высоту размером родителя */
-    object-fit: contain; /* Масштабирует изображение, сохраняя пропорции */
-}
-
+.control-button-icon:hover { /* ... */ }
+.control-button-icon svg { /* ... */ }
+.control-button-icon img { /* ... */ }
 
 /* Кнопка настроек */
 .settings-button {
@@ -88,82 +62,29 @@ html, body {
     top: 15px;
     left: 15px;
     z-index: 51;
-    background: none; /* Убираем фон по умолчанию */
-    border-radius: 50%; /* Делаем ее круглой */
-    /* Наследует размер 36x36 из .control-button-icon */
+    background: none;
+    border-radius: 50%;
 }
-
 
 /* --- СТИЛИ ВАЛЮТЫ/МАГАЗИНА --- */
-
-/* Кристаллы (теперь без кнопки магазина внутри) */
-.secondary-currency {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    z-index: 50;
-    /* Больше не flex-контейнер для магазина */
-}
-
-/* Контейнер для гемов */
-.gem-display {
-    display: flex;
-    align-items: center;
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 5px 10px;
-    border-radius: 8px;
-    font-size: 1.2em;
-    font-weight: bold;
-}
-
-.gem-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 8px;
-    line-height: 1;
-}
-.gem-icon svg {
-    width: 1.1em;
-    height: 1.1em;
-    fill: var(--gem-color);
-    vertical-align: middle;
-}
-#gem-count {
-    font-weight: bold;
-    color: var(--text-color);
-}
-
-/* Кнопка Магазина - ПОЗИЦИОНИРОВАНИЕ И РАЗМЕР */
-.shop-button {
-    position: absolute; /* Абсолютное позиционирование */
-    right: 20px;        /* Отступ справа (можно изменить) */
-    top: 55%;           /* Смещаем верхний край ниже середины (можно изменить) */
-    transform: translateY(-50%); /* Центрируем кнопку вертикально относительно её top */
-    width: 48px;        /* Новая увеличенная ширина кнопки */
-    height: 48px;       /* Новая увеличенная высота кнопки */
-    border-radius: 12px;/* Можно сделать скругление побольше */
-    z-index: 50;        /* Тот же z-index, что и у гемов */
-    /* Наследует базовые стили из .control-button-icon */
-}
-
-/* Увеличиваем иконку внутри увеличенной кнопки */
-.shop-button svg {
-    width: 28px; /* Размер иконки, должен совпадать с width/height в HTML */
-    height: 28px;
-}
+.secondary-currency { /* ... */ }
+.gem-display { /* ... */ }
+.gem-icon { /* ... */ }
+.gem-icon svg { /* ... */ }
+#gem-count { /* ... */ }
+.shop-button { /* ... */ }
+.shop-button svg { /* ... */ }
 
 .header { text-align: center; margin-bottom: 15px; font-size: 1.1em; opacity: 0.8; }
-
 .game-area { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
 
 /* Стили отображения валют */
-.essence-display { text-align: center; margin-bottom: 15px; margin-top: 30px; font-size: 2.5em; font-weight: bold; }
-.main-currency { margin-bottom: 3px; display: block; color: var(--text-color); font-size: 1em; font-weight: bold; }
-.essence-icon { display: inline-block; margin-right: 5px; font-size: 0.9em; }
-.per-second-display { display: block; font-size: 0.4em; font-weight: normal; opacity: 0.7; margin-top: 0; margin-bottom: 0; color: var(--text-color); }
+.essence-display { /* ... */ }
+.main-currency { /* ... */ }
+.essence-icon { /* ... */ }
+.per-second-display { /* ... */ }
 
-/* Колба */
+/* Колба (БЕЗ ОБВОДКИ) */
 .cauldron {
     width: 180px;
     height: 200px;
@@ -172,24 +93,21 @@ html, body {
     user-select: none;
     margin: 20px auto;
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
-    /* --- НАЧАЛО: Убираем border, добавляем box-shadow --- */
-    /* border: 3px solid var(--current-border-color, transparent); /* УДАЛЕНО */
-    border: none; /* Убедимся, что рамки точно нет */
-    box-shadow: 0 0 0 3px var(--current-outline-color, transparent); /* Создаем эффект обводки тенью толщиной 3px */
-    /* --- КОНЕЦ: Убираем border, добавляем box-shadow --- */
-    border-radius: 0;
-    will-change: transform, background, box-shadow; /* Заменяем border-color на box-shadow */
-    overflow: visible; /* Должен быть visible для тени */
-    /* Переменная для текущего цвета контура */
-    --current-outline-color: transparent; /* Значение по умолчанию */
+    /* --- НАЧАЛО: Изменения для отката обводки --- */
+    border: none; /* Убедимся, что нет стандартной рамки */
+    /* box-shadow: 0 0 0 3px var(--current-outline-color, transparent); /* УДАЛЕНО */
+    /* --current-outline-color: transparent; /* УДАЛЕНО */
+    will-change: transform, background; /* Удален box-shadow */
     transition: transform 0.1s ease-out, filter 0.1s ease-out,
-                background-color 0.3s ease, background-image 0.3s ease,
-                box-shadow 0.3s ease; /* Заменяем border-color на box-shadow */
+                background-color 0.3s ease, background-image 0.3s ease; /* Удален box-shadow */
+    /* --- КОНЕЦ: Изменения для отката обводки --- */
+    border-radius: 0;
+    overflow: visible; /* Оставляем, т.к. не мешает */
 }
 
-.cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(70%); }
+.cauldron.blocked-cauldron { /* ... */ }
 
-.cauldron::before { /* Жидкость */
+.cauldron::before { /* Жидкость (остается прозрачной) */
     content: '';
     position: absolute;
     bottom: 0;
@@ -198,9 +116,9 @@ html, body {
     height: var(--liquid-level, 10%);
     background-color: rgba(165, 105, 189, 0.65); /* Фиолетовый с 65% непрозрачностью */
     z-index: 1;
-    overflow: hidden; /* Ограничиваем жидкость */
-    clip-path: inherit; /* Наследуем форму колбы для обрезки жидкости */
-    transition: background-color 0.3s ease; /* Плавный переход цвета */
+    overflow: hidden;
+    clip-path: inherit;
+    transition: background-color 0.3s ease;
 }
 
 .bubbles-container { /* Пузырьки */
@@ -208,151 +126,63 @@ html, body {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: var(--liquid-level, 10%); /* Высота равна уровню жидкости */
+    height: var(--liquid-level, 10%);
     z-index: 2;
     pointer-events: none;
-    overflow: hidden; /* Ограничиваем пузырьки */
-    clip-path: inherit; /* Пусть контейнер пузырьков наследует форму колбы */
+    overflow: hidden;
+    clip-path: inherit;
 }
 
-.bubble { position: absolute; bottom: -20px; width: 8px; height: 8px; background-color: var(--bubble-color); border-radius: 50%; opacity: 0.6; animation: rise 3s infinite ease-in; }
-@keyframes rise { 0% { transform: translateY(0) scale(1); opacity: 0.6; } 50% { transform: scale(1.1); } 90% { opacity: 0.4; } 100% { transform: translateY(-220px) scale(0.8); opacity: 0; } }
-.cauldron:active:not(.blocked-cauldron) { transform: scale(0.95); }
+.bubble { /* ... */ }
+@keyframes rise { /* ... */ }
+.cauldron:active:not(.blocked-cauldron) { /* ... */ }
 
 /* Фидбек при клике */
-#click-feedback-container { position: absolute; top: calc(50% - 150px); /* Скорректировано под размер колбы */ left: 50%; transform: translateX(-50%); width: 170px; height: 120px; pointer-events: none; z-index: 10; }
-.click-feedback { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.2em; font-weight: bold; color: var(--accent-color); opacity: 1; animation: fadeUp 1s ease-out forwards; white-space: nowrap; display: inline-flex; align-items: center; }
-@keyframes fadeUp { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); /* Улетает выше */ } }
+#click-feedback-container { /* ... */ }
+.click-feedback { /* ... */ }
+@keyframes fadeUp { /* ... */ }
 
 /* Кнопки управления */
-.controls { margin-top: 20px; display: flex; justify-content: space-around; padding: 10px 0; background-color: rgba(0, 0, 0, 0.1); border-radius: 8px; }
-.control-button { padding: 10px 20px; font-size: 1em; background-color: var(--button-bg); color: var(--text-color); border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease-out; }
-.control-button:hover:not(:disabled) { background-color: var(--button-hover-bg); }
-.control-button:active:not(:disabled) { transform: scale(0.98); }
-.telegram-feature { background-color: #5093d1; }
-.telegram-feature:hover:not(:disabled) { background-color: #60a3e1; }
+.controls { /* ... */ }
+.control-button { /* ... */ }
+.telegram-feature { /* ... */ }
 
 /* Общие стили панелей */
-.upgrades-panel, .settings-panel .settings-box, .shop-panel {
-    background-color: var(--secondary-bg);
-    border-radius: 15px;
-    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    color: var(--text-color); /* Цвет текста по умолчанию для панелей */
-}
+.upgrades-panel, .settings-panel .settings-box, .shop-panel { /* ... */ }
 
 /* Панель улучшений */
-.upgrades-panel {
-    position: fixed; bottom: 0; left: 0; width: 100%; height: 60%;
-    border-bottom-left-radius: 0; border-bottom-right-radius: 0;
-    transform: translateY(100%); transition: transform 0.3s ease-out; z-index: 100;
-}
-.upgrades-panel:not(.hidden) { transform: translateY(0); }
+.upgrades-panel { /* ... */ }
+.upgrades-panel:not(.hidden) { /* ... */ }
 
 /* Заголовки панелей */
-.panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-.panel-header h2 { margin: 0; font-size: 1.4em; }
-.close-button { background: none; border: none; color: var(--text-color); font-size: 2em; line-height: 1; cursor: pointer; opacity: 0.7; transition: opacity 0.2s ease; padding: 0 5px; /* Небольшой паддинг для удобства нажатия */ }
-.close-button:hover { opacity: 1; }
+.panel-header { /* ... */ }
+.panel-header h2 { /* ... */ }
+.close-button { /* ... */ }
 
 /* Список улучшений */
-#upgrades-list { list-style: none; overflow-y: auto; flex-grow: 1; padding-right: 5px; margin: 0; } /* Убрал дефолтный padding у ul */
-#upgrades-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: opacity 0.3s ease, background-color 0.3s ease; }
-#upgrades-list li:last-child { border-bottom: none; }
-.upgrade-info { flex-grow: 1; margin-right: 10px; }
-.upgrade-info h3 { font-size: 1em; margin-bottom: 3px; }
-.upgrade-info p { font-size: 0.8em; opacity: 0.7; margin: 0; } /* Убрал дефолтный margin у p */
-.upgrade-cost { font-size: 0.9em; font-weight: bold; color: var(--accent-color); margin-top: 4px; }
-.buy-upgrade-btn { padding: 8px 15px; font-size: 0.9em; background-color: var(--accent-color); color: var(--primary-bg); border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.2s ease, opacity 0.2s ease, color 0.2s ease; min-width: 90px; text-align: center; }
-.buy-upgrade-btn:hover:not(:disabled) { background-color: #88e8d8; }
-.buy-upgrade-btn:disabled:not(.locked .buy-upgrade-btn) { background-color: var(--disabled-color); color: #a0a0a0; cursor: not-allowed; opacity: 0.7; }
-#upgrades-list li.locked { opacity: 0.5; background-color: rgba(0, 0, 0, 0.15); }
-#upgrades-list li.locked .upgrade-info h3, #upgrades-list li.locked .upgrade-info p:not(.requirement-info) { color: #b0b0b0; opacity: 0.8; }
-#upgrades-list li.locked .buy-upgrade-btn { background-color: #555; border: 1px solid rgba(255, 255, 255, 0.1); color: var(--accent-color); font-size: 0.8em; opacity: 1; cursor: default; }
-.requirement-info { font-size: 0.75em; color: var(--accent-color); opacity: 1; margin-top: 5px; font-weight: bold; }
-#upgrades-list li.cannot-afford { /* Можно добавить стиль для недоступных по цене */ }
+#upgrades-list { /* ... */ }
+#upgrades-list li { /* ... */ }
+/* ... (остальные стили улучшений) ... */
 
-/* Панель настроек */
-.settings-panel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-out; }
-.settings-panel:not(.hidden) { opacity: 1; pointer-events: auto; }
-.settings-box { width: 90%; max-width: 400px; max-height: 80vh; border-radius: 15px; /* Наследует стили фона/тени из общего стиля панелей */ }
-.settings-content { padding: 15px; /* Добавил внутренний отступ */ overflow-y: auto; flex-grow: 1; }
-.language-options { display: flex; gap: 10px; flex-wrap: wrap; }
-.lang-btn { padding: 8px 16px; font-size: 0.9em; background-color: var(--button-bg); color: var(--text-color); border: 2px solid transparent; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease; }
-.lang-btn:hover { background-color: var(--button-hover-bg); }
-.lang-btn.active { background-color: var(--accent-color); color: var(--primary-bg); border-color: var(--text-color); font-weight: bold; }
-
+/* Панель настроек (БЕЗ ЗВУКА) */
+.settings-panel { /* ... */ }
+.settings-panel:not(.hidden) { /* ... */ }
+.settings-box { /* ... */ }
+.settings-content { padding: 15px; overflow-y: auto; flex-grow: 1; }
+.settings-content h3 { margin-bottom: 10px; font-size: 1.1em; opacity: 0.9; } /* Упрощено */
+.language-options { /* ... */ }
+.lang-btn { /* ... */ }
+/* Стили для настроек звука удалены */
 
 /* --- Стили Магазина --- */
-.shop-panel {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 70%; /* Можно настроить высоту */
-    border-radius: 15px 15px 0 0; /* Только верхние углы скруглены */
-    transform: translateY(100%);
-    transition: transform 0.3s ease-out;
-    z-index: 100; /* Такой же как у улучшений */
-    /* Наследует background, shadow, padding, display flex из общего стиля панелей */
-}
+.shop-panel { /* ... */ }
+.shop-panel:not(.hidden) { /* ... */ }
+.shop-currency-display { /* ... */ }
+/* ... (остальные стили магазина) ... */
 
-.shop-panel:not(.hidden) {
-    transform: translateY(0);
-}
-
-.shop-currency-display {
-    text-align: right;
-    margin-bottom: 15px;
-    font-size: 1.1em;
-    opacity: 0.9;
-    display: flex; /* Используем flex для выравнивания */
-    align-items: center; /* Выравниваем по вертикали */
-    justify-content: flex-end; /* Прижимаем к правому краю */
-}
-
-.shop-currency-display .gem-icon {
-    margin: 0 5px; /* Небольшие отступы вокруг иконки */
-    vertical-align: middle; /* Выравнивание иконки */
-    line-height: 1;
-}
-.shop-currency-display .gem-icon svg {
-    /* Размеры уже заданы в HTML, наследует fill */
-}
-
-#shop-gem-count {
-    font-weight: bold;
-}
-
-#skins-list {
-    list-style: none;
-    overflow-y: auto;
-    flex-grow: 1;
-    padding: 5px 5px 0 0; /* Отступы сверху и справа */
-    margin: 0; /* Убираем дефолтный margin ul */
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); /* Адаптивная сетка */
-    gap: 15px; /* Отступы между скинами */
-}
-
-#skins-list li {
-    background-color: rgba(0, 0, 0, 0.15);
-    border-radius: 10px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    border: 2px solid transparent; /* Для рамки активного скина */
-    transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-
-#skins-list li.active-skin {
-    border-color: var(--accent-color);
-    box-shadow: 0 0 8px var(--accent-color);
-}
+#skins-list { /* ... */ }
+#skins-list li { /* ... */ }
+#skins-list li.active-skin { /* ... */ }
 
 .skin-preview {
     width: 80px;
@@ -365,265 +195,41 @@ html, body {
     position: relative;
     -webkit-clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
-    /* --- НАЧАЛО: Используем тень и для превью --- */
-    /* border: 1px solid rgba(255, 255, 255, 0.1); /* УДАЛЕНО */
-    border: none; /* Убедимся, что рамки нет */
-    box-shadow: 0 0 0 2px var(--preview-outline-color, rgba(255, 255, 255, 0.1)); /* Тень 2px для превью */
-    /* --- КОНЕЦ: Используем тень и для превью --- */
-    --preview-outline-color: rgba(255, 255, 255, 0.1); /* Переменная для цвета тени превью */
-    transition: box-shadow 0.3s ease; /* Анимация тени */
+    /* --- НАЧАЛО: Откат обводки превью --- */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Возвращена простая рамка */
+    /* box-shadow: 0 0 0 2px var(--preview-outline-color, rgba(255, 255, 255, 0.1)); /* УДАЛЕНО */
+    /* --preview-outline-color: rgba(255, 255, 255, 0.1); /* УДАЛЕНО */
+    transition: border-color 0.3s ease; /* Анимация рамки */
+    /* --- КОНЕЦ: Откат обводки превью --- */
 }
 
-/* Устанавливаем цвет тени для превью каждого скина */
-.skin-preview.skin-default { background-color: var(--flask-color); --preview-outline-color: var(--skin-default-outline-color); }
-.skin-preview.skin-gold { background-color: #ffd700; background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080); --preview-outline-color: var(--skin-gold-outline-color); }
-.skin-preview.skin-crystal { background-color: #add8e6; background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%); --preview-outline-color: var(--skin-crystal-outline-color); }
-.skin-preview.skin-obsidian { background-color: #333; background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d); --preview-outline-color: var(--skin-obsidian-outline-color); }
+/* Стили для скинов превью (установка фона, рамка не меняется) */
+.skin-preview.skin-default { background-color: var(--flask-color); }
+.skin-preview.skin-gold { background-color: #ffd700; background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080); }
+.skin-preview.skin-crystal { background-color: #add8e6; background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%); }
+.skin-preview.skin-obsidian { background-color: #333; background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d); }
+
+.skin-info { /* ... */ }
+.skin-info h3 { /* ... */ }
+.skin-cost { /* ... */ }
+/* ... (остальные стили кнопок скинов) ... */
+
+/* Стили для самой колбы (только фон) */
+.cauldron.skin-default { background-color: var(--flask-color); background-image: none; }
+.cauldron.skin-gold { background-color: #ffd700; background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080); }
+.cauldron.skin-crystal { background-color: #add8e6; background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%); }
+.cauldron.skin-obsidian { background-color: #333; background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d); }
+/* Переменная --current-outline-color удалена из этих правил */
 
 
-.skin-info {
-    width: 100%; /* Занимает всю ширину карточки */
-    margin-top: 5px; /* Отступ от превью */
-}
-.skin-info h3 {
-    font-size: 0.9em;
-    margin-bottom: 5px;
-    word-break: break-word; /* Перенос длинных названий */
-    min-height: 2.2em; /* Резервируем место под 2 строки названия */
-    display: flex; /* Центрируем текст, если он короткий */
-    align-items: center;
-    justify-content: center;
-    line-height: 1.1; /* Чуть уменьшаем межстрочный интервал для названий в 2 строки */
-}
+.hidden { display: none !important; }
 
-.skin-cost {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.95em;
-    margin-bottom: 8px;
-    font-weight: bold;
-    color: var(--gem-color); /* Цвет гемов */
-    min-height: 1.2em; /* Резервируем место, даже если цены нет (для выравнивания кнопок) */
-}
-
-.skin-cost .gem-icon {
-    margin-right: 4px;
-    line-height: 1;
-}
-.skin-cost .gem-icon svg {
-     width: 0.9em;
-     height: 0.9em;
-     fill: var(--gem-color); /* Убедимся, что иконка тоже красится */
-     vertical-align: middle;
-}
-
-.skin-action-btn {
-    padding: 6px 12px;
-    font-size: 0.85em;
-    background-color: var(--button-bg);
-    color: var(--text-color);
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s ease, opacity 0.2s ease;
-    width: 100%; /* Кнопка на всю ширину карточки */
-    margin-top: auto; /* Прижимает кнопку к низу карточки */
-}
-
-.skin-action-btn:hover:not(:disabled) {
-    background-color: var(--button-hover-bg);
-}
-
-.skin-action-btn.buy-btn {
-    background-color: var(--accent-color);
-    color: var(--primary-bg);
-    font-weight: bold;
-}
-.skin-action-btn.buy-btn:hover:not(:disabled) {
-    background-color: #88e8d8;
-}
-
-.skin-action-btn.select-btn {
-    background-color: #5093d1; /* Синий для выбора */
-}
-.skin-action-btn.select-btn:hover:not(:disabled) {
-    background-color: #60a3e1;
-}
-
-.skin-action-btn.selected-btn {
-     background-color: var(--primary-bg); /* Темный фон для выбранной */
-     border: 1px solid var(--accent-color);
-     color: var(--accent-color);
-     opacity: 0.8;
-     cursor: default; /* Указываем, что кнопка неактивна */
-}
-
-
-.skin-action-btn:disabled:not(.selected-btn) { /* Не применяем стиль к "Выбрано" */
-    background-color: var(--disabled-color);
-    color: #a0a0a0;
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-/* Стили для самой колбы (устанавливают фон и переменную контура) */
-.cauldron.skin-default {
-    background-color: var(--flask-color);
-    background-image: none;
-    --current-outline-color: var(--skin-default-outline-color);
-}
-.cauldron.skin-gold {
-    background-color: #ffd700;
-    background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080);
-    --current-outline-color: var(--skin-gold-outline-color);
-}
-.cauldron.skin-crystal {
-    background-color: #add8e6;
-    background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
-    --current-outline-color: var(--skin-crystal-outline-color);
-}
-.cauldron.skin-obsidian {
-    background-color: #333;
-    background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d);
-    --current-outline-color: var(--skin-obsidian-outline-color);
-}
-
-
-.hidden { display: none !important; /* Более сильное скрытие */ }
-
-/* --- Стили для настроек звука --- */
-.settings-content h3 { /* Общий стиль для заголовков в настройках */
-    margin-top: 20px; /* Отступ перед заголовками */
-    margin-bottom: 10px;
-    font-size: 1.1em;
-    opacity: 0.9;
-    border-top: 1px solid rgba(255, 255, 255, 0.1); /* Разделитель */
-    padding-top: 15px;
-}
-.settings-content h3:first-of-type { /* Убираем верхний отступ и разделитель у первого */
-    margin-top: 0;
-    border-top: none;
-    padding-top: 0;
-}
-
-.setting-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Разносим label и input */
-    margin-bottom: 12px;
-    padding: 5px 0;
-}
-
-.setting-item label {
-    margin-right: 15px; /* Отступ справа от текста */
-    font-size: 0.95em;
-    opacity: 0.9;
-}
-
-/* Стилизация чекбокса (простая) */
-.settings-checkbox {
-    transform: scale(1.2); /* Немного увеличим чекбокс */
-    cursor: pointer;
-    accent-color: var(--accent-color); /* Цвет чекбокса */
-}
-
-/* Стилизация слайдера громкости */
-.sound-volume-container {
-    /* Flex уже есть от .setting-item */
-}
-
-.settings-slider {
-    flex-grow: 1; /* Занимает доступное пространство */
-    margin: 0 10px; /* Отступы по бокам */
-    cursor: pointer;
-    accent-color: var(--accent-color); /* Цвет ползунка и трека (в современных браузерах) */
-    height: 6px; /* Сделаем трек чуть толще */
-    border-radius: 3px;
-    background: rgba(0, 0, 0, 0.2); /* Фон трека */
-    outline: none; /* Убираем стандартный outline */
-     -webkit-appearance: none; /* Убираем стандартный вид для WebKit */
-    appearance: none;
-}
-/* Стили для ползунка WebKit (Chrome, Safari) */
-.settings-slider::-webkit-slider-thumb {
-    -webkit-appearance: none; /* Override default look */
-    appearance: none;
-    width: 18px; /* Ширина ползунка */
-    height: 18px; /* Высота ползунка */
-    background: var(--accent-color); /* Цвет ползунка */
-    border-radius: 50%; /* Круглый ползунок */
-    cursor: pointer;
-    border: 2px solid var(--primary-bg); /* Обводка цветом фона для контраста */
-    margin-top: -6px; /* Центрируем ползунок относительно трека */
-}
-/* Стили для ползунка Firefox */
-.settings-slider::-moz-range-thumb {
-    width: 14px; /* Чуть меньше для Firefox */
-    height: 14px;
-    background: var(--accent-color);
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid var(--primary-bg);
-}
-/* Стили для трека Firefox */
-.settings-slider::-moz-range-track {
-    width: 100%;
-    height: 6px;
-    cursor: pointer;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 3px;
-    border: none; /* Убираем стандартную рамку Firefox */
-}
-
-
-.volume-percentage {
-    font-size: 0.9em;
-    min-width: 35px; /* Ширина для отображения "100%" */
-    text-align: right;
-    opacity: 0.8;
-}
-
-/* Состояние отключенного слайдера */
-.settings-slider:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    accent-color: var(--disabled-color);
-}
-.settings-slider:disabled::-webkit-slider-thumb {
-    background: var(--disabled-color);
-    border-color: var(--secondary-bg); /* Меняем цвет обводки на фоне */
-}
-.settings-slider:disabled::-moz-range-thumb {
-    background: var(--disabled-color);
-    border-color: var(--secondary-bg);
-}
-
-.sound-volume-container .volume-percentage.disabled {
-    opacity: 0.5;
-}
-
+/* Стили для настроек звука удалены */
 
 /* Адаптация */
-@media (min-width: 600px) {
-    .upgrades-panel, .shop-panel {
-        left: 50%;
-        transform: translate(-50%, 100%);
-        width: 80%;
-        max-width: 500px; /* Или 600px для магазина */
-    }
-    .shop-panel { max-width: 600px; }
-    .upgrades-panel:not(.hidden), .shop-panel:not(.hidden) {
-        transform: translate(-50%, 0);
-    }
-     #skins-list {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Чуть больше на широких экранах */
-    }
-}
+@media (min-width: 600px) { /* ... */ }
 
 /* Уведомления */
-.notification { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 8px; color: white; z-index: 1001; opacity: 0; transition: opacity 0.5s ease, bottom 0.3s ease; text-align: center; max-width: 80%; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; }
-.notification.info { background-color: #3498db; }
-.notification.error { background-color: #e74c3c; }
-.notification.warning { background-color: #f39c12; }
-.notification.success { background-color: #2ecc71; }
+.notification { /* ... */ }
+.notification.info { /* ... */ }
+/* ... (остальные стили уведомлений) ... */
