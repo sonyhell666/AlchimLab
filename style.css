@@ -4,13 +4,13 @@
     --secondary-bg: #4a4466;
     --accent-color: #76d7c4;
     --text-color: #f0f0f0;
-    --liquid-color: #a569bd; /* НЕ ИСПОЛЬЗУЕТСЯ */
-    --bubble-color: #e8daef; /* НЕ ИСПОЛЬЗУЕТСЯ */
+    --liquid-color: #a569bd; /* Цвет жидкости */
+    --bubble-color: #e8daef; /* Цвет пузырьков */
     --button-bg: #5d5480;
     --button-hover-bg: #71689a;
     --disabled-color: #6c6c6c;
     --flask-color: #00abc1; /* Цвет для clip-path колбы */
-    --flask-highlight: white; /* НЕ ИСПОЛЬЗУЕТСЯ */
+    --liquid-level: 50%; /* Уровень жидкости (можно менять через JS) */
 }
 
 * {
@@ -73,26 +73,78 @@ html, body {
 }
 
 /* --- Новая Колба с использованием clip-path --- */
-.cauldron { /* Оставляем класс .cauldron */
-    /* Задаем базовые размеры прямоугольника, который будем обрезать */
-    /* Подберите размеры, чтобы форма выглядела пропорционально */
+.cauldron {
     width: 140px;
-    height: 200px; /* Высота должна быть больше ширины для такой формы */
-    background-color: var(--flask-color); /* Цвет колбы */
-    position: relative; /* Может понадобиться для позиционирования контейнера */
+    height: 200px;
+    background-color: var(--flask-color);
+    position: relative; /* Обязательно для позиционирования дочерних элементов */
     cursor: pointer;
     user-select: none;
     transition: transform 0.1s ease-out;
-    margin: 20px auto; /* Пример центрирования и отступов */
-
-    /* Применяем вашу точную форму */
+    margin: 20px auto;
     clip-path: polygon(59.80% 41.70%,58.98% 38.59%,59.00% 18.11%,60.23% 12.98%,62.02% 8.06%,37.89% 8.03%,40.71% 13.82%,41.43% 39.72%,23.95% 76.28%,23.04% 83.57%,24.75% 88.61%,27.08% 91.60%,30.28% 93.09%,73.20% 93.08%,76.73% 89.35%,78.77% 85.05%,77.87% 79.08%);
-
-    /* Сбрасываем стили от предыдущих версий, если они остались */
+    overflow: hidden; /* Обрезаем все, что выходит за пределы clip-path и для псевдо-элементов */
     border: none;
     border-radius: 0;
-    overflow: hidden; /* Можно оставить, не помешает */
     box-shadow: none;
+}
+
+/* Слой жидкости (псевдо-элемент ::before) */
+.cauldron::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--liquid-level, 50%); /* Высота контролируется переменной */
+    background-color: var(--liquid-color);
+    z-index: 1; /* Находится под пузырьками */
+    transition: height 0.5s ease; /* Плавное изменение уровня */
+}
+
+/* Контейнер для пузырьков (должен быть добавлен в HTML внутрь .cauldron) */
+.bubbles-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--liquid-level, 50%); /* Высота совпадает с уровнем жидкости */
+    z-index: 2; /* Находится над слоем жидкости */
+    overflow: hidden; /* Обрезает пузырьки, выходящие за верхнюю границу контейнера */
+    pointer-events: none; /* Не перехватывает клики, предназначенные для колбы */
+    transition: height 0.5s ease; /* Синхронизируем изменение высоты с жидкостью */
+}
+
+/* Стиль для отдельных пузырьков (создаются через JavaScript) */
+.bubble {
+    position: absolute;
+    bottom: -20px; /* Начинают движение из-под видимой области */
+    width: 8px;
+    height: 8px;
+    background-color: var(--bubble-color);
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: rise 3s infinite ease-in;
+    /* Разные размеры, скорость и задержку можно задавать через JS */
+}
+
+/* Анимация подъема пузырьков */
+@keyframes rise {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1.1); /* Небольшая пульсация */
+    }
+    90% {
+         opacity: 0.4;
+    }
+    100% {
+        /* Поднимаются выше видимой области контейнера пузырьков */
+        transform: translateY(-220px) scale(0.8); /* translateY должен быть больше высоты колбы */
+        opacity: 0;
+    }
 }
 
 /* Анимация клика */
@@ -100,26 +152,27 @@ html, body {
     transform: scale(0.95);
 }
 
-/* УБЕДИТЕСЬ, ЧТО УДАЛЕНЫ СТИЛИ ДЛЯ .cauldron::before, .cauldron::after, */
-/* .cauldron-liquid, .cauldron-bubbles И @keyframes bubble */
-
-
 /* --- Фидбек при клике --- */
+/* Контейнер для чисел, вылетающих при клике */
 #click-feedback-container {
     position: absolute;
-    /* Позиция относительно ВЕРХНЕГО КРАЯ .cauldron */
-    /* Попробуйте подобрать top, чтобы было над колбой */
-    top: 0px;
+    /* Позиционируем относительно ВЕРХНЕГО КРАЯ .game-area или другого родителя */
+    /* Можно разместить прямо над колбой, подбирая top/left */
+    /* Пример: По центру над колбой (если колба тоже центрирована) */
+    top: calc(50% - 150px); /* Подбирайте значение, чтобы было над колбой */
     left: 50%;
     transform: translateX(-50%);
-    width: 150px;
-    height: 100px;
-    pointer-events: none;
-    z-index: 10;
+    width: 150px; /* Ширина области, где могут появляться числа */
+    height: 100px; /* Высота области */
+    pointer-events: none; /* Не мешает кликам */
+    z-index: 10; /* Над колбой, но под панелью улучшений */
+    /* border: 1px dashed red; */ /* Временная рамка для отладки позиции */
 }
+
 
 .click-feedback {
     position: absolute;
+    /* Появляются примерно в центре #click-feedback-container */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -132,7 +185,7 @@ html, body {
 
 @keyframes fadeUp {
     0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); }
+    100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); } /* Улетают вверх */
 }
 
 
@@ -226,7 +279,7 @@ html, body {
     list-style: none;
     overflow-y: auto;
     flex-grow: 1;
-    padding-right: 5px;
+    padding-right: 5px; /* Небольшой отступ для скроллбара */
 }
 
 #upgrades-list li {
@@ -260,7 +313,7 @@ html, body {
     font-size: 0.9em;
     font-weight: bold;
     color: var(--accent-color);
-    margin-top: 4px;
+    margin-top: 4px; /* Добавлен небольшой отступ сверху */
 }
 
 .buy-upgrade-btn {
@@ -273,12 +326,12 @@ html, body {
     cursor: pointer;
     font-weight: bold;
     transition: background-color 0.2s ease, opacity 0.2s ease, color 0.2s ease;
-    min-width: 90px;
+    min-width: 90px; /* Минимальная ширина для выравнивания */
     text-align: center;
 }
 
 .buy-upgrade-btn:hover:not(:disabled) {
-    background-color: #88e8d8;
+    background-color: #88e8d8; /* Чуть светлее при наведении */
 }
 
 .buy-upgrade-btn:disabled {
@@ -290,54 +343,59 @@ html, body {
 
 .hidden { display: none; }
 
+/* Адаптация панели улучшений для больших экранов */
 @media (min-width: 600px) {
     .upgrades-panel {
         left: 50%;
         transform: translate(-50%, 100%);
         width: 80%;
-        max-width: 500px;
+        max-width: 500px; /* Ограничение ширины */
     }
      .upgrades-panel:not(.hidden) {
-        transform: translate(-50%, 0);
+        transform: translate(-50%, 0); /* Появление снизу по центру */
     }
 }
 
+/* Стили для заблокированных улучшений */
 #upgrades-list li.locked {
     opacity: 0.5;
-    background-color: rgba(0, 0, 0, 0.15);
+    background-color: rgba(0, 0, 0, 0.15); /* Немного темнее фон */
 }
 
 #upgrades-list li.locked .upgrade-info h3,
-#upgrades-list li.locked .upgrade-info p:not(.requirement-info) {
-    color: #b0b0b0;
+#upgrades-list li.locked .upgrade-info p:not(.requirement-info) { /* Не затрагиваем текст требований */
+    color: #b0b0b0; /* Более тусклый текст */
     opacity: 0.8;
 }
 
 #upgrades-list li.locked .buy-upgrade-btn {
-    background-color: #555;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--accent-color);
-    font-size: 0.8em;
-    opacity: 1;
+    background-color: #555; /* Темно-серая кнопка */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Тонкая рамка */
+    color: var(--accent-color); /* Цвет текста требований */
+    font-size: 0.8em; /* Меньший шрифт */
+    opacity: 1; /* Непрозрачная */
+    cursor: default; /* Стандартный курсор */
 }
 
+/* Стиль для текста с требованиями */
 .requirement-info {
     font-size: 0.75em;
-    color: var(--accent-color);
-    opacity: 1;
+    color: var(--accent-color); /* Яркий акцентный цвет */
+    opacity: 1; /* Полная непрозрачность */
     margin-top: 5px;
     font-weight: bold;
 }
 
+/* Уведомления */
 .notification {
     position: fixed;
-    bottom: 70px;
+    bottom: 70px; /* Над панелью улучшений или кнопками */
     left: 50%;
     transform: translateX(-50%);
     padding: 10px 20px;
     border-radius: 8px;
     color: white;
-    z-index: 1001;
+    z-index: 1001; /* Выше всего, кроме, возможно, модальных окон */
     opacity: 0;
     transition: opacity 0.5s ease, bottom 0.3s ease;
     text-align: center;
