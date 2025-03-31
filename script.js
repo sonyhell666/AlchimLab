@@ -1,8 +1,8 @@
 // Файл: script.js
 // Версия БЕЗ ЗВУКА, БЕЗ ОБВОДКИ, с исправлением ошибки CloudStorage
-// Добавлено: Динамический цвет жидкости по времени UTC (Лондон), Обводка колбы
-// Исправлено: Мигание кнопок "Купить"
-// Добавлено: Отладочные console.log
+// Добавлено: Динамический цвет жидкости, Обводка колбы, Отладочные логи
+// Исправлено: Мигание кнопок
+// Упрощен конец файла для поиска SyntaxError
 document.addEventListener('DOMContentLoaded', () => {
     // Инициализация Telegram Web App
     const tg = window.Telegram.WebApp;
@@ -14,17 +14,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const cauldronElement = document.getElementById('cauldron');
     const openUpgradesBtn = document.getElementById('open-upgrades-btn');
 
-    // !!! НОВАЯ ПРОВЕРКА (ШАГ 3) !!!
+    // !!! Отладочная проверка !!!
     console.log('DOMContentLoaded fired.');
     console.log('cauldronElement:', cauldronElement);
     console.log('essenceCountElement:', essenceCountElement);
     console.log('openUpgradesBtn:', openUpgradesBtn);
-    // !!! КОНЕЦ ПРОВЕРКИ (ШАГ 3) !!!
+    // !!! Конец проверки !!!
 
     const essencePerSecondElement = document.getElementById('essence-per-second');
     const gemCountElement = document.getElementById('gem-count');
     const clickFeedbackContainer = document.getElementById('click-feedback-container');
-    // const openUpgradesBtn = document.getElementById('open-upgrades-btn'); // Уже получено выше
     const closeUpgradesBtn = document.getElementById('close-upgrades-btn');
     const upgradesPanel = document.getElementById('upgrades-panel');
     const upgradesListElement = document.getElementById('upgrades-list');
@@ -240,9 +239,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Логика клика по котлу ---
      if (cauldronElement) {
          cauldronElement.addEventListener('click', () => {
-             // !!! НОВАЯ ПРОВЕРКА (ШАГ 4) !!!
+             // !!! Отладочный лог !!!
              console.log('Cauldron click event fired!');
-             // !!! КОНЕЦ ПРОВЕРКИ (ШАГ 4) !!!
+             // !!! Конец лога !!!
 
              const currentTime = Date.now();
              if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('light'); }
@@ -261,27 +260,33 @@ document.addEventListener('DOMContentLoaded', () => {
                  if (warningCount >= MAX_WARNINGS) { isBlocked = true; console.error("Автокликер заблокирован."); showTemporaryNotification(translations.autoclickerBlocked?.[currentLanguage] || "Автокликер обнаружен!", "error"); if (tg?.HapticFeedback) { tg.HapticFeedback.notificationOccurred('error'); } if (cauldronElement) cauldronElement.classList.add('blocked-cauldron'); }
              }
          });
-         // !!! НОВАЯ ПРОВЕРКА (ШАГ 4) !!!
+         // !!! Отладочный лог !!!
          console.log('Cauldron click listener ADDED.');
-         // !!! КОНЕЦ ПРОВЕРКИ (ШАГ 4) !!!
+         // !!! Конец лога !!!
      } else {
-         // !!! НОВАЯ ПРОВЕРКА (ШАГ 4) !!!
+         // !!! Отладочный лог !!!
          console.error("Элемент колбы #cauldron не найден ДО добавления слушателя!");
-         // !!! КОНЕЦ ПРОВЕРКИ (ШАГ 4) !!!
+         // !!! Конец лога !!!
      }
 
     // --- Логика авто-клика ---
-    setInterval(() => { if (!isBlocked && essencePerSecond > 0 && Number.isFinite(essencePerSecond)) { const essenceToAdd = essencePerSecond / 10; if (Number.isFinite(essenceToAdd)) { essence += essenceToAdd; updateDisplay(); } else { console.warn("Рассчитана некорректная порция эссенции."); } } }, 100);
+    // Обернем в try-catch на всякий случай
+    try {
+        setInterval(() => { if (!isBlocked && essencePerSecond > 0 && Number.isFinite(essencePerSecond)) { const essenceToAdd = essencePerSecond / 10; if (Number.isFinite(essenceToAdd)) { essence += essenceToAdd; updateDisplay(); } else { console.warn("Рассчитана некорректная порция эссенции."); } } }, 100);
+    } catch(e) { console.error("Ошибка в интервале автоклика:", e); }
 
     // --- Интервал для уменьшения уровня жидкости ---
-    setInterval(() => {
-        const currentTime = Date.now();
-        if (currentTime - lastInteractionTime > IDLE_TIMEOUT && visualLiquidLevel > LIQUID_MIN_LEVEL) {
-            visualLiquidLevel -= LIQUID_DECAY_RATE;
-            visualLiquidLevel = Math.max(visualLiquidLevel, LIQUID_MIN_LEVEL);
-            updateDisplay(); // Обновляем UI, чтобы показать изменение уровня
-        }
-    }, LIQUID_UPDATE_INTERVAL);
+    // Обернем в try-catch на всякий случай
+    try {
+        setInterval(() => {
+            const currentTime = Date.now();
+            if (currentTime - lastInteractionTime > IDLE_TIMEOUT && visualLiquidLevel > LIQUID_MIN_LEVEL) {
+                visualLiquidLevel -= LIQUID_DECAY_RATE;
+                visualLiquidLevel = Math.max(visualLiquidLevel, LIQUID_MIN_LEVEL);
+                updateDisplay(); // Обновляем UI, чтобы показать изменение уровня
+            }
+        }, LIQUID_UPDATE_INTERVAL);
+    } catch(e) { console.error("Ошибка в интервале уменьшения жидкости:", e); }
 
     // --- Логика улучшений ---
     function calculateCost(upgrade) { if (!upgrade || typeof upgrade.baseCost !== 'number' || typeof upgrade.costMultiplier !== 'number' || typeof upgrade.currentLevel !== 'number') { console.error("Некорректные данные улучшения для расчета стоимости:", upgrade); return Infinity; } return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel)); }
@@ -361,7 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const required = upgrade.requiredEssence || 0;
         if (Math.floor(essence) < required) {
-            // Эта проверка теперь менее вероятна из-за updateUpgradeButtonStates, но оставим на всякий случай
             showTemporaryNotification(`${translations.needMoreEssence?.[currentLanguage] || "Нужно больше!"} ${formatNumber(required)} 🧪`, "warning");
             if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
             return;
@@ -426,7 +430,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     requirementInfoElement.textContent = `${translations.requirementInfoPrefix?.[currentLanguage] || "Требуется"}: ${formatNumber(required)} 🧪`;
                     requirementInfoElement.style.display = 'block';
                 }
-                 // При renderUpgrades слушатель не добавляется для locked, так что тут ничего удалять не надо
             } else {
                 if (requirementInfoElement) {
                     requirementInfoElement.style.display = 'none';
@@ -436,7 +439,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     isButtonDisabled = false;
                 }
-                // Слушатель должен был быть добавлен при renderUpgrades, если !isLocked
             }
 
             button.disabled = isButtonDisabled;
@@ -731,12 +733,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function showTemporaryNotification(message, type = "info") { const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); void notification.offsetWidth; requestAnimationFrame(() => { notification.style.opacity = '1'; notification.style.bottom = '80px'; }); setTimeout(() => { notification.style.opacity = '0'; notification.style.bottom = '70px'; setTimeout(() => { if (notification.parentNode) { notification.remove(); } }, 500); }, 2500); }
 
     // --- Первоначальная инициализация ---
-    try {
-        loadGame(); // Обернем основной запуск в try...catch
-    } catch (initError) {
-        console.error("КРИТИЧЕСКАЯ ОШИБКА ПРИ ИНИЦИАЛИЗАЦИИ:", initError);
-        showTemporaryNotification("Критическая ошибка! Попробуйте перезапустить.", "error");
-    }
+    // Убрали try...catch отсюда, чтобы видеть ошибки загрузки напрямую
+    loadGame();
 
 
     // --- Автосохранение и обработчики событий ---
@@ -748,4 +746,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Интервал для обновления цвета жидкости ---
     const liquidColorUpdateInterval = setInterval(updateLiquidColor, 5 * 60 * 1000); // Обновлять каждые 5 минут
 
-}); // Конец DOMContentLoaded
+}); // Конец DOMContentLoaded - Строка ~721
