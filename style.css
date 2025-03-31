@@ -41,14 +41,20 @@ html, body {
     left: 15px;
     background: none;
     border: none;
-    padding: 5px;
+    padding: 0;
     cursor: pointer;
     z-index: 51;
     opacity: 0.8;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
 }
-.settings-button svg { display: block; width: 26px; height: 26px; fill: var(--text-color); }
-.settings-button:hover { opacity: 1; }
+.settings-button:hover { opacity: 1; background-color: rgba(255, 255, 255, 0.1); }
+.settings-button svg { display: block; width: 24px; height: 24px; fill: var(--text-color); }
 
 .header { text-align: center; margin-bottom: 15px; font-size: 1.1em; opacity: 0.8; }
 
@@ -67,18 +73,29 @@ html, body {
 #gem-count { font-weight: bold; color: var(--text-color); }
 
 /* Колба */
-.cauldron { width: 180px; height: 200px; background-color: var(--flask-color); position: relative; cursor: pointer; user-select: none; /* --- Возвращаем transition для transform --- */ transition: transform 0.1s ease-out, filter 0.1s ease-out; margin: 20px auto; clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%); overflow: hidden; border: none; border-radius: 0; box-shadow: none; }
+.cauldron {
+    width: 180px;
+    height: 200px;
+    background-color: var(--flask-color);
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.1s ease-out, filter 0.1s ease-out;
+    margin: 20px auto;
+    clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
+    overflow: hidden;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    /* --- ДОБАВЛЕНО: Подсказка для аппаратного ускорения --- */
+    will-change: transform;
+}
 .cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(70%); }
 .cauldron::before { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: var(--liquid-level, 10%); background-color: var(--liquid-color); z-index: 1; }
 .bubbles-container { position: absolute; bottom: 0; left: 0; width: 100%; height: var(--liquid-level, 10%); z-index: 2; overflow: hidden; pointer-events: none; }
 .bubble { position: absolute; bottom: -20px; width: 8px; height: 8px; background-color: var(--bubble-color); border-radius: 50%; opacity: 0.6; animation: rise 3s infinite ease-in; }
 @keyframes rise { 0% { transform: translateY(0) scale(1); opacity: 0.6; } 50% { transform: scale(1.1); } 90% { opacity: 0.4; } 100% { transform: translateY(-220px) scale(0.8); opacity: 0; } }
-
-/* --- ВОЗВРАЩАЕМ Анимацию клика по колбе --- */
-.cauldron:active:not(.blocked-cauldron) {
-    transform: scale(0.95);
-}
-/* --- --- */
+.cauldron:active:not(.blocked-cauldron) { transform: scale(0.95); }
 
 /* Фидбек при клике */
 #click-feedback-container { position: absolute; top: calc(50% - 150px); left: 50%; transform: translateX(-50%); width: 170px; height: 120px; pointer-events: none; z-index: 10; }
@@ -126,7 +143,7 @@ html, body {
 /* Панель настроек */
 .settings-panel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-out; }
 .settings-panel:not(.hidden) { opacity: 1; pointer-events: auto; }
-.settings-box { width: 90%; max-width: 400px; max-height: 80vh; }
+.settings-box { width: 90%; max-width: 400px; max-height: 80vh; } /* Стили фона, тени и т.д. наследуются */
 .settings-content { padding: 10px 0; overflow-y: auto; flex-grow: 1; }
 .settings-content h3 { margin-bottom: 10px; font-size: 1.1em; opacity: 0.9; }
 .language-options { display: flex; gap: 10px; flex-wrap: wrap; }
