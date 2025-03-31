@@ -15,14 +15,13 @@
         </div>
 
         <!-- Кнопка настроек -->
-        <button id="settings-btn" class="settings-button control-button-icon"> <!-- Добавлен класс control-button-icon -->
+        <button id="settings-btn" class="settings-button control-button-icon">
             <img src="gear-icon.png" alt="Настройки" />
         </button>
 
-        <!-- ИЗМЕНЕНО: Отображение Кристаллов и Кнопка Магазина -->
+        <!-- Отображение Кристаллов (в правом верхнем углу) -->
         <div class="secondary-currency">
-            <!-- Существующий счетчик гемов -->
-            <div class="gem-display">
+             <div class="gem-display">
                  <span class="gem-icon">
                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em">
                          <path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/>
@@ -30,14 +29,14 @@
                  </span>
                  <span id="gem-count">0</span>
             </div>
-            <!-- НОВАЯ КНОПКА МАГАЗИНА -->
-            <button id="shop-btn" class="shop-button control-button-icon" aria-label="Магазин">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20">
-                    <path fill="currentColor" d="M17 6h-2c0-2.21-1.79-4-4-4S7 3.79 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm7 16H5V8h14v12zM12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                </svg>
-            </button>
         </div>
-        <!-- КОНЕЦ ИЗМЕНЕНИЙ -->
+
+        <!-- КНОПКА МАГАЗИНА (теперь позиционируется отдельно) -->
+        <button id="shop-btn" class="shop-button control-button-icon" aria-label="Магазин">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28"> <!-- Увеличен размер SVG -->
+                <path fill="currentColor" d="M17 6h-2c0-2.21-1.79-4-4-4S7 3.79 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm7 16H5V8h14v12zM12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+            </svg>
+        </button>
 
 
         <div class="game-area">
