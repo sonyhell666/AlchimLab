@@ -87,7 +87,7 @@ html, body {
     border: none;
     border-radius: 0;
     box-shadow: none;
-    /* --- ДОБАВЛЕНО: Подсказка для аппаратного ускорения --- */
+    /* Подсказка для аппаратного ускорения */
     will-change: transform;
 }
 .cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(70%); }

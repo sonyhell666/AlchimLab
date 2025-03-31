@@ -105,83 +105,23 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     // --- Функции для пузырьков ---
-    function createBubble() {
-        if (!bubblesContainer) return;
-        const bubble = document.createElement('div');
-        bubble.classList.add('bubble');
-        const size = Math.random() * 8 + 6;
-        const duration = Math.random() * 2.5 + 3;
-        const delay = Math.random() * 1.5;
-        const horizontalPosition = Math.random() * 90 + 5;
-        bubble.style.width = `${size}px`; bubble.style.height = `${size}px`;
-        bubble.style.left = `${horizontalPosition}%`;
-        bubble.style.animationDuration = `${duration}s`; bubble.style.animationDelay = `${delay}s`;
-        bubblesContainer.appendChild(bubble);
-        setTimeout(() => { bubble.remove(); }, (duration + delay) * 1000 + 100);
-    }
+    function createBubble() { if (!bubblesContainer) return; const b = document.createElement('div'); b.classList.add('bubble'); const s = Math.random() * 8 + 6; const d = Math.random() * 2.5 + 3; const l = Math.random() * 1.5; const h = Math.random() * 90 + 5; b.style.width = `${s}px`; b.style.height = `${s}px`; b.style.left = `${h}%`; b.style.animationDuration = `${d}s`; b.style.animationDelay = `${l}s`; bubblesContainer.appendChild(b); setTimeout(() => { b.remove(); }, (d + l) * 1000 + 100); }
     setInterval(createBubble, 500);
 
     // --- Функция обновления визуала жидкости и пузырьков ---
-    function updateLiquidLevelVisual(percentage) {
-        const level = Math.max(LIQUID_MIN_LEVEL, Math.min(LIQUID_MAX_LEVEL, percentage));
-        if (cauldronElement) {
-            cauldronElement.style.setProperty('--liquid-level', `${level}%`);
-             if(bubblesContainer) { bubblesContainer.style.height = `${level}%`; }
-        } else { console.warn("Cauldron element not found."); }
-    }
+    function updateLiquidLevelVisual(percentage) { const l = Math.max(LIQUID_MIN_LEVEL, Math.min(LIQUID_MAX_LEVEL, percentage)); if (cauldronElement) { cauldronElement.style.setProperty('--liquid-level', `${l}%`); if(bubblesContainer) { bubblesContainer.style.height = `${l}%`; } } else { console.warn("Cauldron !found."); } }
 
     // --- Общая функция обновления UI ---
-    function updateDisplay() {
-        if (essenceCountElement) { essenceCountElement.textContent = formatNumber(Math.floor(essence)); }
-        if (essencePerSecondElement && perSecondDisplayDiv) { essencePerSecondElement.textContent = formatNumber(essencePerSecond); perSecondDisplayDiv.style.display = essencePerSecond > 0 ? 'block' : 'none'; }
-        if (gemCountElement) { gemCountElement.textContent = formatNumber(gems); }
-        if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) { renderUpgrades(); }
-    }
+    function updateDisplay() { if (essenceCountElement) essenceCountElement.textContent = formatNumber(Math.floor(essence)); if (essencePerSecondElement && perSecondDisplayDiv) { essencePerSecondElement.textContent = formatNumber(essencePerSecond); perSecondDisplayDiv.style.display = essencePerSecond > 0 ? 'block' : 'none'; } if (gemCountElement) gemCountElement.textContent = formatNumber(gems); if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) renderUpgrades(); }
 
     // --- Функция форматирования чисел ---
-    function formatNumber(num) { /* ... (код без изменений) ... */ }
+    function formatNumber(num) { if (isNaN(num)||!Number.isFinite(num)) { console.warn("formatNum invalid:", num); return "ERR"; } if (num < 1000) return num.toString(); if (num < 1e6) return (num/1e3).toFixed(1).replace('.0','')+'K'; if (num < 1e9) return (num/1e6).toFixed(1).replace('.0','')+'M'; return (num/1e9).toFixed(1).replace('.0','')+'B'; }
 
     // --- Функция для отображения "+N" при клике ---
-    function showClickFeedback(amount, type = 'essence') { /* ... (код без изменений, уже включает иконки) ... */ }
+    function showClickFeedback(amount, type = 'essence') { if (isBlocked||!clickFeedbackContainer) return; const f=document.createElement('div'); f.className='click-feedback'; const fmt=formatNumber(amount); if (type==='gem'){ const i=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="var(--gem-color)" style="vertical-align:middle;margin-left:4px;"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/></svg>`; f.innerHTML=`+${fmt}${i}`; f.style.fontSize='1.3em'; f.style.fontWeight='bold'; f.style.color='#f0f0f0';} else { f.textContent=`+${fmt} 🧪`; f.style.color='var(--accent-color)';} const ox=Math.random()*60-30; const oy=(type==='gem')?(Math.random()*20+15):(Math.random()*20-10); f.style.left=`calc(50% + ${ox}px)`; f.style.top=`calc(50% + ${oy}px)`; clickFeedbackContainer.appendChild(f); setTimeout(()=>{f.remove();},950); }
 
     // --- Логика клика по котлу ---
-    if (cauldronElement) {
-        cauldronElement.addEventListener('click', () => {
-            const currentTime = Date.now();
-            if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            if (isBlocked) { /* ... (код без изменений) ... */ return; }
-
-            if (currentTime - lastClickTime >= MIN_CLICK_INTERVAL) {
-                warningCount = 0;
-                lastInteractionTime = currentTime;
-
-                // 1. Эссенция
-                let clickAmount = essencePerClick;
-                if (Number.isFinite(clickAmount)) { essence += clickAmount; if (clickFeedbackContainer) showClickFeedback(clickAmount, 'essence'); }
-                else { console.error("Invalid essencePerClick value:", essencePerClick); }
-
-                // 2. Кристалл
-                if (Math.random() < GEM_AWARD_CHANCE) { gems += GEMS_PER_AWARD; console.log(`Got gem! Total: ${gems}`); if (clickFeedbackContainer) showClickFeedback(GEMS_PER_AWARD, 'gem'); if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); }
-
-                // 3. Жидкость
-                visualLiquidLevel += LIQUID_INCREASE_PER_CLICK; visualLiquidLevel = Math.min(visualLiquidLevel, LIQUID_MAX_LEVEL);
-                updateLiquidLevelVisual(visualLiquidLevel);
-
-                // 4. Обновление UI
-                updateDisplay();
-
-                // --- ВОЗВРАЩАЕМ Анимацию клика ---
-                cauldronElement.style.transform = 'scale(0.95)';
-                setTimeout(() => { if(cauldronElement) cauldronElement.style.transform = 'scale(1)'; }, 80);
-                // --- ---
-
-                lastClickTime = currentTime;
-            } else {
-                // Логика предупреждения (без изменений)
-                warningCount++; /* ... */ lastInteractionTime = currentTime; /* ... */
-            }
-        });
-    } else { console.error("Cauldron element not found!"); }
+    if (cauldronElement) { cauldronElement.addEventListener('click', ()=>{ const cT=Date.now(); if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); if (isBlocked) { showTemporaryNotification(translations.autoclickerBlocked?.[currentLanguage]||"Autoclicker detected! Clicking blocked.", "error"); return; } if(cT-lastClickTime>=MIN_CLICK_INTERVAL){ warningCount=0; lastInteractionTime=cT; let clA=essencePerClick; if(Number.isFinite(clA)){ essence+=clA; if(clickFeedbackContainer) showClickFeedback(clA,'essence');} else { console.error("Invalid E/Click:", essencePerClick);} if(Math.random()<GEM_AWARD_CHANCE){ gems+=GEMS_PER_AWARD; console.log(`Got gem! Total: ${gems}`); if(clickFeedbackContainer) showClickFeedback(GEMS_PER_AWARD,'gem'); if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');} visualLiquidLevel+=LIQUID_INCREASE_PER_CLICK; visualLiquidLevel=Math.min(visualLiquidLevel,LIQUID_MAX_LEVEL); updateLiquidLevelVisual(visualLiquidLevel); updateDisplay(); cauldronElement.style.transform='scale(0.95)'; setTimeout(()=>{if(cauldronElement) cauldronElement.style.transform='scale(1)';},80); lastClickTime=cT;} else { warningCount++; lastInteractionTime=cT; console.warn(`Warn ${warningCount}/${MAX_WARNINGS}`); showTemporaryNotification(`${translations.tooFastClick?.[currentLanguage]||"Clicking too fast!"} Warn ${warningCount}/${MAX_WARNINGS}`, "warning"); if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); if(warningCount>=MAX_WARNINGS){ isBlocked=true; console.error("Blocked."); showTemporaryNotification(translations.autoclickerBlocked?.[currentLanguage]||"Autoclicker detected! Clicking blocked.", "error"); if(tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error'); if(cauldronElement) cauldronElement.classList.add('blocked-cauldron');}}}); } else { console.error("Cauldron !found!"); }
 
     // --- Логика авто-клика ---
     setInterval(() => { if (!isBlocked && essencePerSecond > 0 && Number.isFinite(essencePerSecond)) { const eA = essencePerSecond / 10; if (Number.isFinite(eA)) { essence += eA; updateDisplay(); } else { console.warn("..."); } } }, 100);
@@ -190,14 +130,17 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(() => { const cT = Date.now(); if (cT - lastInteractionTime > IDLE_TIMEOUT && visualLiquidLevel > LIQUID_MIN_LEVEL) { visualLiquidLevel -= LIQUID_DECAY_RATE; visualLiquidLevel = Math.max(visualLiquidLevel, LIQUID_MIN_LEVEL); } updateLiquidLevelVisual(visualLiquidLevel); }, LIQUID_UPDATE_INTERVAL);
 
     // --- Логика улучшений ---
-    function calculateCost(upgrade) { /* ... (код без изменений) ... */ }
-    function renderUpgrades() { /* ... (код без изменений, уже включает перевод) ... */ }
-    function buyUpgrade(upgradeId) { /* ... (код без изменений) ... */ }
-    function recalculateBonuses() { /* ... (код без изменений) ... */ }
+    function calculateCost(u) { if(!u||typeof u.baseCost!=='number'||typeof u.costMultiplier!=='number'||typeof u.currentLevel!=='number'){console.error("Invalid calcCost:",u);return Infinity;} return Math.floor(u.baseCost*Math.pow(u.costMultiplier,u.currentLevel));}
+    function renderUpgrades() { if(!upgradesListElement){console.error("Upgrades list !found!");return;} upgradesListElement.innerHTML=''; upgrades.sort((a,b)=>(a.requiredEssence||0)-(b.requiredEssence||0)); if(upgrades.length===0){upgradesListElement.innerHTML=`<li><p>No upgrades defined.</p></li>`;return;} const cEF=Math.floor(essence); upgrades.forEach(u=>{ const cost=calculateCost(u); if(!Number.isFinite(cost)){console.error("Skip render invalid cost:",u.id);return;} const req=u.requiredEssence||0; const isL=cEF<req; const canA=cEF>=cost; const li=document.createElement('li'); if(isL)li.classList.add('locked'); else if(!canA)li.classList.add('cannot-afford'); const tN=translations[u.nameKey]?.[currentLanguage]||u.nameKey; const tD=translations[u.descKey]?.[currentLanguage]||u.descKey; const bT=translations.buyButton?.[currentLanguage]||"Buy"; const rP=translations.requirementPrefix?.[currentLanguage]||"Need"; const rIP=translations.requirementInfoPrefix?.[currentLanguage]||"Requires"; let btnTxt=bT; let btnDis=false; if(isL){btnDis=true;btnTxt=`${rP} ${formatNumber(req)} 🧪`;}else if(!canA){btnDis=true;} li.innerHTML=`<div class="upgrade-info"><h3>${tN} (Lv. ${u.currentLevel})</h3><p>${tD}</p><p class="upgrade-cost">Cost: ${formatNumber(cost)} 🧪</p>${isL?`<p class="requirement-info">${rIP}: ${formatNumber(req)} 🧪</p>`:''}</div><button class="buy-upgrade-btn" data-upgrade-id="${u.id}">${btnTxt}</button>`; const btn=li.querySelector('.buy-upgrade-btn'); if(btn){btn.disabled=btnDis; if(!isL){btn.addEventListener('click',(e)=>{e.stopPropagation(); if(!btn.disabled)buyUpgrade(u.id);});}} upgradesListElement.appendChild(li);});}
+    function buyUpgrade(id) { if(isBlocked){showTemporaryNotification(translations.actionBlocked?.[currentLanguage]||"Action blocked.", "error");return;} const u=upgrades.find(up=>up.id===id); if(!u){console.error("Upgrade !found:",id);return;} const req=u.requiredEssence||0; if(Math.floor(essence)<req){showTemporaryNotification(`${translations.needMoreEssence?.[currentLanguage]||"Need more essence!"} ${formatNumber(req)} 🧪`, "error");return;} const cost=calculateCost(u); if(!Number.isFinite(cost)){showTemporaryNotification(translations.invalidCostError?.[currentLanguage]||"Error: Invalid upgrade cost!", "error");return;} if(essence>=cost){essence-=cost; u.currentLevel++; recalculateBonuses(); updateDisplay(); if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');} else {showTemporaryNotification(translations.notEnoughEssence?.[currentLanguage]||"Not enough essence!", "error"); if(tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');}}
+    function recalculateBonuses() { essencePerClick=1; essencePerSecond=0; upgrades.forEach(u=>{ if(u.currentLevel>0 && Number.isFinite(u.value) && typeof u.type==='string'){ if(u.type==='click')essencePerClick+=u.value*u.currentLevel; else if(u.type==='auto')essencePerSecond+=u.value*u.currentLevel;} else if(u.currentLevel>0){console.warn("Invalid bonus data:",u);}}); if(!Number.isFinite(essencePerClick)){console.error("Invalid E/Click");essencePerClick=1;} if(!Number.isFinite(essencePerSecond)){console.error("Invalid E/Sec");essencePerSecond=0;} }
 
-    // --- Открытие/Закрытие панели улучшений ---
-    if (openUpgradesBtn && upgradesPanel) { openUpgradesBtn.addEventListener('click', () => { renderUpgrades(); upgradesPanel.classList.remove('hidden'); }); } else { console.error("..."); }
-    if (closeUpgradesBtn && upgradesPanel) { closeUpgradesBtn.addEventListener('click', () => { upgradesPanel.classList.add('hidden'); }); } else { console.error("..."); }
+    // --- Открытие/Закрытие панелей ---
+    if(openUpgradesBtn&&upgradesPanel){openUpgradesBtn.addEventListener('click',()=>{renderUpgrades();upgradesPanel.classList.remove('hidden');});}else{console.error("...");}
+    if(closeUpgradesBtn&&upgradesPanel){closeUpgradesBtn.addEventListener('click',()=>{upgradesPanel.classList.add('hidden');});}else{console.error("...");}
+    if(settingsBtn){settingsBtn.addEventListener('click', openSettings);} else {console.error("...");}
+    if(closeSettingsBtn){closeSettingsBtn.addEventListener('click', closeSettings);} else {console.error("...");}
+    if(settingsPanel){settingsPanel.addEventListener('click',(e)=>{if(e.target===settingsPanel)closeSettings();});}
 
     // --- Логика настроек ---
     function openSettings() { if (settingsPanel) { updateActiveLangButton(); settingsPanel.classList.remove('hidden'); } }
@@ -205,21 +148,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function setLanguage(lang) { if (translations.greetingBase[lang]) { currentLanguage = lang; console.log(`Lang: ${currentLanguage}`); applyTranslations(); updateActiveLangButton(); saveGame(); if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) { renderUpgrades(); } } else { console.warn(`Lang "${lang}" !found.`); } }
     function applyTranslations() { if (userGreetingElement) { let g = translations.greetingBase[currentLanguage] || "Laboratory"; if (userName) { g += ` ${userName}`; } userGreetingElement.textContent = g; } document.querySelectorAll('[data-translate]').forEach(el => { const k = el.dataset.translate; if (translations[k]?.[currentLanguage]) { if(el.tagName === 'BUTTON' || el.tagName === 'H2' || el.tagName === 'H3' || el.parentElement?.id === 'per-second-display') { el.textContent = translations[k][currentLanguage]; } else { el.textContent = translations[k][currentLanguage]; } } else { console.warn(`Trans key "${k}"/${currentLanguage} !found.`); } }); }
     function updateActiveLangButton() { if (!languageOptionsContainer) return; languageOptionsContainer.querySelectorAll('.lang-btn').forEach(b => { b.classList.toggle('active', b.dataset.lang === currentLanguage); }); }
-    if (settingsBtn) { settingsBtn.addEventListener('click', openSettings); } else { console.error("..."); }
-    if (closeSettingsBtn) { closeSettingsBtn.addEventListener('click', closeSettings); } else { console.error("..."); }
-    if (settingsPanel) { settingsPanel.addEventListener('click', (e) => { if (e.target === settingsPanel) closeSettings(); }); }
     if (languageOptionsContainer) { languageOptionsContainer.addEventListener('click', (e) => { if (e.target.classList.contains('lang-btn')) { const l = e.target.dataset.lang; if (l) setLanguage(l); } }); } else { console.error("..."); }
 
     // --- Логика реферальной системы ---
-    function checkReferralAndBonus() { /* ... (код без изменений) ... */ }
-    function handleNewReferral(inviterId) { /* ... (код без изменений) ... */ }
-    function handleBonusClaim(referralId) { /* ... (код без изменений) ... */ }
-    if (inviteFriendBtn) { inviteFriendBtn.addEventListener('click', () => { /* ... (код без изменений) ... */ }); } else { console.error("..."); }
+    function checkReferralAndBonus() { const sP=tg.initDataUnsafe?.start_param; const uP=new URLSearchParams(window.location.search); const cBP=uP.get('claimBonus'); console.log("Params:",window.location.search,"Start:",sP); if(sP&&!isNaN(parseInt(sP))){handleNewReferral(sP);} else if(cBP){handleBonusClaim(cBP);}}
+    function handleNewReferral(invId) { tg.CloudStorage.getItem('gameState',(err,val)=>{ if(err){console.error("CS err referral:",err);return;} let isNew=true; if(val){try{const sS=JSON.parse(val);if((sS.essence&&sS.essence>0)||(sS.upgrades&&sS.upgrades.some(u=>u.level>0))||(sS.gems&&sS.gems>0)){isNew=false;console.log("Old player.");}}catch(e){console.error("Parse err ref check",e);}}else{console.log("New player.");} if(isNew){console.log(`New! Inviter: ${invId}. Send...`);saveGame();if(tg.sendData){const dS=JSON.stringify({type:'referral_registered',inviter_id:invId});try{tg.sendData(dS);console.log("Sent ref data:",dS);showTemporaryNotification(translations.welcomeReferral?.[currentLanguage]||"Welcome! Inviter gets bonus.", "success");}catch(sendErr){console.error("Send data err:",sendErr);showTemporaryNotification(translations.referralRegErrorBot?.[currentLanguage]||"Could not register invite (bot error).", "error");}}else{console.error("tg.sendData N/A.");showTemporaryNotification(translations.referralRegErrorFunc?.[currentLanguage]||"Could not register invite (N/A).", "error");}}else{console.log("Not new, no bonus.");}}); }
+    function handleBonusClaim(refId) { console.log(`Claim bonus: ${refId}`); if(!refId||typeof refId!=='string'||refId.trim()===''){console.warn("Invalid refId.");return;} tg.CloudStorage.getItem('claimed_bonuses',(err,val)=>{ if(err){console.error("CS err get claimed:",err);showTemporaryNotification(translations.bonusCheckError?.[currentLanguage]||"Bonus check error!", "error");return;} let cB=[]; if(val){try{cB=JSON.parse(val);if(!Array.isArray(cB))cB=[];}catch(e){console.error("Parse claimed:",e);cB=[];}} if(cB.includes(refId)){console.log(`Bonus ${refId} claimed.`);showTemporaryNotification(translations.bonusAlreadyClaimed?.[currentLanguage]||"Bonus already claimed.", "warning");} else { const bA=50000; if(Number.isFinite(essence)){essence+=bA;console.log(`Claimed ${refId}! +${bA} E.`);showTemporaryNotification(`+${formatNumber(bA)} 🧪 ${translations.bonusReasonFriend?.[currentLanguage]||"for invited friend!"}`, "success");updateDisplay();cB.push(refId);tg.CloudStorage.setItem('claimed_bonuses',JSON.stringify(cB),(setErr)=>{if(setErr)console.error("Save claimed err:",setErr);else{console.log("Claimed updated.");saveGame();}}); } else { console.error("Cannot add bonus, essence invalid:",essence);showTemporaryNotification(translations.bonusAddError?.[currentLanguage]||"Bonus add error!", "error");}} try{const url=new URL(window.location);url.searchParams.delete('claimBonus');window.history.replaceState({},document.title,url.toString());}catch(e){console.warn("Could not clean URL",e);}}); }
+    if (inviteFriendBtn) { inviteFriendBtn.addEventListener('click', () => { if (tg?.initDataUnsafe?.user?.id) { const bot='AlchimLaboratory_Bot'; const app='AlchimLab'; const uid=tg.initDataUnsafe.user.id; const url=`https://t.me/${bot}/${app}?start=${uid}`; const txt=translations.shareText?.[currentLanguage]||'Join my Alchemy Lab in Telegram! 🧪⚗️ Click and create elixirs!'; tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(txt)}`); console.log('Share link:',url); } else { console.error('Cannot get user ID/API.'); showTemporaryNotification(translations.inviteLinkError?.[currentLanguage]||'Failed to create invite link.', 'error'); } }); } else { console.error("..."); }
 
     // --- Сохранение/Загрузка ---
-    function saveGame() { if (!tg?.CloudStorage) { console.error("..."); return; } if (!Number.isFinite(essence)) essence = 0; if (!Number.isFinite(gems)) gems = 0; const gS = { essence: essence, gems: gems, upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel })), language: currentLanguage }; try { const gSS = JSON.stringify(gS); tg.CloudStorage.setItem('gameState', gSS, (err) => { if (err) console.error("Save err:", err); }); } catch (e) { console.error("Stringify err:", e); showTemporaryNotification("Save Error!", "error"); } }
-    function loadGame() { isBlocked = false; warningCount = 0; if(cauldronElement) cauldronElement.classList.remove('blocked-cauldron'); if (!tg?.CloudStorage) { console.error("..."); resetGameData(); applyTranslations(); updateDisplay(); updateLiquidLevelVisual(LIQUID_MIN_LEVEL); showTemporaryNotification("Load Error.", "warning"); return; } console.log("Loading..."); tg.CloudStorage.getItem('gameState', (err, val) => { let loadedOk = false; if (err) { console.error("Load err:", err); showTemporaryNotification("Load Error!", "error"); resetGameData(); } else if (val) { console.log("Data recv:", val.length); try { const gS = JSON.parse(val); essence = Number(gS.essence) || 0; if (!Number.isFinite(essence)) essence = 0; gems = Number(gS.gems) || 0; if (!Number.isFinite(gems)) gems = 0; currentLanguage = gS.language || 'ru'; if (!translations.greetingBase[currentLanguage]) { console.warn(`Lang "${currentLanguage}" !supported, -> 'ru'.`); currentLanguage = 'ru'; } upgrades.forEach(u => { const s = gS.upgrades?.find(su => su.id === u.id); u.currentLevel = (s && Number.isFinite(Number(s.level))) ? Number(s.level) : 0; }); recalculateBonuses(); console.log("Loaded OK."); loadedOk = true; } catch (e) { console.error("Parse err:", e); showTemporaryNotification("Read Error!", "error"); resetGameData(); } } else { console.log("No save data."); resetGameData(); } checkReferralAndBonus(); applyTranslations(); updateDisplay(); visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel); }); }
-    function resetGameData() { isBlocked = false; warningCount = 0; if(cauldronElement) cauldronElement.classList.remove('blocked-cauldron'); essence = 0; gems = 0; upgrades.forEach(u => u.currentLevel = 0); currentLanguage = 'ru'; recalculateBonuses(); visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); console.log("Reset OK."); }
+    function saveGame() { if (!tg?.CloudStorage) { console.error("..."); return; } if (!Number.isFinite(essence)) essence = 0; if (!Number.isFinite(gems)) gems = 0; const gS = { essence: essence, gems: gems, upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel })), language: currentLanguage }; try { const gSS = JSON.stringify(gS); tg.CloudStorage.setItem('gameState', gSS, (err) => { if (err) console.error("Save err:", err); }); } catch (e) { console.error("Stringify err:", e); showTemporaryNotification(translations.saveCritError?.[currentLanguage]||"Critical save error!", "error"); } }
+    function loadGame() { isBlocked=false; warningCount=0; if(cauldronElement) cauldronElement.classList.remove('blocked-cauldron'); if (!tg?.CloudStorage) { console.error("..."); resetGameData(); applyTranslations(); updateDisplay(); updateLiquidLevelVisual(LIQUID_MIN_LEVEL); showTemporaryNotification(translations.loadErrorStartNew?.[currentLanguage]||"Failed to load progress. Starting new game.", "warning"); return; } console.log("Loading..."); tg.CloudStorage.getItem('gameState', (err, val) => { let loadedOk = false; if (err) { console.error("Load err:", err); showTemporaryNotification(translations.loadError?.[currentLanguage]||"Error loading progress!", "error"); resetGameData(); } else if (val) { console.log("Data recv:", val.length); try { const gS = JSON.parse(val); essence = Number(gS.essence) || 0; if (!Number.isFinite(essence)) essence = 0; gems = Number(gS.gems) || 0; if (!Number.isFinite(gems)) gems = 0; currentLanguage = gS.language || 'ru'; if (!translations.greetingBase[currentLanguage]) { console.warn(`Lang "${currentLanguage}" !supported, -> 'ru'.`); currentLanguage = 'ru'; } upgrades.forEach(u => { const s = gS.upgrades?.find(su => su.id === u.id); u.currentLevel = (s && Number.isFinite(Number(s.level))) ? Number(s.level) : 0; }); recalculateBonuses(); console.log("Loaded OK."); loadedOk = true; } catch (e) { console.error("Parse err:", e); showTemporaryNotification(translations.readError?.[currentLanguage]||"Error reading data!", "error"); resetGameData(); } } else { console.log("No save data."); resetGameData(); } checkReferralAndBonus(); applyTranslations(); updateDisplay(); visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel); }); }
+    function resetGameData() { isBlocked=false; warningCount=0; if(cauldronElement) cauldronElement.classList.remove('blocked-cauldron'); essence=0; gems=0; upgrades.forEach(u=>u.currentLevel=0); currentLanguage='ru'; recalculateBonuses(); visualLiquidLevel=LIQUID_MIN_LEVEL; lastInteractionTime=Date.now(); console.log("Reset OK."); }
 
     // --- Функция уведомлений ---
     function showTemporaryNotification(message, type = "info") { const n=document.createElement('div'); n.className=`notification ${type}`; n.textContent=message; document.body.appendChild(n); setTimeout(()=>{n.style.opacity='1'; n.style.bottom='80px';},10); setTimeout(()=>{n.style.opacity='0'; n.style.bottom='70px'; setTimeout(()=>{n.remove();},500);},2500); }
