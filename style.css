@@ -8,10 +8,17 @@
     --button-bg: #5d5480;
     --button-hover-bg: #71689a;
     --disabled-color: #6c6c6c;
-    --flask-color: #00abc1; /* Используется для скина по умолчанию */
+    --flask-color: #00abc1; /* Используется для фона скина по умолчанию */
     --gem-color: #ff69b4;
-    /* Добавлена переменная для цвета жидкости, запасной цвет с alpha=0.35 */
-    --liquid-color: rgba(138, 43, 226, 0.35);
+    --liquid-color: rgba(138, 43, 226, 0.35); /* Управляется JS, запасной цвет */
+
+    /* --- НОВОЕ: Переменные для цвета обводки колбы --- */
+    --cauldron-border-color-default: #008b9a;   /* Темнее основного цвета колбы */
+    --cauldron-border-color-gold: #b8860b;     /* DarkGoldenrod - для золотой */
+    --cauldron-border-color-crystal: #add8e6;   /* LightBlue - для хрустальной (или можно #ffffff) */
+    --cauldron-border-color-obsidian: #1a1a1a; /* Очень темный - для обсидиана */
+    /* Запасной цвет обводки, если переменная не задана */
+    --cauldron-border-color: var(--cauldron-border-color-default);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -20,12 +27,15 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .app-container { display: flex; flex-direction: column; height: 100%; padding: 15px; position: relative; }
 
 /* --- Кнопки-иконки --- */
+/* ... (без изменений) ... */
 .control-button-icon { background: rgba(0, 0, 0, 0.2); border: none; padding: 0; cursor: pointer; opacity: 0.8; transition: opacity 0.2s ease, background-color 0.2s ease; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; color: var(--text-color); overflow: hidden; }
 .control-button-icon:hover { opacity: 1; background-color: rgba(255, 255, 255, 0.1); }
 .control-button-icon img { display: block; width: 24px; height: 24px; max-width: 100%; max-height: 100%; object-fit: contain; }
 .settings-button { position: absolute; top: 15px; left: 15px; z-index: 51; background: none; border-radius: 50%; }
 
+
 /* --- Валюта/Магазин --- */
+/* ... (без изменений) ... */
 .secondary-currency { position: absolute; top: 15px; right: 15px; z-index: 50; }
 .gem-display { display: flex; align-items: center; background-color: rgba(0, 0, 0, 0.2); padding: 5px 10px; border-radius: 8px; font-size: 1.2em; font-weight: bold; }
 .gem-icon { display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; line-height: 1; }
@@ -41,36 +51,56 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .essence-icon { display: inline-block; margin-right: 5px; font-size: 0.9em; }
 .per-second-display { display: block; font-size: 0.4em; font-weight: normal; opacity: 0.7; margin-top: 0; margin-bottom: 0; color: var(--text-color); }
 
-/* --- Колба (БЕЗ ОБВОДКИ) --- */
+/* --- Колба --- */
 .cauldron {
     width: 180px; height: 200px; position: relative; cursor: pointer; user-select: none; margin: 20px auto;
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
-    border: none; border-radius: 0; will-change: transform, background;
-    transition: transform 0.1s ease-out, filter 0.1s ease-out, background-color 0.3s ease, background-image 0.3s ease;
-    overflow: hidden;
+    border-radius: 0; /* Убираем border-radius, т.к. форма задается clip-path */
+    will-change: transform, background;
+    /* ИЗМЕНЕНО: Добавлена обводка (border) */
+    border: 3px solid var(--cauldron-border-color); /* Используем переменную для цвета обводки */
+    /* ИЗМЕНЕНО: Добавлен border-color в transition */
+    transition: transform 0.1s ease-out, filter 0.1s ease-out, background-color 0.3s ease, background-image 0.3s ease, border-color 0.3s ease;
+    overflow: hidden; /* Важно оставить overflow: hidden */
+    background-clip: padding-box; /* Чтобы фон не залезал под рамку */
 }
 .cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(70%); }
 
 .cauldron::before { /* Жидкость */
     content: '';
     position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
+    /* ИЗМЕНЕНО: Учитываем толщину рамки, чтобы жидкость была внутри */
+    bottom: 3px;
+    left: 3px;
+    right: 3px;
+    /* Ширина теперь вычисляется как 100% минус двойная рамка */
+    width: calc(100% - 6px);
+    /* Высота остается прежней, управляется --liquid-level */
     height: var(--liquid-level, 10%);
-    /* ИЗМЕНЕНО: Используем CSS переменную и устанавливаем новую прозрачность */
-    background-color: var(--liquid-color); /* Цвет управляется JS, запасной в :root */
+    background-color: var(--liquid-color); /* Цвет управляется JS */
     z-index: 1;
-    overflow: hidden;
-    /* ИЗМЕНЕНО: Добавляем transition для плавного изменения цвета и сохраняем для высоты */
+    /* Важно: Не наследуем clip-path от родителя, т.к. жидкость должна быть внутри рамки */
+    /* clip-path: inherit; - УДАЛЕНО или НЕ ДОБАВЛЯТЬ */
+    overflow: hidden; /* На всякий случай */
     transition: background-color 1s ease, height 0.1s linear;
+    /* Можно добавить небольшой border-radius, чтобы сгладить углы жидкости внутри */
+    border-radius: 5px 5px 0 0; /* Скругляем только верхние углы */
 }
 
+
 .bubbles-container { /* Пузырьки */
-    position: absolute; bottom: 0; left: 0; width: 100%; height: var(--liquid-level, 10%);
-    z-index: 2; pointer-events: none; overflow: hidden;
-    /* Контейнер для пузырьков подстраивается под уровень жидкости */
+    position: absolute;
+    /* ИЗМЕНЕНО: Позиционируем относительно рамки */
+    bottom: 3px;
+    left: 3px;
+    width: calc(100% - 6px); /* Ширина как у жидкости */
+    height: var(--liquid-level, 10%); /* Высота как у жидкости */
+    z-index: 2;
+    pointer-events: none;
+    overflow: hidden;
     transition: height 0.1s linear;
+    /* Можно тоже скруглить */
+    border-radius: 5px 5px 0 0;
 }
 
 .bubble { position: absolute; bottom: -20px; width: 8px; height: 8px; background-color: var(--bubble-color); border-radius: 50%; opacity: 0.6; animation: rise 3s infinite ease-in; }
@@ -78,11 +108,14 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .cauldron:active:not(.blocked-cauldron) { transform: scale(0.95); }
 
 /* --- Фидбек клика --- */
+/* ... (без изменений) ... */
 #click-feedback-container { position: absolute; top: calc(50% - 150px); left: 50%; transform: translateX(-50%); width: 170px; height: 120px; pointer-events: none; z-index: 10; }
 .click-feedback { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.2em; font-weight: bold; color: var(--accent-color); opacity: 1; animation: fadeUp 1s ease-out forwards; white-space: nowrap; display: inline-flex; align-items: center; }
 @keyframes fadeUp { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); } }
 
+
 /* --- Кнопки управления --- */
+/* ... (без изменений) ... */
 .controls { margin-top: 20px; display: flex; justify-content: space-around; padding: 10px 0; background-color: rgba(0, 0, 0, 0.1); border-radius: 8px; }
 .control-button { padding: 10px 20px; font-size: 1em; background-color: var(--button-bg); color: var(--text-color); border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease-out; }
 .control-button:hover:not(:disabled) { background-color: var(--button-hover-bg); }
@@ -90,7 +123,9 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .telegram-feature { background-color: #5093d1; }
 .telegram-feature:hover:not(:disabled) { background-color: #60a3e1; }
 
+
 /* --- Панели --- */
+/* ... (без изменений) ... */
 .upgrades-panel, .settings-panel .settings-box, .shop-panel { background-color: var(--secondary-bg); border-radius: 15px; box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2); padding: 15px; display: flex; flex-direction: column; color: var(--text-color); }
 .upgrades-panel, .shop-panel { position: fixed; bottom: 0; left: 0; width: 100%; border-bottom-left-radius: 0; border-bottom-right-radius: 0; transform: translateY(100%); transition: transform 0.3s ease-out; z-index: 100; }
 .upgrades-panel { height: 60%; }
@@ -101,7 +136,9 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .close-button { background: none; border: none; color: var(--text-color); font-size: 2em; line-height: 1; cursor: pointer; opacity: 0.7; transition: opacity 0.2s ease; padding: 0 5px; }
 .close-button:hover { opacity: 1; }
 
+
 /* --- Улучшения --- */
+/* ... (без изменений) ... */
 #upgrades-list { list-style: none; overflow-y: auto; flex-grow: 1; padding-right: 5px; margin: 0; }
 #upgrades-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: opacity 0.3s ease, background-color 0.3s ease; }
 #upgrades-list li:last-child { border-bottom: none; }
@@ -117,7 +154,9 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 #upgrades-list li.locked .buy-upgrade-btn { background-color: #555; border: 1px solid rgba(255, 255, 255, 0.1); color: var(--accent-color); font-size: 0.8em; opacity: 1; cursor: default; }
 .requirement-info { font-size: 0.75em; color: var(--accent-color); opacity: 1; margin-top: 5px; font-weight: bold; }
 
+
 /* --- Настройки (только язык) --- */
+/* ... (без изменений) ... */
 .settings-panel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-out; }
 .settings-panel:not(.hidden) { opacity: 1; pointer-events: auto; }
 .settings-box { width: 90%; max-width: 400px; max-height: 80vh; border-radius: 15px; }
@@ -128,7 +167,9 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .lang-btn:hover { background-color: var(--button-hover-bg); }
 .lang-btn.active { background-color: var(--accent-color); color: var(--primary-bg); border-color: var(--text-color); font-weight: bold; }
 
+
 /* --- Магазин --- */
+/* ... (без изменений) ... */
 .shop-currency-display { text-align: right; margin-bottom: 15px; font-size: 1.1em; opacity: 0.9; display: flex; align-items: center; justify-content: flex-end; }
 .shop-currency-display .gem-icon { margin: 0 5px; vertical-align: middle; line-height: 1; }
 #shop-gem-count { font-weight: bold; }
@@ -154,18 +195,42 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
 .skin-action-btn.selected-btn { background-color: var(--primary-bg); border: 1px solid var(--accent-color); color: var(--accent-color); opacity: 0.8; cursor: default; }
 .skin-action-btn:disabled:not(.selected-btn) { background-color: var(--disabled-color); color: #a0a0a0; cursor: not-allowed; opacity: 0.7; }
 
-/* --- Скины колбы (только фон) --- */
-.cauldron.skin-default { background-color: var(--flask-color); background-image: none; }
-.cauldron.skin-gold { background-color: #ffd700; background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080); }
-.cauldron.skin-crystal { background-color: #add8e6; background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%); }
-.cauldron.skin-obsidian { background-color: #333; background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d); }
+
+/* --- Скины колбы (фон + ИЗМЕНЕНИЕ обводки) --- */
+.cauldron.skin-default {
+    background-color: var(--flask-color);
+    background-image: none;
+    /* Используем переменную для обводки по умолчанию */
+    border-color: var(--cauldron-border-color-default);
+}
+.cauldron.skin-gold {
+    background-color: #ffd700;
+    background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080);
+    /* Переопределяем цвет обводки для золотого скина */
+    border-color: var(--cauldron-border-color-gold);
+}
+.cauldron.skin-crystal {
+    background-color: #add8e6;
+    background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+    /* Переопределяем цвет обводки для хрустального скина */
+    border-color: var(--cauldron-border-color-crystal);
+}
+.cauldron.skin-obsidian {
+    background-color: #333;
+    background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d);
+    /* Переопределяем цвет обводки для обсидианового скина */
+    border-color: var(--cauldron-border-color-obsidian);
+}
 
 .hidden { display: none !important; }
 
 /* --- Адаптация --- */
+/* ... (без изменений) ... */
 @media (min-width: 600px) { .upgrades-panel, .shop-panel { left: 50%; transform: translate(-50%, 100%); width: 80%; max-width: 500px; } .shop-panel { max-width: 600px; } .upgrades-panel:not(.hidden), .shop-panel:not(.hidden) { transform: translate(-50%, 0); } #skins-list { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
 
+
 /* --- Уведомления --- */
+/* ... (без изменений) ... */
 .notification { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 8px; color: white; z-index: 1001; opacity: 0; transition: opacity 0.5s ease, bottom 0.3s ease; text-align: center; max-width: 80%; font-size: 0.9em; box-shadow: 0 2px 5px rgba(0,0,0,0.2); pointer-events: none; }
 .notification.info { background-color: #3498db; }
 .notification.error { background-color: #e74c3c; }
