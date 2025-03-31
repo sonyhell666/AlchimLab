@@ -2,8 +2,7 @@
 // Версия БЕЗ ЗВУКА, БЕЗ ОБВОДКИ, с исправлением ошибки CloudStorage
 // Добавлено: Динамический цвет жидкости, Обводка колбы, Отладочные логи
 // Исправлено: Мигание кнопок
-// Упрощен конец файла для поиска SyntaxError
-// РАСКОММЕНТИРОВАНЫ ПОСЛЕДНИЕ БЛОКИ, чтобы исправить ошибку
+// Очищен конец файла для исправления SyntaxError
 document.addEventListener('DOMContentLoaded', () => {
     // Инициализация Telegram Web App
     const tg = window.Telegram.WebApp;
@@ -241,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
      if (cauldronElement) {
          cauldronElement.addEventListener('click', () => {
              // !!! Отладочный лог !!!
-             console.log('Cauldron click event fired!');
+             // console.log('Cauldron click event fired!'); // Раскомментируйте для отладки, если нужно
              // !!! Конец лога !!!
 
              const currentTime = Date.now();
@@ -617,11 +616,32 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleNewReferral(inviterId) { console.log("Обработка нового реферала от", inviterId); /* Логика здесь */ }
     function handleBonusClaim(referralId) { console.log("Обработка запроса на бонус за реферала", referralId); /* Логика здесь */ }
     function cleanBonusUrlParam() { /* Логика здесь */ }
-    if (inviteFriendBtn) { /* Логика кнопки приглашения */ }
+    if (inviteFriendBtn) {
+        inviteFriendBtn.addEventListener('click', () => {
+            if (tg?.share) {
+                const userId = tg.initDataUnsafe?.user?.id;
+                if (!userId) {
+                    showTemporaryNotification(translations.inviteLinkError?.[currentLanguage] || "Не удалось создать ссылку.", "error");
+                    return;
+                }
+                const shareUrl = `https://t.me/${tg.initDataUnsafe.bot_username}/${tg.initDataUnsafe.web_app_name}?startapp=${userId}`;
+                tg.share({
+                    url: shareUrl,
+                    text: translations.shareText?.[currentLanguage] || 'Присоединяйся к игре!'
+                });
+                if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            } else {
+                showTemporaryNotification("Функция поделиться недоступна.", "warning");
+            }
+        });
+     }
 
     // --- Сохранение/Загрузка ---
     function saveGame() {
-        if (!tg?.CloudStorage || !tg.CloudStorage.setItem) { return; }
+        if (!tg?.CloudStorage || !tg.CloudStorage.setItem) {
+            // console.log("[Save] CloudStorage недоступен, сохранение невозможно."); // Раскомментировать для отладки
+            return;
+        }
         // console.log("[Save] Попытка сохранения..."); // Можно раскомментировать для отладки
         let isValid = true;
         if (!Number.isFinite(essence) || essence < 0) { console.warn(`[Save Valid] Эссенция->0`); essence = 0; isValid = false; }
@@ -640,7 +660,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // console.log(`[Save] Сохранение данных (${gameStateString.length} байт)...`); // Отладка
             try {
                 tg.CloudStorage.setItem('gameState', gameStateString, (error, success) => {
-                    if (error) { console.error("[Save Cb] Ошибка:", error); } else if (success) { /* Успешно */ } else { console.warn("[Save Cb] Неопред. результат."); }
+                    if (error) { console.error("[Save Cb] Ошибка:", error); }
+                    // else if (success) { console.log("[Save Cb] Успешно сохранено."); } // Раскомментировать для отладки
+                    // else { console.warn("[Save Cb] Неопред. результат."); } // Раскомментировать для отладки
                 });
             } catch (storageError) { console.error("[Save Try] Ошибка вызова setItem:", storageError); }
         } catch (stringifyError) { console.error("[Save] Ошибка JSON.stringify:", stringifyError); showTemporaryNotification(translations.saveCritError?.[currentLanguage] || "Ошибка сохранения!", "error"); }
@@ -652,9 +674,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cauldronElement) cauldronElement.classList.remove('blocked-cauldron');
         let needsReset = false;
 
+        // Флаг для выполнения пост-настроек один раз
+        let postSetupDone = false;
+
+        const performPostLoadSetup = () => {
+            if (postSetupDone) return;
+            console.log("[Load] Выполнение пост-настроек...");
+            applyTranslations();
+            updateDisplay(); // Первоначальное отображение
+            applyCauldronSkin();
+            updateLiquidColor(); // Устанавливаем цвет жидкости
+            visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel); // Устанавливаем нач. уровень
+            checkReferralAndBonus();
+            console.log(`[Load] Пост-настройки завершены. Состояние: E:${formatNumber(essence)}, G:${gems}, Skin:${activeSkinId}`);
+            postSetupDone = true;
+        };
+
         if (!tg?.CloudStorage || !tg.CloudStorage.getItem) {
             console.warn("[Load] CloudStorage объект недоступен. Новая игра.");
             needsReset = true;
+            resetGameData(); // Сбрасываем данные, если хранилище недоступно
+            performPostLoadSetup(); // Выполняем настройки сразу
         } else {
             try {
                 tg.CloudStorage.getItem('gameState', (error, value) => {
@@ -681,44 +721,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (needsReset) { resetGameData(); }
                     // Пост-настройки ВНУТРИ колбэка
-                    applyTranslations();
-                    updateDisplay(); // Первоначальное отображение
-                    applyCauldronSkin();
-                    updateLiquidColor(); // Устанавливаем цвет жидкости
-                    visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel); // Устанавливаем нач. уровень
-                    checkReferralAndBonus();
-                    console.log(`[Load Cb] Завершено. Состояние: E:${essence}, G:${gems}, Skin:${activeSkinId}`);
+                    performPostLoadSetup();
+                    console.log(`[Load Cb] Завершено.`);
                 });
             } catch (storageError) {
-                console.error("[Load Try] Ошибка вызова getItem:", storageError); showTemporaryNotification("Загрузка недоступна.", "error"); needsReset = true;
-                if (needsReset) { resetGameData(); }
-                // Пост-настройки ПРИ ОШИБКЕ ВЫЗОВА
-                applyTranslations();
-                updateDisplay();
-                applyCauldronSkin();
-                updateLiquidColor();
-                visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel);
-                checkReferralAndBonus();
+                console.error("[Load Try] Ошибка вызова getItem:", storageError); showTemporaryNotification("Загрузка недоступна.", "error");
+                needsReset = true;
+                resetGameData(); // Сбрасываем данные при ошибке вызова
+                performPostLoadSetup(); // Выполняем настройки
                 console.log(`[Load] Завершено после ошибки вызова getItem.`);
             }
         }
-
-        // Пост-настройки если CloudStorage недоступен сразу
-        if (!tg?.CloudStorage) {
-             setTimeout(() => {
-                 if (needsReset) { resetGameData(); }
-                 console.log("[Load Timeout] Выполнение пост-настройки.");
-                 applyTranslations();
-                 updateDisplay();
-                 applyCauldronSkin();
-                 updateLiquidColor();
-                 visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel);
-                 checkReferralAndBonus();
-                 console.log(`[Load Timeout] Завершено. Состояние: E:${essence}, G:${gems}, Skin:${activeSkinId}`);
-                 showTemporaryNotification("Прогресс не будет сохранен.", "warning");
-             }, 50);
-        }
     }
+
 
     function resetGameData() {
         console.log("Сброс данных игры к значениям по умолчанию.");
@@ -732,20 +747,28 @@ document.addEventListener('DOMContentLoaded', () => {
     function showTemporaryNotification(message, type = "info") { const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); void notification.offsetWidth; requestAnimationFrame(() => { notification.style.opacity = '1'; notification.style.bottom = '80px'; }); setTimeout(() => { notification.style.opacity = '0'; notification.style.bottom = '70px'; setTimeout(() => { if (notification.parentNode) { notification.remove(); } }, 500); }, 2500); }
 
     // --- Первоначальная инициализация ---
-    loadGame();
+    loadGame(); // Загружаем игру
 
 
     // --- Автосохранение и обработчики событий ---
-    // ЗАКОММЕНТИРОВАНО ДЛЯ ПОИСКА ОШИБКИ // Можно оставить эту строку комментария или удалить
-    const autoSaveInterval = setInterval(saveGame, 15000);
-    window.addEventListener('beforeunload', saveGame);
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { saveGame(); } });
-    if (tg?.onEvent) { tg.onEvent('viewportChanged', (event) => { if (event.isStateStable) { console.log("Viewport stable, save."); saveGame(); } }); }
-    // */ // <--- Убрана лишняя строка комментария
+    const autoSaveInterval = setInterval(saveGame, 15000); // Сохраняем каждые 15 секунд
+    window.addEventListener('beforeunload', saveGame); // Сохраняем перед закрытием
+    document.addEventListener('visibilitychange', () => { // Сохраняем при сворачивании/переключении вкладки
+        if (document.visibilityState === 'hidden') {
+            saveGame();
+        }
+    });
+    if (tg?.onEvent) {
+        tg.onEvent('viewportChanged', (event) => {
+            // Сохраняем, когда viewport стабилизируется (например, после скрытия/показа клавиатуры)
+            if (event && event.isStateStable) {
+                console.log("Viewport stable, save.");
+                saveGame();
+            }
+        });
+    }
 
     // --- Интервал для обновления цвета жидкости ---
-    // ЗАКОММЕНТИРОВАНО ДЛЯ ПОИСКА ОШИБКИ // Можно оставить эту строку комментария или удалить
     const liquidColorUpdateInterval = setInterval(updateLiquidColor, 5 * 60 * 1000); // Обновлять каждые 5 минут
-    // */ // <--- Убрана лишняя строка комментария
 
 }); // Конец DOMContentLoaded
