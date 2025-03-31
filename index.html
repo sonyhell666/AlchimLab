@@ -14,17 +14,22 @@
             <p id="user-greeting">Лаборатория Алхимика</p>
         </div>
 
+        <!-- Кнопка настроек -->
+        <button id="settings-btn" class="settings-button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                <path d="M19.14,12.94a2,2,0,0,1-1.64-.73l-.07-.09a6.84,6.84,0,0,0-1.57-1.13,1,1,0,0,0-1.1.15,1.39,1.39,0,0,0-.3.41l-.06.11-.19.41a2,2,0,0,1-1.84,1.23h-.12a2,2,0,0,1-1.83-1.23l-.19-.41-.06-.11a1.39,1.39,0,0,0-.3-.41,1,1,0,0,0-1.1-.15,6.84,6.84,0,0,0-1.57,1.13l-.07.09a2,2,0,0,1-1.64.73,2,2,0,0,1-1.64-.73l-.07-.09a6.79,6.79,0,0,0-1.13-1.57,1,1,0,0,0-.15-1.1,1.39,1.39,0,0,0-.41-.3l-.11-.06-.41-.19a2,2,0,0,1-1.23-1.84v-.12a2,2,0,0,1,1.23-1.84l.41-.19.11-.06a1.39,1.39,0,0,0,.41-.3,1,1,0,0,0,.15-1.1A6.79,6.79,0,0,0,4.86,6.16l.07.09a2,2,0,0,1,.73,1.64,2,2,0,0,1-.73,1.64l-.09.07a6.84,6.84,0,0,0,1.13,1.57,1,1,0,0,0,1.1.15,1.39,1.39,0,0,0,.3-.41l.06-.11.19-.41a2,2,0,0,1,1.84-1.23h.12a2,2,0,0,1,1.83,1.23l.19.41.06.11a1.39,1.39,0,0,0,.3.41,1,1,0,0,0,1.1.15,6.84,6.84,0,0,0,1.57-1.13l.07-.09a2,2,0,0,1,1.64-.73,2,2,0,0,1,1.64.73l.07.09a6.79,6.79,0,0,0,1.13,1.57,1,1,0,0,0,1.1.15,1.39,1.39,0,0,0,.41.3l.11.06.41.19a2,2,0,0,1,1.23,1.84v.12a2,2,0,0,1-1.23,1.84l-.41.19-.11.06a1.39,1.39,0,0,0-.41.3,1,1,0,0,0-.15,1.1,6.79,6.79,0,0,0,1.13,1.57l.09.07A2,2,0,0,1,19.14,12.94ZM12,8a4,4,0,1,0,4,4A4,4,0,0,0,12,8Z"/>
+            </svg>
+        </button>
+
         <!-- Отображение Кристаллов (в правом верхнем углу) -->
         <div class="secondary-currency">
             <span class="gem-icon">
-                <!-- SVG иконка кристалла (розовый цвет задается в CSS) -->
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em">
                     <path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/>
                 </svg>
             </span>
             <span id="gem-count">0</span>
         </div>
-
 
         <div class="game-area">
             <!-- Отображение основной валюты и дохода -->
@@ -34,37 +39,52 @@
                     <span id="essence-count">0</span>
                 </div>
                 <div id="per-second-display" class="per-second-display">
-                     <span id="essence-per-second">0</span> в сек
+                     <span id="essence-per-second">0</span> <span data-translate="perSec">в сек</span>
                 </div>
             </div>
 
             <!-- Колба -->
             <div id="cauldron" class="cauldron">
-                <div class="bubbles-container" id="bubbles-container">
-                    <!-- Пузырьки добавляются через JS -->
-                </div>
+                <div class="bubbles-container" id="bubbles-container"></div>
             </div>
             <!-- Контейнер для фидбека кликов (+N) -->
             <div id="click-feedback-container"></div>
-
         </div>
 
         <!-- Кнопки управления -->
         <div class="controls">
-            <button id="open-upgrades-btn" class="control-button">Улучшения</button>
-            <button id="invite-friend-btn" class="control-button telegram-feature">Друзья</button>
+            <button id="open-upgrades-btn" class="control-button" data-translate="upgradesButton">Улучшения</button>
+            <button id="invite-friend-btn" class="control-button telegram-feature" data-translate="friendsButton">Друзья</button>
         </div>
 
         <!-- Панель улучшений (скрыта по умолчанию) -->
         <div id="upgrades-panel" class="upgrades-panel hidden">
             <div class="panel-header">
-                <h2>Улучшения</h2>
+                <h2 data-translate="upgradesTitle">Улучшения</h2>
                 <button id="close-upgrades-btn" class="close-button">×</button>
             </div>
-            <ul id="upgrades-list">
-                <!-- Улучшения добавляются через JS -->
-            </ul>
+            <ul id="upgrades-list"></ul>
         </div>
+
+        <!-- Панель настроек (скрыта по умолчанию) -->
+        <div id="settings-panel" class="settings-panel hidden">
+             <div class="settings-box">
+                 <div class="panel-header">
+                     <h2 data-translate="settingsTitle">Настройки</h2>
+                     <button id="close-settings-btn" class="close-button">×</button>
+                 </div>
+                 <div class="settings-content">
+                     <h3 data-translate="languageTitle">Язык</h3>
+                     <div class="language-options">
+                         <button class="lang-btn" data-lang="ru">Русский</button>
+                         <button class="lang-btn" data-lang="en">English</button>
+                         <!-- Добавить другие языки по необходимости -->
+                     </div>
+                     <!-- Сюда можно добавить другие настройки -->
+                 </div>
+             </div>
+        </div>
+
     </div>
 
     <script src="script.js"></script>
