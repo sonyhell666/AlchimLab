@@ -4,11 +4,15 @@
     --secondary-bg: #4a4466; /* Цвет панелей */
     --accent-color: #76d7c4; /* Бирюзовый для акцентов */
     --text-color: #f0f0f0; /* Светлый текст */
-    --liquid-color: #a569bd; /* Фиолетовая жидкость */
-    --bubble-color: #e8daef; /* Цвет пузырьков */
+    --liquid-color: #a569bd; /* Фиолетовая жидкость (НЕ ИСПОЛЬЗУЕТСЯ ДЛЯ НОВОЙ КОЛБЫ)*/
+    --bubble-color: #e8daef; /* Цвет пузырьков (НЕ ИСПОЛЬЗУЕТСЯ ДЛЯ НОВОЙ КОЛБЫ) */
     --button-bg: #5d5480;
     --button-hover-bg: #71689a;
-    --disabled-color: #6c6c6c; /* Сделаем чуть темнее */
+    --disabled-color: #6c6c6c;
+
+    /* Добавляем цвета для новой колбы */
+    --flask-color: #00abc1; /* Цвет колбы с картинки */
+    --flask-highlight: white; /* Цвет бликов */
 }
 
 * {
@@ -70,108 +74,81 @@ html, body {
     margin-top: 5px;
 }
 
-/* --- Колба (замена котла) --- */
+/* --- Новая Колба Эрленмейера --- */
 .cauldron { /* Оставляем класс .cauldron, чтобы не менять JS */
-    width: 120px; /* Сделаем основу чуть уже */
-    height: 120px; /* Высота основной круглой части */
-    background-color: rgba(220, 225, 235, 0.25); /* Полупрозрачный цвет стекла */
-    border: 3px solid #afb8d1; /* Более светлый серо-голубой контур */
-    /* Создаем круглое дно и плоский верх для пристыковки горлышка */
-    border-radius: 50%; /* Делаем круглую основу */
-    position: relative;
+    width: 0; /* Ширина верхушки конуса */
+    height: 0; /* Для создания фигуры через border */
+    border-left: 65px solid transparent; /* Половина ширины основания */
+    border-right: 65px solid transparent; /* Половина ширины основания */
+    border-bottom: 110px solid var(--flask-color); /* Высота и цвет конуса */
+    position: relative; /* Для позиционирования горлышка и бликов */
     cursor: pointer;
-    user-select: none; /* Запретить выделение */
-    overflow: visible; /* ВАЖНО: Делаем visible, чтобы горлышко было видно */
-    box-shadow: inset 0 -10px 15px rgba(0, 0, 0, 0.1), /* Внутренняя тень снизу */
-                inset 0 5px 10px rgba(255, 255, 255, 0.2), /* Внутренний блик сверху */
-                0 4px 8px rgba(0, 0, 0, 0.2); /* Внешняя тень */
-    transition: transform 0.1s ease-out; /* Анимация при клике */
-    margin-top: 50px; /* Добавляем отступ сверху, чтобы освободить место для горлышка */
+    user-select: none;
+    transition: transform 0.1s ease-out;
+    margin-bottom: 30px; /* Отступ снизу, если нужно */
+    /* Сбрасываем старые стили, если они не перезаписались */
+    background-color: transparent;
+    border-radius: 0;
+    border-top: none; /* Убираем верхнюю границу, если она была */
+    overflow: visible;
+    box-shadow: none;
 }
 
-/* Добавляем горлышко колбы с помощью псевдоэлемента */
+/* Горлышко колбы */
 .cauldron::before {
     content: '';
     position: absolute;
-    bottom: 75%; /* Позиционируем горлышко над основной частью */
-    left: 50%;
-    transform: translateX(-50%);
-    width: 40px; /* Ширина горлышка */
-    height: 60px; /* Высота горлышка */
-    background-color: rgba(220, 225, 235, 0.25); /* Тот же цвет стекла */
-    border: 3px solid #afb8d1; /* Тот же контур */
-    border-bottom: none; /* Убираем нижнюю границу, где стыкуется с колбой */
-    /* Слегка скругляем верхние углы горлышка */
-    border-radius: 8px 8px 0 0;
-    box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.2); /* Блик внутри горлышка */
+    bottom: 110px; /* Позиционируем над конусом (равно высоте border-bottom) */
+    left: -25px; /* (Ширина горлышка / 2) */
+    width: 50px; /* Ширина горлышка */
+    height: 55px; /* Высота горлышка */
+    background-color: var(--flask-color); /* Тот же цвет */
+    /* Скругление верхнего края горлышка */
+    border-radius: 5px 5px 0 0;
+    /* Сбрасываем старые стили */
+    border: none;
+    transform: none;
+    box-shadow: none;
 }
 
-/* Стили для активного состояния остаются прежними */
+/* Блики/Пузырьки */
+.cauldron::after {
+    content: '';
+    position: absolute;
+    /* Позиционирование первого (большого) круга */
+    bottom: 15px; /* Отступ от нижнего края конуса */
+    left: -15px; /* Отступ от левого края конуса (подбирать) */
+    width: 18px; /* Размер большого круга */
+    height: 18px; /* Размер большого круга */
+    background-color: var(--flask-highlight);
+    border-radius: 50%;
+    /* Создание второго (маленького) круга с помощью тени */
+    box-shadow: 25px 8px 0 -3px var(--flask-highlight), /* Горизонтальное смещение, Вертикальное, Размытие(0), Расширение(-), Цвет */
+                25px 8px 0 -3px var(--flask-highlight); /* Дублируем для четкости */
+    /* Сбрасываем старые стили */
+    border: none;
+    transform: none;
+    opacity: 1; /* Убедимся, что блики видны */
+    animation: none; /* Убираем старую анимацию пузырьков */
+    pointer-events: none; /* Блики не должны мешать клику */
+}
+
+/* Анимация клика остается */
 .cauldron:active {
     transform: scale(0.95);
 }
 
-/* Измененные стили для жидкости в колбе */
-.cauldron-liquid {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 55%; /* Немного изменим уровень жидкости для круглой колбы */
-    background-color: var(--liquid-color);
-    /* Делаем нижние углы жидкости очень круглыми, как дно колбы */
-    border-radius: 0 0 50% 50%; /* Важно для соответствия форме */
-    opacity: 0.8;
-    /* Добавим небольшой блик на поверхности жидкости */
-    box-shadow: inset 0 5px 10px rgba(255, 255, 255, 0.15);
-}
-
-/* Стили для пузырьков остаются без изменений */
-.cauldron-bubbles {
-    position: absolute;
-    bottom: 10%;
-    left: 0;
-    width: 100%;
-    height: 50%;
-    /* Добавляем pointer-events: none, чтобы пузырьки не мешали клику по колбе */
-    pointer-events: none;
-}
-
-.cauldron-bubbles span {
-    position: absolute;
-    bottom: 0;
-    width: 8px;
-    height: 8px;
-    background-color: var(--bubble-color);
-    border-radius: 50%;
-    opacity: 0;
-    animation: bubble 3s infinite ease-in;
-}
-/* Распределение пузырьков и задержка анимации */
-.cauldron-bubbles span:nth-child(1) { left: 20%; animation-delay: 0.5s; }
-.cauldron-bubbles span:nth-child(2) { left: 40%; animation-delay: 1.2s; width: 6px; height: 6px; }
-.cauldron-bubbles span:nth-child(3) { left: 60%; animation-delay: 0.2s; }
-.cauldron-bubbles span:nth-child(4) { left: 80%; animation-delay: 1.8s; width: 7px; height: 7px; }
-
-/* Анимация пузырьков остается без изменений */
-@keyframes bubble {
-    0% { transform: translateY(0); opacity: 0; }
-    20% { opacity: 0.7; }
-    80% { opacity: 0.5; }
-    100% { transform: translateY(-80px); opacity: 0; }
-}
 
 /* --- Фидбек при клике --- */
 #click-feedback-container {
     position: absolute;
-    /* Скорректируем позицию фидбека относительно центра новой колбы */
-    /* Можно поднять чуть выше, чтобы не перекрывать горлышко */
-    top: -30px; /* Экспериментируйте с этим значением */
+    /* Позиционируем над колбой, можно подстроить top */
+    top: -50px; /* Примерно над горлышком */
     left: 50%;
     transform: translateX(-50%);
-    width: 100px;
-    height: 100px; /* Область для появления текста */
-    pointer-events: none; /* Не мешает кликам по колбе */
+    width: 150px; /* Расширим область немного */
+    height: 100px;
+    pointer-events: none;
     z-index: 10;
 }
 
@@ -222,7 +199,7 @@ html, body {
     transform: scale(0.98);
 }
 
-.telegram-feature { /* Стиль для кнопок Telegram-интеграции (пока просто цвет) */
+.telegram-feature { /* Стиль для кнопок Telegram-интеграции */
     background-color: #5093d1; /* Синеватый цвет */
 }
 .telegram-feature:hover {
@@ -368,13 +345,12 @@ html, body {
 /* --- Стили для заблокированных улучшений --- */
 #upgrades-list li.locked {
     opacity: 0.5; /* Делаем их полупрозрачными */
-    /* Убрал pointer-events: none;, чтобы можно было видеть всплывающие подсказки, если они есть */
     background-color: rgba(0, 0, 0, 0.15); /* Слегка затемняем фон */
 }
 
 /* Текст внутри заблокированного элемента */
 #upgrades-list li.locked .upgrade-info h3,
-#upgrades-list li.locked .upgrade-info p:not(.requirement-info) { /* Не меняем цвет requirement-info */
+#upgrades-list li.locked .upgrade-info p:not(.requirement-info) {
     color: #b0b0b0; /* Делаем текст сероватым */
     opacity: 0.8;
 }
@@ -397,9 +373,7 @@ html, body {
     font-weight: bold;
 }
 
-/* --- Стили для уведомлений (добавлены ранее в JS) --- */
-/* Здесь должны быть ваши стили для .notification, .notification.info, .notification.error и т.д. */
-/* Скопируйте их из вашего оригинального файла или моего предыдущего ответа, если нужно */
+/* --- Стили для уведомлений --- */
 .notification {
     position: fixed;
     bottom: 70px; /* Поднимаем немного выше из-за панели кнопок */
