@@ -1,7 +1,3 @@
-Пожалуйста, вот полный код файла `script.js` с исправленной логикой загрузки и обработки отсутствия `CloudStorage`.
-
---- START OF FILE script.js ---
-
 ```javascript
 // Файл: script.js
 document.addEventListener('DOMContentLoaded', () => {
