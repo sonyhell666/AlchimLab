@@ -4,7 +4,7 @@
     --secondary-bg: #4a4466;
     --accent-color: #76d7c4;
     --text-color: #f0f0f0;
-    --liquid-color: #a569bd;
+    /* --liquid-color: #a569bd; /* Исходный цвет, теперь используется в RGBA ниже */
     --bubble-color: #e8daef;
     --button-bg: #5d5480;
     --button-hover-bg: #71689a;
@@ -163,7 +163,6 @@ html, body {
     transition: transform 0.1s ease-out, filter 0.1s ease-out, background-color 0.3s ease, background-image 0.3s ease; /* Добавлены переходы для скинов */
     margin: 20px auto;
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
-    /* overflow: hidden; -> Убрано/перенесено */
     border: none; /* Убедимся что нет базовой рамки */
     border-radius: 0;
     box-shadow: none;
@@ -174,6 +173,7 @@ html, body {
 
 .cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(70%); }
 
+/* --- НАЧАЛО ИЗМЕНЕНИЯ: Прозрачная жидкость --- */
 .cauldron::before { /* Жидкость */
     content: '';
     position: absolute;
@@ -181,24 +181,25 @@ html, body {
     left: 0;
     width: 100%;
     height: var(--liquid-level, 10%);
-    background-color: var(--liquid-color);
+    /* background-color: var(--liquid-color); /* Старая строка */
+    background-color: rgba(165, 105, 189, 0.75); /* Фиолетовый с 75% непрозрачностью */
     z-index: 1;
     overflow: hidden; /* Ограничиваем жидкость */
-    /* Можно добавить тот же clip-path, если жидкость вылезает */
-    /* clip-path: inherit; ИЛИ скопировать polygon() */
+    /* clip-path: inherit; */ /* Можно раскомментировать, если нужно точное повторение формы */
+    transition: background-color 0.3s ease; /* Плавный переход цвета */
 }
+/* --- КОНЕЦ ИЗМЕНЕНИЯ --- */
 
 .bubbles-container { /* Пузырьки */
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: var(--liquid-level, 10%);
+    height: var(--liquid-level, 10%); /* Высота равна уровню жидкости */
     z-index: 2;
     pointer-events: none;
     overflow: hidden; /* Ограничиваем пузырьки */
-     /* Можно добавить тот же clip-path, если пузырьки вылезают */
-    /* clip-path: inherit; ИЛИ скопировать polygon() */
+    clip-path: inherit; /* Пусть контейнер пузырьков наследует форму колбы */
 }
 
 .bubble { position: absolute; bottom: -20px; width: 8px; height: 8px; background-color: var(--bubble-color); border-radius: 50%; opacity: 0.6; animation: rise 3s infinite ease-in; }
@@ -206,9 +207,9 @@ html, body {
 .cauldron:active:not(.blocked-cauldron) { transform: scale(0.95); }
 
 /* Фидбек при клике */
-#click-feedback-container { position: absolute; top: calc(50% - 150px); left: 50%; transform: translateX(-50%); width: 170px; height: 120px; pointer-events: none; z-index: 10; }
+#click-feedback-container { position: absolute; top: calc(50% - 150px); /* Скорректировано под размер колбы */ left: 50%; transform: translateX(-50%); width: 170px; height: 120px; pointer-events: none; z-index: 10; }
 .click-feedback { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1.2em; font-weight: bold; color: var(--accent-color); opacity: 1; animation: fadeUp 1s ease-out forwards; white-space: nowrap; display: inline-flex; align-items: center; }
-@keyframes fadeUp { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); } }
+@keyframes fadeUp { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); /* Улетает выше */ } }
 
 /* Кнопки управления */
 .controls { margin-top: 20px; display: flex; justify-content: space-around; padding: 10px 0; background-color: rgba(0, 0, 0, 0.1); border-radius: 8px; }
@@ -240,16 +241,16 @@ html, body {
 /* Заголовки панелей */
 .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
 .panel-header h2 { margin: 0; font-size: 1.4em; }
-.close-button { background: none; border: none; color: var(--text-color); font-size: 2em; line-height: 1; cursor: pointer; opacity: 0.7; transition: opacity 0.2s ease; }
+.close-button { background: none; border: none; color: var(--text-color); font-size: 2em; line-height: 1; cursor: pointer; opacity: 0.7; transition: opacity 0.2s ease; padding: 0 5px; /* Небольшой паддинг для удобства нажатия */ }
 .close-button:hover { opacity: 1; }
 
 /* Список улучшений */
-#upgrades-list { list-style: none; overflow-y: auto; flex-grow: 1; padding-right: 5px; }
+#upgrades-list { list-style: none; overflow-y: auto; flex-grow: 1; padding-right: 5px; margin: 0; } /* Убрал дефолтный padding у ul */
 #upgrades-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px 5px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); transition: opacity 0.3s ease, background-color 0.3s ease; }
 #upgrades-list li:last-child { border-bottom: none; }
 .upgrade-info { flex-grow: 1; margin-right: 10px; }
 .upgrade-info h3 { font-size: 1em; margin-bottom: 3px; }
-.upgrade-info p { font-size: 0.8em; opacity: 0.7; }
+.upgrade-info p { font-size: 0.8em; opacity: 0.7; margin: 0; } /* Убрал дефолтный margin у p */
 .upgrade-cost { font-size: 0.9em; font-weight: bold; color: var(--accent-color); margin-top: 4px; }
 .buy-upgrade-btn { padding: 8px 15px; font-size: 0.9em; background-color: var(--accent-color); color: var(--primary-bg); border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background-color 0.2s ease, opacity 0.2s ease, color 0.2s ease; min-width: 90px; text-align: center; }
 .buy-upgrade-btn:hover:not(:disabled) { background-color: #88e8d8; }
@@ -258,7 +259,7 @@ html, body {
 #upgrades-list li.locked .upgrade-info h3, #upgrades-list li.locked .upgrade-info p:not(.requirement-info) { color: #b0b0b0; opacity: 0.8; }
 #upgrades-list li.locked .buy-upgrade-btn { background-color: #555; border: 1px solid rgba(255, 255, 255, 0.1); color: var(--accent-color); font-size: 0.8em; opacity: 1; cursor: default; }
 .requirement-info { font-size: 0.75em; color: var(--accent-color); opacity: 1; margin-top: 5px; font-weight: bold; }
-#upgrades-list li.cannot-afford { }
+#upgrades-list li.cannot-afford { /* Можно добавить стиль для недоступных по цене */ }
 
 /* Панель настроек */
 .settings-panel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease-out; }
@@ -317,7 +318,8 @@ html, body {
     list-style: none;
     overflow-y: auto;
     flex-grow: 1;
-    padding: 0 5px 0 0; /* Отступ справа для скроллбара */
+    padding: 5px 5px 0 0; /* Отступы сверху и справа */
+    margin: 0; /* Убираем дефолтный margin ul */
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); /* Адаптивная сетка */
     gap: 15px; /* Отступы между скинами */
@@ -372,6 +374,7 @@ html, body {
     display: flex; /* Центрируем текст, если он короткий */
     align-items: center;
     justify-content: center;
+    line-height: 1.1; /* Чуть уменьшаем межстрочный интервал для названий в 2 строки */
 }
 
 .skin-cost {
@@ -382,6 +385,7 @@ html, body {
     margin-bottom: 8px;
     font-weight: bold;
     color: var(--gem-color); /* Цвет гемов */
+    min-height: 1.2em; /* Резервируем место, даже если цены нет (для выравнивания кнопок) */
 }
 
 .skin-cost .gem-icon {
@@ -405,7 +409,7 @@ html, body {
     cursor: pointer;
     transition: background-color 0.2s ease, opacity 0.2s ease;
     width: 100%; /* Кнопка на всю ширину карточки */
-    margin-top: auto; /* Прижимает кнопку к низу карточки, если контент разной высоты */
+    margin-top: auto; /* Прижимает кнопку к низу карточки */
 }
 
 .skin-action-btn:hover:not(:disabled) {
@@ -433,6 +437,7 @@ html, body {
      border: 1px solid var(--accent-color);
      color: var(--accent-color);
      opacity: 0.8;
+     cursor: default; /* Указываем, что кнопка неактивна */
 }
 
 
