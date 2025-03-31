@@ -45,18 +45,25 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
     border: none; border-radius: 0; will-change: transform, background;
     transition: transform 0.1s ease-out, filter 0.1s ease-out, background-color 0.3s ease, background-image 0.3s ease;
-    overflow: visible;
+    /* ИЗМЕНЕНО: Добавлено overflow: hidden; */
+    overflow: hidden;
 }
 .cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(70%); }
+
 .cauldron::before { /* Жидкость */
     content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: var(--liquid-level, 10%);
     background-color: rgba(165, 105, 189, 0.65); /* Прозрачность */
-    z-index: 1; overflow: hidden; clip-path: inherit; transition: background-color 0.3s ease;
+    z-index: 1; overflow: hidden;
+    /* ИЗМЕНЕНО: Удалено clip-path: inherit; */
+    transition: background-color 0.3s ease;
 }
+
 .bubbles-container { /* Пузырьки */
     position: absolute; bottom: 0; left: 0; width: 100%; height: var(--liquid-level, 10%);
-    z-index: 2; pointer-events: none; overflow: hidden; clip-path: inherit;
+    z-index: 2; pointer-events: none; overflow: hidden;
+    /* ИЗМЕНЕНО: Удалено clip-path: inherit; */
 }
+
 .bubble { position: absolute; bottom: -20px; width: 8px; height: 8px; background-color: var(--bubble-color); border-radius: 50%; opacity: 0.6; animation: rise 3s infinite ease-in; }
 @keyframes rise { 0% { transform: translateY(0) scale(1); opacity: 0.6; } 50% { transform: scale(1.1); } 90% { opacity: 0.4; } 100% { transform: translateY(-220px) scale(0.8); opacity: 0; } }
 .cauldron:active:not(.blocked-cauldron) { transform: scale(0.95); }
