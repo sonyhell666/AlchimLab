@@ -38,13 +38,10 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    -webkit-tap-highlight-color: transparent; /* Убираем подсветку при тапе на мобильных */
+    -webkit-tap-highlight-color: transparent;
 }
 
-html {
-    height: 100%;
-    font-size: 16px; /* Базовый размер шрифта */
-}
+html { height: 100%; font-size: 16px; }
 
 body {
     height: 100%;
@@ -52,50 +49,40 @@ body {
                  Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     background-color: var(--primary-bg);
     color: var(--text-color);
-    overflow: hidden; /* Запрещаем прокрутку основной страницы */
-    user-select: none; /* Запрещаем выделение текста */
+    overflow: hidden;
+    user-select: none;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
-    /* Добавим безопасные зоны для мобильных устройств */
-    padding-top: constant(safe-area-inset-top);
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: constant(safe-area-inset-bottom);
-    padding-bottom: env(safe-area-inset-bottom);
+    /* Убираем padding safe-area с body, добавим в container */
 }
 
 .app-container {
     display: flex;
     flex-direction: column;
-    height: 100%; /* Растягиваем на весь viewport */
-    /* Уберем padding из app-container, чтобы safe-area работала на body */
-    /* padding: 15px; */
-    position: relative; /* Для абсолютного позиционирования дочерних элементов */
+    height: 100%;
+    position: relative;
+    /* Возвращаем padding и добавляем safe-area здесь */
+    padding: 15px;
+    padding-top: max(15px, env(safe-area-inset-top));
+    padding-bottom: max(15px, env(safe-area-inset-bottom));
+    padding-left: max(15px, env(safe-area-inset-left));
+    padding-right: max(15px, env(safe-area-inset-right));
 }
 
-/* --- Верхняя область (Заголовок, Настройки, Кристаллы) --- */
-.top-bar { /* Новый контейнер для верхних элементов */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 15px; /* Внутренние отступы */
-    position: relative; /* Чтобы z-index работал */
-    flex-shrink: 0;
-    z-index: 50; /* Выше игровой зоны */
-    min-height: 50px; /* Минимальная высота */
-}
+/* --- Верхняя часть (Кнопка настроек, Заголовок, Кристаллы) --- */
+/* Убираем .top-bar, возвращаем абсолютное позиционирование */
 
-.header { /* Теперь заголовок - часть top-bar */
-    /* Удаляем абсолютное позиционирование */
+.header { /* Заголовок по центру */
     text-align: center;
-    /* margin-bottom: 15px; Убрано, управляется top-bar */
+    /* Увеличим отступ сверху, чтобы не мешать кнопке настроек */
+    margin-top: 5px;
+    margin-bottom: 10px;
     font-size: 1.1rem;
     opacity: 0.8;
-    /* Добавляем flex-grow, чтобы он занимал центр */
-    flex-grow: 1;
-    margin: 0 10px; /* Отступы от боковых иконок */
-    line-height: 1.2;
-    overflow: hidden; /* Обрезаем текст, если не влезает */
+    flex-shrink: 0;
+    padding: 0 45px; /* Оставляем место по бокам для иконок */
+    overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
 }
@@ -115,67 +102,46 @@ body {
     height: 36px;
     border-radius: 8px;
     color: var(--text-color);
-    /* Убираем position: absolute для кнопок в .top-bar */
-    /* position: absolute; */
+    /* Возвращаем абсолютное позиционирование */
+    position: absolute;
     z-index: 51;
-    flex-shrink: 0; /* Не сжимаем кнопки */
 }
-.control-button-icon:hover {
-    opacity: 1;
-    background-color: rgba(255, 255, 255, 0.1);
-}
-.control-button-icon img,
-.control-button-icon svg {
-    display: block;
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-}
+.control-button-icon:hover { opacity: 1; background-color: rgba(255, 255, 255, 0.1); }
+.control-button-icon img, .control-button-icon svg { display: block; width: 24px; height: 24px; object-fit: contain; }
 
 .settings-button {
-    /* Убираем позиционирование */
-    /* top: 15px; */
-    /* left: 15px; */
+    /* Позиционируем абсолютно */
+    top: 15px; /* Отступ сверху контейнера */
+    left: 15px; /* Отступ слева контейнера */
     background: none;
     border-radius: 50%;
-    margin-right: 10px; /* Отступ справа от заголовка */
-    order: -1; /* Ставим кнопку настроек слева */
 }
-.settings-button img {
-    filter: invert(90%) sepia(10%) saturate(100%) hue-rotate(180deg) brightness(100%) contrast(90%);
-}
+.settings-button img { filter: invert(90%) sepia(10%) saturate(100%) hue-rotate(180deg) brightness(100%) contrast(90%); }
 
 .secondary-currency {
-    /* Убираем позиционирование */
-    /* position: absolute; */
-    /* top: 15px; */
-    /* right: 15px; */
+    /* Позиционируем абсолютно */
+    position: absolute;
+    top: 15px; /* Отступ сверху контейнера */
+    right: 15px; /* Отступ справа контейнера */
     z-index: 50;
-    margin-left: 10px; /* Отступ слева от заголовка */
 }
-.gem-display {
-    display: flex;
-    align-items: center;
-    background-color: rgba(0, 0, 0, 0.2);
-    padding: 5px 10px;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: bold;
-}
+.gem-display { display: flex; align-items: center; background-color: rgba(0, 0, 0, 0.2); padding: 5px 10px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; }
 .gem-icon { display: inline-flex; align-items: center; justify-content: center; margin-right: 8px; line-height: 1; }
 .gem-icon svg { width: 1.1em; height: 1.1em; fill: var(--gem-color); vertical-align: middle; }
 #gem-count { font-weight: bold; color: var(--text-color); }
 
-/* Кнопка Магазина - позиционируем абсолютно относительно app-container */
 .shop-button {
-    position: absolute; /* Возвращаем абсолютное позиционирование */
-    top: calc(50% + 30px); /* Примерное положение, можно подстроить */
-    right: 15px;
-    transform: translateY(-50%);
+    /* Позиционируем абсолютно */
+    position: absolute;
+    /* Смещаем ниже кристаллов */
+    top: 60px; /* Фиксированный отступ сверху */
+    right: 15px; /* Отступ справа */
+    /* Убираем transform, чтобы было проще */
+    /* transform: translateY(-50%); */
     width: 44px;
     height: 44px;
     border-radius: 12px;
-    z-index: 50; /* Ниже кнопок в top-bar, но выше game-area */
+    z-index: 50;
 }
 
 
@@ -185,47 +151,34 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* Центрируем содержимое */
+    justify-content: center; /* Центрируем колбу */
     position: relative;
-    padding: 10px 15px; /* Отступы внутри игровой зоны */
+    /* Убираем padding, т.к. он есть у app-container */
+    /* padding: 10px 15px; */
     min-height: 250px;
-    /* Убран margin-bottom, т.к. .controls позиционируются */
+    margin-top: 10px; /* Добавляем отступ от верхних элементов */
 }
 
 /* Отображение эссенции и дохода */
 .essence-display {
     text-align: center;
-    margin-bottom: 5px; /* Уменьшаем отступ */
+    margin-bottom: 10px; /* Стандартный отступ */
     flex-shrink: 0;
-    position: relative; /* Чтобы z-index работал */
-    z-index: 1; /* Выше колбы, если вдруг наедет */
+    position: relative;
+    z-index: 1;
 }
-.main-currency {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: var(--text-color);
-    margin-bottom: 0; /* Уменьшаем отступ */
-    display: block;
-    line-height: 1.1;
-}
+.main-currency { font-size: 2.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 0; display: block; line-height: 1.1; }
 .essence-icon { display: inline-block; margin-right: 5px; font-size: 0.9em; vertical-align: baseline; }
-.per-second-display {
-    display: block;
-    font-size: 0.9rem;
-    font-weight: normal;
-    opacity: 0.7;
-    margin-top: 0;
-    color: var(--text-secondary-color);
-}
+.per-second-display { display: block; font-size: 0.9rem; font-weight: normal; opacity: 0.7; margin-top: 0; color: var(--text-secondary-color); }
 
 /* --- Колба --- */
 .cauldron {
-    width: clamp(160px, 40vw, 200px); /* Адаптивная ширина */
-    height: clamp(180px, 45vw, 220px); /* Адаптивная высота */
+    width: clamp(160px, 45vw, 200px); /* Чуть увеличим макс. относительную ширину */
+    height: clamp(180px, 50vw, 220px);
     position: relative;
     cursor: pointer;
     user-select: none;
-    margin: 15px auto; /* Уменьшаем вертикальные отступы */
+    margin: 10px auto; /* Уменьшаем отступы */
     flex-shrink: 0;
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
     border-radius: 0;
@@ -234,7 +187,7 @@ body {
     border: 3px solid var(--cauldron-border-color-default);
     transition: transform 0.1s ease-out, filter 0.1s ease-out, background-color 0.3s ease, background-image 0.3s ease, border-color 0.3s ease;
     overflow: hidden;
-    z-index: 0; /* Ниже счетчика */
+    z-index: 0;
 }
 /* Остальные стили колбы, жидкости, пузырьков без изменений */
 .cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(80%) brightness(0.8); }
@@ -244,18 +197,16 @@ body {
 .bubble { position: absolute; bottom: -20px; width: 8px; height: 8px; background-color: var(--bubble-color); border-radius: 50%; opacity: 0; animation: rise 3s infinite ease-in; will-change: transform, opacity; }
 @keyframes rise { 0% { transform: translateY(0) scale(1); opacity: 0; } 10% { opacity: 1; } 50% { transform: translateY(-100px) scale(1.1); } 90% { opacity: 0.6; } 100% { transform: translateY(-220px) scale(0.8); opacity: 0; } }
 
-
 /* --- Фидбек клика (+N) --- */
 #click-feedback-container {
     position: absolute;
-    /* Позиционируем относительно центра колбы */
-    top: 50%; /* Центрируем по вертикали game-area */
+    top: 50%;
     left: 50%;
-    transform: translate(-50%, -60%); /* Смещаем чуть выше центра колбы */
+    transform: translate(-50%, -60%);
     width: 180px;
     height: 150px;
     pointer-events: none;
-    z-index: 10; /* Выше колбы */
+    z-index: 10;
     overflow: visible;
 }
 .click-feedback { position: absolute; top: 50%; left: 50%; font-size: 1.2rem; font-weight: bold; opacity: 1; animation: fadeUp 1s ease-out forwards; white-space: nowrap; display: inline-flex; align-items: center; will-change: transform, opacity; }
@@ -263,18 +214,18 @@ body {
 
 /* --- Нижние кнопки управления --- */
 .controls {
-    /* margin-top: 20px; Убираем, т.к. отступы управляются иначе */
     display: flex;
     justify-content: space-around;
-    padding: 10px 15px; /* Добавляем горизонтальные отступы */
-    /* background-color: rgba(0, 0, 0, 0.1); Можно оставить или убрать */
+    padding: 10px 0; /* Убираем горизонтальные отступы, т.к. они в app-container */
+    /* background-color: rgba(0, 0, 0, 0.1); */
     border-radius: 8px;
     flex-shrink: 0;
-    position: relative; /* Чтобы z-index работал */
-    z-index: 1; /* На одном уровне с игровой зоной */
-    margin-bottom: 10px; /* Отступ снизу */
+    position: relative;
+    z-index: 1;
+    /* Убираем margin-bottom, т.к. отступ управляется padding у app-container */
+    /* margin-bottom: 10px; */
 }
-.control-button { padding: 10px 15px; font-size: 1rem; background-color: var(--button-bg); color: var(--text-color); border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease-out; flex-grow: 1; margin: 0 5px; max-width: 48%; /* Немного увеличим макс ширину */ text-align: center; line-height: 1.4; /* Улучшаем читаемость в 2 строки */ }
+.control-button { padding: 10px 15px; font-size: 1rem; background-color: var(--button-bg); color: var(--text-color); border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease-out; flex-grow: 1; margin: 0 5px; max-width: 48%; text-align: center; line-height: 1.4; }
 .control-button:hover:not(:disabled) { background-color: var(--button-hover-bg); }
 .control-button:active:not(:disabled) { transform: scale(0.98); }
 .control-button:disabled { background-color: var(--disabled-color); color: var(--disabled-text-color); cursor: not-allowed; opacity: 0.7; }
@@ -286,81 +237,96 @@ body {
     background-color: var(--secondary-bg);
     box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
     padding: 15px;
-    display: flex; /* Используем flex */
+    display: flex;
     flex-direction: column;
     color: var(--text-color);
     position: fixed;
     z-index: 100;
     overflow: hidden;
-    transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s step-end; /* Добавляем visibility */
+    /* Используем visibility для скрытия */
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0s linear 0.3s; /* Скрываем visibility после анимации */
+    opacity: 1;
+    visibility: visible;
 }
 .panel-base.hidden {
     opacity: 0;
-    visibility: hidden; /* Скрываем полностью */
+    visibility: hidden;
     pointer-events: none;
-    transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0.3s step-start; /* Обратная анимация visibility */
+    /* Показываем visibility сразу при начале анимации появления */
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0s linear 0s;
+    /* Добавляем transform: none чтобы не мешать другим трансформациям */
+    transform: none !important;
 }
+
 
 /* Панели улучшений и магазина (снизу) */
 .upgrades-panel, .shop-panel {
     bottom: 0;
     left: 0;
     width: 100%;
-    border-top-left-radius: 15px; /* Скругление сверху */
+    border-top-left-radius: 15px;
     border-top-right-radius: 15px;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
-    transform: translateY(100%); /* Скрыты под экраном */
+    /* Анимация выезда снизу */
+    transform: translateY(100%);
 }
 .upgrades-panel { height: 60%; }
-.shop-panel { height: 70%; max-height: 550px; } /* Увеличим макс высоту */
+.shop-panel { height: 70%; max-height: 550px; }
 
 .upgrades-panel:not(.hidden),
 .shop-panel:not(.hidden) {
     transform: translateY(0); /* Показываем */
-    opacity: 1;
-    visibility: visible; /* Делаем видимыми */
-    pointer-events: auto;
 }
 
-/* Панель настроек (по центру) */
+/* Панель настроек (по центру) - исправление */
 .settings-panel {
-    /* Используем display: flex для центрирования .settings-box */
+    /* display: flex и другие стили фона уже есть в .panel-base */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.6);
-    /* display: flex; Уже есть в .panel-base */
+    /* Центрируем .settings-box */
+    display: flex;
     align-items: center;
     justify-content: center;
     z-index: 200;
-    /* Убираем transform, управляем через opacity/visibility */
+    border-radius: 0;
+    padding: 0;
+    /* Управляем видимостью через opacity/visibility родителя .panel-base */
     /* transform: scale(1); */
-    border-radius: 0; /* Убираем скругление у фона */
-    padding: 0; /* Убираем паддинг у фона */
+    /* Добавляем явное position: fixed */
+    position: fixed;
 }
-.settings-panel.hidden {
-     /* opacity: 0; visibility: hidden; pointer-events: none; унаследовано */
-}
+/* Не нужно отдельное правило для .settings-panel.hidden, т.к. оно наследует от .panel-base.hidden */
 .settings-box {
     background-color: var(--secondary-bg);
     border-radius: 15px;
-    padding: 15px; /* Паддинг внутри бокса */
+    padding: 15px;
     width: 90%;
     max-width: 400px;
     max-height: 80vh;
     display: flex;
     flex-direction: column;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    /* Добавляем анимацию появления для бокса */
+    /* Анимация появления самого бокса */
     transform: scale(0.95);
     opacity: 0;
     transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+    /* Важно: предотвращаем наследование visibility от родителя */
+    visibility: visible;
+    pointer-events: auto; /* Разрешаем клики внутри */
 }
 .settings-panel:not(.hidden) .settings-box {
     transform: scale(1);
     opacity: 1;
+}
+/* Если панель скрыта, скрываем и бокс */
+.settings-panel.hidden .settings-box {
+     opacity: 0;
+     transform: scale(0.95);
+     pointer-events: none;
 }
 
 
