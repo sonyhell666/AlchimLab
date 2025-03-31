@@ -1,7 +1,8 @@
 // Файл: script.js
 // Версия БЕЗ ЗВУКА, БЕЗ ОБВОДКИ, с исправлением ошибки CloudStorage
 // Добавлено: Динамический цвет жидкости по времени UTC (Лондон), Обводка колбы
-// Исправлено: Мигание кнопок "Купить" за счет обновления состояния вместо полной перерисовки
+// Исправлено: Мигание кнопок "Купить"
+// Добавлено: Отладочные console.log
 document.addEventListener('DOMContentLoaded', () => {
     // Инициализация Telegram Web App
     const tg = window.Telegram.WebApp;
@@ -10,11 +11,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Получаем ссылки на элементы DOM ---
     const essenceCountElement = document.getElementById('essence-count');
+    const cauldronElement = document.getElementById('cauldron');
+    const openUpgradesBtn = document.getElementById('open-upgrades-btn');
+
+    // !!! НОВАЯ ПРОВЕРКА (ШАГ 3) !!!
+    console.log('DOMContentLoaded fired.');
+    console.log('cauldronElement:', cauldronElement);
+    console.log('essenceCountElement:', essenceCountElement);
+    console.log('openUpgradesBtn:', openUpgradesBtn);
+    // !!! КОНЕЦ ПРОВЕРКИ (ШАГ 3) !!!
+
     const essencePerSecondElement = document.getElementById('essence-per-second');
     const gemCountElement = document.getElementById('gem-count');
-    const cauldronElement = document.getElementById('cauldron');
     const clickFeedbackContainer = document.getElementById('click-feedback-container');
-    const openUpgradesBtn = document.getElementById('open-upgrades-btn');
+    // const openUpgradesBtn = document.getElementById('open-upgrades-btn'); // Уже получено выше
     const closeUpgradesBtn = document.getElementById('close-upgrades-btn');
     const upgradesPanel = document.getElementById('upgrades-panel');
     const upgradesListElement = document.getElementById('upgrades-list');
@@ -230,6 +240,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Логика клика по котлу ---
      if (cauldronElement) {
          cauldronElement.addEventListener('click', () => {
+             // !!! НОВАЯ ПРОВЕРКА (ШАГ 4) !!!
+             console.log('Cauldron click event fired!');
+             // !!! КОНЕЦ ПРОВЕРКИ (ШАГ 4) !!!
+
              const currentTime = Date.now();
              if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('light'); }
              if (isBlocked) { showTemporaryNotification(translations.autoclickerBlocked?.[currentLanguage] || "Автокликер обнаружен!", "error"); return; }
@@ -247,7 +261,14 @@ document.addEventListener('DOMContentLoaded', () => {
                  if (warningCount >= MAX_WARNINGS) { isBlocked = true; console.error("Автокликер заблокирован."); showTemporaryNotification(translations.autoclickerBlocked?.[currentLanguage] || "Автокликер обнаружен!", "error"); if (tg?.HapticFeedback) { tg.HapticFeedback.notificationOccurred('error'); } if (cauldronElement) cauldronElement.classList.add('blocked-cauldron'); }
              }
          });
-     } else { console.error("Элемент колбы #cauldron не найден!"); }
+         // !!! НОВАЯ ПРОВЕРКА (ШАГ 4) !!!
+         console.log('Cauldron click listener ADDED.');
+         // !!! КОНЕЦ ПРОВЕРКИ (ШАГ 4) !!!
+     } else {
+         // !!! НОВАЯ ПРОВЕРКА (ШАГ 4) !!!
+         console.error("Элемент колбы #cauldron не найден ДО добавления слушателя!");
+         // !!! КОНЕЦ ПРОВЕРКИ (ШАГ 4) !!!
+     }
 
     // --- Логика авто-клика ---
     setInterval(() => { if (!isBlocked && essencePerSecond > 0 && Number.isFinite(essencePerSecond)) { const essenceToAdd = essencePerSecond / 10; if (Number.isFinite(essenceToAdd)) { essence += essenceToAdd; updateDisplay(); } else { console.warn("Рассчитана некорректная порция эссенции."); } } }, 100);
@@ -470,6 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (openUpgradesBtn && upgradesPanel) {
         openUpgradesBtn.addEventListener('click', () => {
+            console.log('Open Upgrades button clicked.'); // Отладка
             renderUpgrades(); // Полная перерисовка при открытии
             upgradesPanel.classList.remove('hidden');
             closeSettings(); closeShop();
@@ -480,6 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (settingsBtn && settingsPanel) {
         settingsBtn.addEventListener('click', () => {
+            console.log('Settings button clicked.'); // Отладка
             updateActiveLangButton();
             settingsPanel.classList.remove('hidden');
             closeUpgrades(); closeShop();
@@ -491,6 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (shopBtn && shopPanel) {
         shopBtn.addEventListener('click', () => {
+            console.log('Shop button clicked.'); // Отладка
             renderSkins(); // Полная перерисовка при открытии
             shopPanel.classList.remove('hidden');
             closeUpgrades(); closeSettings();
@@ -707,7 +731,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function showTemporaryNotification(message, type = "info") { const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); void notification.offsetWidth; requestAnimationFrame(() => { notification.style.opacity = '1'; notification.style.bottom = '80px'; }); setTimeout(() => { notification.style.opacity = '0'; notification.style.bottom = '70px'; setTimeout(() => { if (notification.parentNode) { notification.remove(); } }, 500); }, 2500); }
 
     // --- Первоначальная инициализация ---
-    loadGame(); // Загрузка игры
+    try {
+        loadGame(); // Обернем основной запуск в try...catch
+    } catch (initError) {
+        console.error("КРИТИЧЕСКАЯ ОШИБКА ПРИ ИНИЦИАЛИЗАЦИИ:", initError);
+        showTemporaryNotification("Критическая ошибка! Попробуйте перезапустить.", "error");
+    }
+
 
     // --- Автосохранение и обработчики событий ---
     const autoSaveInterval = setInterval(saveGame, 15000);
