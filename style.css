@@ -70,41 +70,71 @@ html, body {
     margin-top: 5px;
 }
 
-/* --- Котел --- */
-.cauldron {
-    width: 150px;
-    height: 150px;
-    background-color: #333; /* Цвет котла */
-    border: 5px solid #222;
-    border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%; /* Форма котла */
+/* --- Колба (замена котла) --- */
+.cauldron { /* Оставляем класс .cauldron, чтобы не менять JS */
+    width: 120px; /* Сделаем основу чуть уже */
+    height: 120px; /* Высота основной круглой части */
+    background-color: rgba(220, 225, 235, 0.25); /* Полупрозрачный цвет стекла */
+    border: 3px solid #afb8d1; /* Более светлый серо-голубой контур */
+    /* Создаем круглое дно и плоский верх для пристыковки горлышка */
+    border-radius: 50%; /* Делаем круглую основу */
     position: relative;
     cursor: pointer;
     user-select: none; /* Запретить выделение */
-    overflow: hidden; /* Скрыть выходящие за пределы пузырьки */
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    overflow: visible; /* ВАЖНО: Делаем visible, чтобы горлышко было видно */
+    box-shadow: inset 0 -10px 15px rgba(0, 0, 0, 0.1), /* Внутренняя тень снизу */
+                inset 0 5px 10px rgba(255, 255, 255, 0.2), /* Внутренний блик сверху */
+                0 4px 8px rgba(0, 0, 0, 0.2); /* Внешняя тень */
     transition: transform 0.1s ease-out; /* Анимация при клике */
+    margin-top: 50px; /* Добавляем отступ сверху, чтобы освободить место для горлышка */
 }
+
+/* Добавляем горлышко колбы с помощью псевдоэлемента */
+.cauldron::before {
+    content: '';
+    position: absolute;
+    bottom: 75%; /* Позиционируем горлышко над основной частью */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px; /* Ширина горлышка */
+    height: 60px; /* Высота горлышка */
+    background-color: rgba(220, 225, 235, 0.25); /* Тот же цвет стекла */
+    border: 3px solid #afb8d1; /* Тот же контур */
+    border-bottom: none; /* Убираем нижнюю границу, где стыкуется с колбой */
+    /* Слегка скругляем верхние углы горлышка */
+    border-radius: 8px 8px 0 0;
+    box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.2); /* Блик внутри горлышка */
+}
+
+/* Стили для активного состояния остаются прежними */
 .cauldron:active {
     transform: scale(0.95);
 }
 
+/* Измененные стили для жидкости в колбе */
 .cauldron-liquid {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 60%; /* Уровень жидкости */
+    height: 55%; /* Немного изменим уровень жидкости для круглой колбы */
     background-color: var(--liquid-color);
-    border-radius: 0 0 40% 40%;
+    /* Делаем нижние углы жидкости очень круглыми, как дно колбы */
+    border-radius: 0 0 50% 50%; /* Важно для соответствия форме */
     opacity: 0.8;
+    /* Добавим небольшой блик на поверхности жидкости */
+    box-shadow: inset 0 5px 10px rgba(255, 255, 255, 0.15);
 }
 
+/* Стили для пузырьков остаются без изменений */
 .cauldron-bubbles {
     position: absolute;
     bottom: 10%;
     left: 0;
     width: 100%;
     height: 50%;
+    /* Добавляем pointer-events: none, чтобы пузырьки не мешали клику по колбе */
+    pointer-events: none;
 }
 
 .cauldron-bubbles span {
@@ -123,6 +153,7 @@ html, body {
 .cauldron-bubbles span:nth-child(3) { left: 60%; animation-delay: 0.2s; }
 .cauldron-bubbles span:nth-child(4) { left: 80%; animation-delay: 1.8s; width: 7px; height: 7px; }
 
+/* Анимация пузырьков остается без изменений */
 @keyframes bubble {
     0% { transform: translateY(0); opacity: 0; }
     20% { opacity: 0.7; }
@@ -133,12 +164,14 @@ html, body {
 /* --- Фидбек при клике --- */
 #click-feedback-container {
     position: absolute;
-    top: 0; /* Позиционируем над котлом */
+    /* Скорректируем позицию фидбека относительно центра новой колбы */
+    /* Можно поднять чуть выше, чтобы не перекрывать горлышко */
+    top: -30px; /* Экспериментируйте с этим значением */
     left: 50%;
     transform: translateX(-50%);
     width: 100px;
     height: 100px; /* Область для появления текста */
-    pointer-events: none; /* Не мешает кликам по котлу */
+    pointer-events: none; /* Не мешает кликам по колбе */
     z-index: 10;
 }
 
@@ -365,23 +398,25 @@ html, body {
 }
 
 /* --- Стили для уведомлений (добавлены ранее в JS) --- */
+/* Здесь должны быть ваши стили для .notification, .notification.info, .notification.error и т.д. */
+/* Скопируйте их из вашего оригинального файла или моего предыдущего ответа, если нужно */
 .notification {
     position: fixed;
-    bottom: 70px;
+    bottom: 70px; /* Поднимаем немного выше из-за панели кнопок */
     left: 50%;
     transform: translateX(-50%);
     padding: 10px 20px;
     border-radius: 8px;
     color: white;
-    z-index: 1000;
+    z-index: 1001; /* Выше панелей */
     opacity: 0;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.5s ease, bottom 0.3s ease;
+    text-align: center;
+    max-width: 80%;
     font-size: 0.9em;
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
-.notification.info {
-    background-color: #3498db;
-}
-.notification.error {
-    background-color: #e74c3c;
-}
+.notification.info { background-color: #3498db; }
+.notification.error { background-color: #e74c3c; }
+.notification.warning { background-color: #f39c12; }
+.notification.success { background-color: #2ecc71; }
