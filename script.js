@@ -1,5 +1,6 @@
 // Файл: script.js
 // Версия БЕЗ ЗВУКА, БЕЗ ОБВОДКИ, с исправлением ошибки CloudStorage
+// Добавлено: Динамический цвет жидкости по времени UTC (Лондон)
 document.addEventListener('DOMContentLoaded', () => {
     // Инициализация Telegram Web App
     const tg = window.Telegram.WebApp;
@@ -29,7 +30,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeShopBtn = document.getElementById('close-shop-btn');
     const skinsListElement = document.getElementById('skins-list');
     const shopGemCountElement = document.getElementById('shop-gem-count');
-    // Элементы звука не используются
 
     // --- Игровые переменные (состояние) ---
     let essence = 0;
@@ -38,7 +38,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let gems = 0;
     let ownedSkins = ['default'];
     let activeSkinId = 'default';
-    // Переменные звука удалены
     const GEM_AWARD_CHANCE = 0.03;
     const GEMS_PER_AWARD = 1;
     let currentLanguage = 'ru';
@@ -61,10 +60,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const IDLE_TIMEOUT = 500;
     let lastInteractionTime = 0;
 
-    // Инициализация звука удалена
-
     // --- Объект с переводами ---
-    const translations = { /* ... все переводы БЕЗ звука ... */
+    const translations = {
         greetingBase: { ru: "Лаборатория", en: "Laboratory" },
         perSec: { ru: "в сек", en: "/ sec" },
         upgradesButton: { ru: "Улучшения", en: "Upgrades" },
@@ -105,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
         skin_gold_name: { ru: "Золотая колба", en: "Golden Flask" },
         skin_crystal_name: { ru: "Хрустальный сосуд", en: "Crystal Vial" },
         skin_obsidian_name: { ru: "Обсидиановая реторта", en: "Obsidian Retort" },
-        // Переводы звука удалены
         upgrade_click1_name: { ru: "Улучшенный рецепт", en: "Improved Recipe" },
         upgrade_click1_desc: { ru: "+1 к клику", en: "+1 per click" },
         upgrade_auto1_name: { ru: "Гомункул-Помощник", en: "Homunculus Helper" },
@@ -133,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Определения улучшений ---
-    const upgrades = [ /* ... как были раньше ... */
+    const upgrades = [
         { id: 'click1', nameKey: 'upgrade_click1_name', descKey: 'upgrade_click1_desc', baseCost: 15, costMultiplier: 1.4, type: 'click', value: 1, currentLevel: 0, requiredEssence: 0 },
         { id: 'auto1', nameKey: 'upgrade_auto1_name', descKey: 'upgrade_auto1_desc', baseCost: 60, costMultiplier: 1.6, type: 'auto', value: 1, currentLevel: 0, requiredEssence: 0 },
         { id: 'click2', nameKey: 'upgrade_click2_name', descKey: 'upgrade_click2_desc', baseCost: 300, costMultiplier: 1.5, type: 'click', value: 5, currentLevel: 0, requiredEssence: 500 },
@@ -149,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     // --- Определения скинов ---
-    const availableSkins = [ /* ... как были раньше ... */
+    const availableSkins = [
         { id: 'default', nameKey: 'skin_default_name', cost: 0, cssClass: 'skin-default' },
         { id: 'gold', nameKey: 'skin_gold_name', cost: 15, cssClass: 'skin-gold' },
         { id: 'crystal', nameKey: 'skin_crystal_name', cost: 50, cssClass: 'skin-crystal' },
@@ -158,17 +154,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Функции для пузырьков ---
     function createBubble() { if (!bubblesContainer) return; const b = document.createElement('div'); b.classList.add('bubble'); const s = Math.random() * 8 + 6; const d = Math.random() * 2.5 + 3; const l = Math.random() * 1.5; const h = Math.random() * 90 + 5; b.style.width = `${s}px`; b.style.height = `${s}px`; b.style.left = `${h}%`; b.style.animationDuration = `${d}s`; b.style.animationDelay = `${l}s`; bubblesContainer.appendChild(b); setTimeout(() => { b.remove(); }, (d + l) * 1000 + 100); }
-    if (bubblesContainer) { // Добавим проверку на существование контейнера
-        setInterval(createBubble, 500);
-    } else {
-        console.warn("Контейнер для пузырьков не найден.");
-    }
+    if (bubblesContainer) { setInterval(createBubble, 500); } else { console.warn("Контейнер для пузырьков не найден."); }
 
     // --- Функция обновления визуала жидкости ---
-    function updateLiquidLevelVisual(percentage) { const l = Math.max(LIQUID_MIN_LEVEL, Math.min(LIQUID_MAX_LEVEL, percentage)); if (cauldronElement) { cauldronElement.style.setProperty('--liquid-level', `${l}%`); if(bubblesContainer) { bubblesContainer.style.height = `${l}%`; } } else { /* console.warn("Элемент колбы не найден для обновления жидкости."); */ } }
+    function updateLiquidLevelVisual(percentage) {
+        const l = Math.max(LIQUID_MIN_LEVEL, Math.min(LIQUID_MAX_LEVEL, percentage));
+        if (cauldronElement) {
+            cauldronElement.style.setProperty('--liquid-level', `${l}%`);
+            // Обновляем высоту контейнера пузырьков вместе с уровнем жидкости
+            if(bubblesContainer) {
+                bubblesContainer.style.height = `${l}%`;
+            }
+        }
+    }
+
+    // --- Функции для динамического цвета жидкости (по времени Лондона/UTC) ---
+    function getLondonHour() {
+        const now = new Date();
+        return now.getUTCHours(); // Используем UTC
+    }
+
+    function getLiquidColorByLondonTime() {
+        const hour = getLondonHour();
+        const alpha = 0.35; // Установленная прозрачность
+
+        if (hour >= 22 || hour < 5) { // Ночь (22:00 - 04:59 UTC)
+            return `rgba(40, 40, 100, ${alpha})`; // Темно-синий
+        } else if (hour >= 5 && hour < 7) { // Рассвет (05:00 - 06:59 UTC)
+            return `rgba(255, 150, 100, ${alpha})`; // Розово-оранжевый
+        } else if (hour >= 7 && hour < 11) { // Утро (07:00 - 10:59 UTC)
+            return `rgba(100, 180, 220, ${alpha})`; // Светло-голубой
+        } else if (hour >= 11 && hour < 17) { // День (11:00 - 16:59 UTC)
+            return `rgba(220, 220, 100, ${alpha})`; // Желто-зеленый
+        } else if (hour >= 17 && hour < 20) { // Закат (17:00 - 19:59 UTC)
+            return `rgba(255, 120, 50, ${alpha})`; // Оранжево-красный
+        } else { // Вечер (20:00 - 21:59 UTC)
+            return `rgba(70, 70, 150, ${alpha})`; // Сине-фиолетовый
+        }
+    }
+
+    function updateLiquidColor() {
+        if (!cauldronElement) return;
+        const color = getLiquidColorByLondonTime();
+        cauldronElement.style.setProperty('--liquid-color', color);
+        // console.log(`Liquid color updated for UTC hour ${getLondonHour()}: ${color}`); // Для отладки
+    }
+    // --- Конец функций для динамического цвета жидкости ---
 
     // --- Общая функция обновления UI ---
-    function updateDisplay() { if (essenceCountElement) essenceCountElement.textContent = formatNumber(Math.floor(essence)); if (essencePerSecondElement && perSecondDisplayDiv) { essencePerSecondElement.textContent = formatNumber(essencePerSecond); perSecondDisplayDiv.style.display = essencePerSecond > 0 ? 'block' : 'none'; } if (gemCountElement) gemCountElement.textContent = formatNumber(gems); if (shopPanel && !shopPanel.classList.contains('hidden') && shopGemCountElement) { shopGemCountElement.textContent = formatNumber(gems); } if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) renderUpgrades(); }
+    function updateDisplay() {
+        if (essenceCountElement) essenceCountElement.textContent = formatNumber(Math.floor(essence));
+        if (essencePerSecondElement && perSecondDisplayDiv) {
+            essencePerSecondElement.textContent = formatNumber(essencePerSecond);
+            perSecondDisplayDiv.style.display = essencePerSecond > 0 ? 'block' : 'none';
+        }
+        if (gemCountElement) gemCountElement.textContent = formatNumber(gems);
+        if (shopPanel && !shopPanel.classList.contains('hidden') && shopGemCountElement) {
+            shopGemCountElement.textContent = formatNumber(gems);
+        }
+        if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) {
+            renderUpgrades();
+        }
+        // Обновление уровня жидкости (может быть вызвано и отдельно, но здесь для консистентности)
+        updateLiquidLevelVisual(visualLiquidLevel);
+    }
 
     // --- Функция форматирования чисел ---
     function formatNumber(num) { if (isNaN(num) || !Number.isFinite(num)) { console.warn("formatNumber получено некорректное значение:", num); return "ERR"; } const abbreviations = ["", "K", "M", "B", "T", "q", "Q", "s", "S", "O", "N", "d", "U"]; if (num < 1000) return num.toString(); let i = 0; while (num >= 1000 && i < abbreviations.length - 1) { num /= 1000; i++; } const formattedNum = num % 1 === 0 ? num.toString() : num.toFixed(1); return formattedNum + abbreviations[i]; }
@@ -176,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Функция для отображения "+N" при клике ---
     function showClickFeedback(amount, type = 'essence') { if (isBlocked || !clickFeedbackContainer) return; const f = document.createElement('div'); f.className = 'click-feedback'; const fmt = formatNumber(amount); if (type === 'gem') { const svgIconHtml = `<span class="gem-icon" style="display:inline-flex; vertical-align: middle; margin-left: 4px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="var(--gem-color)"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"></path></svg></span>`; f.innerHTML = `+${fmt}${svgIconHtml}`; f.style.fontSize = '1.3em'; f.style.fontWeight = 'bold'; f.style.color = 'var(--gem-color)'; } else { f.textContent = `+${fmt} 🧪`; f.style.color = 'var(--accent-color)'; } const ox = Math.random() * 60 - 30; const oy = (type === 'gem') ? (Math.random() * 20 + 15) : (Math.random() * 20 - 10); f.style.left = `calc(50% + ${ox}px)`; f.style.top = `calc(50% + ${oy}px)`; clickFeedbackContainer.appendChild(f); setTimeout(() => { f.remove(); }, 950); }
 
-    // --- Логика клика по котлу (БЕЗ ЗВУКА) ---
+    // --- Логика клика по котлу ---
      if (cauldronElement) {
          cauldronElement.addEventListener('click', () => {
              const currentTime = Date.now();
@@ -187,8 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  let clickAmount = essencePerClick;
                  if (Number.isFinite(clickAmount)) { essence += clickAmount; if (clickFeedbackContainer) showClickFeedback(clickAmount, 'essence'); } else { console.error("Некорр. essencePerClick:", essencePerClick); }
                  if (Math.random() < GEM_AWARD_CHANCE) { gems += GEMS_PER_AWARD; console.log(`+${GEMS_PER_AWARD} кристалл! Всего: ${gems}`); if (clickFeedbackContainer) showClickFeedback(GEMS_PER_AWARD, 'gem'); if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('medium'); } }
-                 visualLiquidLevel += LIQUID_INCREASE_PER_CLICK; visualLiquidLevel = Math.min(visualLiquidLevel, LIQUID_MAX_LEVEL); updateLiquidLevelVisual(visualLiquidLevel); updateDisplay();
-                 // Звук удален
+                 visualLiquidLevel += LIQUID_INCREASE_PER_CLICK; visualLiquidLevel = Math.min(visualLiquidLevel, LIQUID_MAX_LEVEL); updateDisplay(); // Обновляем UI, включая уровень жидкости
                  cauldronElement.style.transform = 'scale(0.95)'; setTimeout(() => { if (cauldronElement) cauldronElement.style.transform = 'scale(1)'; }, 80);
                  lastClickTime = currentTime;
              } else {
@@ -200,8 +248,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Логика авто-клика ---
     setInterval(() => { if (!isBlocked && essencePerSecond > 0 && Number.isFinite(essencePerSecond)) { const essenceToAdd = essencePerSecond / 10; if (Number.isFinite(essenceToAdd)) { essence += essenceToAdd; updateDisplay(); } else { console.warn("Рассчитана некорректная порция эссенции."); } } }, 100);
+
     // --- Интервал для уменьшения уровня жидкости ---
-    setInterval(() => { const currentTime = Date.now(); if (currentTime - lastInteractionTime > IDLE_TIMEOUT && visualLiquidLevel > LIQUID_MIN_LEVEL) { visualLiquidLevel -= LIQUID_DECAY_RATE; visualLiquidLevel = Math.max(visualLiquidLevel, LIQUID_MIN_LEVEL); } updateLiquidLevelVisual(visualLiquidLevel); }, LIQUID_UPDATE_INTERVAL);
+    setInterval(() => {
+        const currentTime = Date.now();
+        if (currentTime - lastInteractionTime > IDLE_TIMEOUT && visualLiquidLevel > LIQUID_MIN_LEVEL) {
+            visualLiquidLevel -= LIQUID_DECAY_RATE;
+            visualLiquidLevel = Math.max(visualLiquidLevel, LIQUID_MIN_LEVEL);
+            // Вызываем updateDisplay, чтобы обновить и визуал уровня жидкости
+            updateDisplay();
+        }
+    }, LIQUID_UPDATE_INTERVAL);
 
     // --- Логика улучшений ---
     function calculateCost(upgrade) { if (!upgrade || typeof upgrade.baseCost !== 'number' || typeof upgrade.costMultiplier !== 'number' || typeof upgrade.currentLevel !== 'number') { console.error("Некорректные данные улучшения для расчета стоимости:", upgrade); return Infinity; } return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel)); }
@@ -227,8 +284,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateActiveLangButton() { if (!languageOptionsContainer) return; languageOptionsContainer.querySelectorAll('.lang-btn').forEach(button => { button.classList.toggle('active', button.dataset.lang === currentLanguage); }); }
     if (languageOptionsContainer) { languageOptionsContainer.addEventListener('click', (event) => { if (event.target.classList.contains('lang-btn')) { const lang = event.target.dataset.lang; if (lang && lang !== currentLanguage) { setLanguage(lang); } } }); } else { console.error("Контейнер выбора языка не найден."); }
 
-    // Логика настроек звука удалена
-
     // --- Логика магазина ---
     function renderSkins() { if (!skinsListElement) { console.error("Элемент #skins-list не найден!"); return; } skinsListElement.innerHTML = ''; availableSkins.forEach(skin => { const isOwned = ownedSkins.includes(skin.id); const isActive = activeSkinId === skin.id; const canAfford = gems >= skin.cost; const listItem = document.createElement('li'); listItem.dataset.skinId = skin.id; if (isActive) { listItem.classList.add('active-skin'); } const translatedName = translations[skin.nameKey]?.[currentLanguage] || skin.nameKey; const buyButtonText = translations.buyButton?.[currentLanguage] || "Купить"; const selectButtonText = translations.selectButton?.[currentLanguage] || "Выбрать"; const selectedButtonText = translations.selectedButton?.[currentLanguage] || "Выбрано"; const gemIconSvg = `<span class="gem-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/></svg></span>`; let actionButtonHtml = ''; if (isActive) { actionButtonHtml = `<button class="skin-action-btn selected-btn" disabled>${selectedButtonText}</button>`; } else if (isOwned) { actionButtonHtml = `<button class="skin-action-btn select-btn">${selectButtonText}</button>`; } else { actionButtonHtml = `<button class="skin-action-btn buy-btn" ${!canAfford ? 'disabled' : ''}>${buyButtonText}</button>`; } listItem.innerHTML = `<div class="skin-preview ${skin.cssClass || ''}"></div><div class="skin-info"><h3>${translatedName}</h3>${skin.cost > 0 ? `<p class="skin-cost">${gemIconSvg} ${formatNumber(skin.cost)}</p>` : ''}</div>${actionButtonHtml}`; const actionButton = listItem.querySelector('.skin-action-btn'); if (actionButton && !actionButton.classList.contains('selected-btn')) { actionButton.addEventListener('click', () => { if (!actionButton.disabled) { handleSkinAction(skin.id); } }); } skinsListElement.appendChild(listItem); }); }
     function handleSkinAction(skinId) { if (isBlocked) { showTemporaryNotification(translations.actionBlocked?.[currentLanguage] || "Действие заблокировано.", "error"); return; } const skin = availableSkins.find(s => s.id === skinId); if (!skin) return; const isOwned = ownedSkins.includes(skinId); if (isOwned) { if (activeSkinId !== skinId) { setActiveSkin(skinId); } } else { buySkin(skinId); } }
@@ -238,16 +293,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Логика реферальной системы ---
     function checkReferralAndBonus() { const startParam = tg.initDataUnsafe?.start_param; const urlParams = new URLSearchParams(window.location.search); const claimBonusParam = urlParams.get('claimBonus'); console.log("Start Param:", startParam, "Claim Bonus Param:", claimBonusParam); if (claimBonusParam) { handleBonusClaim(claimBonusParam); } else if (startParam && !isNaN(parseInt(startParam))) { handleNewReferral(startParam); } }
-    function handleNewReferral(inviterId) { /* ... */ } // Логика реферала остается
-    function handleBonusClaim(referralId) { /* ... */ } // Логика бонуса остается
-    function cleanBonusUrlParam() { /* ... */ }
-    if (inviteFriendBtn) { /* ... */ }
+    function handleNewReferral(inviterId) { console.log("Обработка нового реферала от", inviterId); /* Логика здесь */ }
+    function handleBonusClaim(referralId) { console.log("Обработка запроса на бонус за реферала", referralId); /* Логика здесь */ }
+    function cleanBonusUrlParam() { /* Логика здесь */ }
+    if (inviteFriendBtn) { /* Логика кнопки приглашения */ }
 
-    // --- Сохранение/Загрузка (Исправленная, БЕЗ звука) ---
+    // --- Сохранение/Загрузка ---
     function saveGame() {
-        if (!tg?.CloudStorage || !tg.CloudStorage.setItem) { return; } // Проверка API
+        if (!tg?.CloudStorage || !tg.CloudStorage.setItem) { return; }
         console.log("[Save] Попытка сохранения...");
-        let isValid = true; // Валидация
+        let isValid = true;
         if (!Number.isFinite(essence) || essence < 0) { console.warn(`[Save Valid] Эссенция->0`); essence = 0; isValid = false; }
         if (!Number.isFinite(gems) || gems < 0) { console.warn(`[Save Valid] Кристаллы->0`); gems = 0; isValid = false; }
         if (!Array.isArray(ownedSkins) || !ownedSkins.includes('default')) { console.warn(`[Save Valid] Скины->сброс`); ownedSkins = ['default']; if (activeSkinId !== 'default') activeSkinId = 'default'; isValid = false; }
@@ -262,9 +317,9 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const gameStateString = JSON.stringify(gameState);
             console.log(`[Save] Сохранение данных (${gameStateString.length} байт)...`);
-            try { // Оборачиваем вызов setItem
+            try {
                 tg.CloudStorage.setItem('gameState', gameStateString, (error, success) => {
-                    if (error) { console.error("[Save Cb] Ошибка:", error); } else if (success) { console.log("[Save Cb] Успешно."); } else { console.warn("[Save Cb] Неопред. результат."); }
+                    if (error) { console.error("[Save Cb] Ошибка:", error); } else if (success) { /* console.log("[Save Cb] Успешно."); */ } else { console.warn("[Save Cb] Неопред. результат."); }
                 });
             } catch (storageError) { console.error("[Save Try] Ошибка вызова setItem:", storageError); }
         } catch (stringifyError) { console.error("[Save] Ошибка JSON.stringify:", stringifyError); showTemporaryNotification(translations.saveCritError?.[currentLanguage] || "Ошибка сохранения!", "error"); }
@@ -276,13 +331,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cauldronElement) cauldronElement.classList.remove('blocked-cauldron');
         let needsReset = false;
 
-        // --- Проверка CloudStorage API ---
         if (!tg?.CloudStorage || !tg.CloudStorage.getItem) {
             console.warn("[Load] CloudStorage объект недоступен. Новая игра.");
             needsReset = true;
-            // Выполняем настройку UI после блока finally/задержки
         } else {
-             // --- Оборачиваем вызов getItem в try...catch ---
             try {
                 tg.CloudStorage.getItem('gameState', (error, value) => {
                     console.log("[Load Cb] Ответ от getItem.");
@@ -296,49 +348,56 @@ document.addEventListener('DOMContentLoaded', () => {
                         try {
                             const savedState = JSON.parse(value);
                             console.log("[Load Parse] OK:", savedState);
-                            // --- Загрузка с валидацией (БЕЗ ЗВУКА) ---
                             essence = Number(savedState.essence) || 0; if (!Number.isFinite(essence) || essence < 0) { console.warn("[Load Valid] Эссенция->0"); essence = 0; }
                             gems = Number(savedState.gems) || 0; if (!Number.isFinite(gems) || gems < 0) { console.warn("[Load Valid] Кристаллы->0"); gems = 0; }
                             currentLanguage = savedState.language || 'ru'; if (!translations.greetingBase[currentLanguage]) { console.warn(`[Load Valid] Язык->ru`); currentLanguage = 'ru'; }
                             if (Array.isArray(savedState.upgrades)) { upgrades.forEach(u => { const sU = savedState.upgrades.find(su => su.id === u.id); const lvl = Number(sU?.level); u.currentLevel = (Number.isFinite(lvl) && lvl >= 0) ? lvl : 0; if(u.currentLevel !==0 && !(Number.isFinite(lvl) && lvl >=0)) console.warn(`[Load Valid] Апгрейд ${u.id}->0`); }); } else { console.warn("[Load Valid] Апгрейды->0"); upgrades.forEach(u => u.currentLevel = 0); }
                             ownedSkins = Array.isArray(savedState.ownedSkins) ? savedState.ownedSkins : ['default']; if (!ownedSkins.includes('default')) { ownedSkins.push('default'); console.warn("[Load Valid] Скин default добавлен."); }
                             activeSkinId = (typeof savedState.activeSkinId === 'string' && ownedSkins.includes(savedState.activeSkinId)) ? savedState.activeSkinId : 'default'; if (savedState.activeSkinId && !ownedSkins.includes(savedState.activeSkinId)) { console.warn(`[Load Valid] Активный скин->default`); }
-                            // --- Конец загрузки ---
                             recalculateBonuses(); console.log("[Load] Загружено успешно."); loadedSuccessfully = true;
                         } catch (parseError) { console.error("[Load Parse] Ошибка:", parseError); showTemporaryNotification(translations.readError?.[currentLanguage] || "Ошибка чтения!", "error"); needsReset = true; }
                     } else { console.log("[Load Cb] Нет данных. Новая игра."); needsReset = true; }
 
-                    // --- Сброс и Пост-настройка ВНУТРИ колбэка ---
                     if (needsReset) { resetGameData(); }
-                    checkReferralAndBonus(); applyTranslations(); updateDisplay(); applyCauldronSkin();
+                    // Выполняем пост-настройки ВНУТРИ колбэка
+                    applyTranslations();
+                    updateDisplay();
+                    applyCauldronSkin();
+                    updateLiquidColor(); // Устанавливаем цвет жидкости после загрузки
                     visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel);
+                    checkReferralAndBonus();
                     console.log(`[Load Cb] Завершено. Состояние: E:${essence}, G:${gems}, Skin:${activeSkinId}`);
-                }); // Конец колбэка getItem
+                });
             } catch (storageError) {
                 console.error("[Load Try] Ошибка вызова getItem:", storageError); showTemporaryNotification("Загрузка недоступна.", "error"); needsReset = true;
-                // --- Пост-настройка ПРИ ОШИБКЕ ВЫЗОВА getItem ---
                 if (needsReset) { resetGameData(); }
-                checkReferralAndBonus(); applyTranslations(); updateDisplay(); applyCauldronSkin();
+                // Выполняем пост-настройки ПРИ ОШИБКЕ ВЫЗОВА
+                applyTranslations();
+                updateDisplay();
+                applyCauldronSkin();
+                updateLiquidColor(); // Устанавливаем цвет жидкости
                 visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel);
+                checkReferralAndBonus();
                 console.log(`[Load] Завершено после ошибки вызова getItem.`);
             }
-        } // Конец else (если CloudStorage объект существует)
+        }
 
-        // Выполнение пост-настройки если CloudStorage недоступен сразу или произошла ошибка при вызове getItem
-        // Небольшая задержка для надежности
-        if (!tg?.CloudStorage || needsReset) { // needsReset добавлено для случая ошибки вызова getItem
+        // Выполнение пост-настройки если CloudStorage недоступен сразу
+        if (!tg?.CloudStorage) {
              setTimeout(() => {
-                 // Сброс вызывается или здесь, или внутри колбэка/catch выше
-                 if (needsReset && !tg?.CloudStorage) { resetGameData(); } // Сброс если CloudStorage не было изначально
+                 if (needsReset) { resetGameData(); } // Сброс если CloudStorage не было изначально
                  console.log("[Load Timeout] Выполнение пост-настройки.");
-                 checkReferralAndBonus(); applyTranslations(); updateDisplay(); applyCauldronSkin();
+                 applyTranslations();
+                 updateDisplay();
+                 applyCauldronSkin();
+                 updateLiquidColor(); // Устанавливаем цвет жидкости
                  visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel);
+                 checkReferralAndBonus();
                  console.log(`[Load Timeout] Завершено. Состояние: E:${essence}, G:${gems}, Skin:${activeSkinId}`);
-                 if (!tg?.CloudStorage) showTemporaryNotification("Прогресс не будет сохранен.", "warning");
-             }, 50); // 50 мс задержки
+                 showTemporaryNotification("Прогресс не будет сохранен.", "warning");
+             }, 50);
         }
     }
-
 
     function resetGameData() {
         console.log("Сброс данных игры к значениям по умолчанию.");
@@ -353,12 +412,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function showTemporaryNotification(message, type = "info") { const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); void notification.offsetWidth; requestAnimationFrame(() => { notification.style.opacity = '1'; notification.style.bottom = '80px'; }); setTimeout(() => { notification.style.opacity = '0'; notification.style.bottom = '70px'; setTimeout(() => { if (notification.parentNode) { notification.remove(); } }, 500); }, 2500); }
 
     // --- Первоначальная инициализация ---
-    loadGame(); // Загрузка игры
+    loadGame(); // Загрузка игры (включает начальную установку цвета и уровня жидкости)
 
     // --- Автосохранение и обработчики событий ---
     const autoSaveInterval = setInterval(saveGame, 15000);
     window.addEventListener('beforeunload', saveGame);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { saveGame(); } });
-    if (tg?.onEvent) { tg.onEvent('viewportChanged', (event) => { if (event.isStateStable) { console.log("Viewport stable, save."); saveGame(); } }); }
+    if (tg?.onEvent) { tg.onEvent('viewportChanged', (event) => { if (event.isStateStable) { /* console.log("Viewport stable, save."); */ saveGame(); } }); }
+
+    // --- Интервал для обновления цвета жидкости ---
+    const liquidColorUpdateInterval = setInterval(updateLiquidColor, 5 * 60 * 1000); // Обновлять каждые 5 минут
 
 }); // Конец DOMContentLoaded

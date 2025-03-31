@@ -8,8 +8,10 @@
     --button-bg: #5d5480;
     --button-hover-bg: #71689a;
     --disabled-color: #6c6c6c;
-    --flask-color: #00abc1;
+    --flask-color: #00abc1; /* Используется для скина по умолчанию */
     --gem-color: #ff69b4;
+    /* Добавлена переменная для цвета жидкости, запасной цвет с alpha=0.35 */
+    --liquid-color: rgba(138, 43, 226, 0.35);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,23 +47,30 @@ html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Sego
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
     border: none; border-radius: 0; will-change: transform, background;
     transition: transform 0.1s ease-out, filter 0.1s ease-out, background-color 0.3s ease, background-image 0.3s ease;
-    /* ИЗМЕНЕНО: Добавлено overflow: hidden; */
     overflow: hidden;
 }
 .cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(70%); }
 
 .cauldron::before { /* Жидкость */
-    content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: var(--liquid-level, 10%);
-    background-color: rgba(165, 105, 189, 0.65); /* Прозрачность */
-    z-index: 1; overflow: hidden;
-    /* ИЗМЕНЕНО: Удалено clip-path: inherit; */
-    transition: background-color 0.3s ease;
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: var(--liquid-level, 10%);
+    /* ИЗМЕНЕНО: Используем CSS переменную и устанавливаем новую прозрачность */
+    background-color: var(--liquid-color); /* Цвет управляется JS, запасной в :root */
+    z-index: 1;
+    overflow: hidden;
+    /* ИЗМЕНЕНО: Добавляем transition для плавного изменения цвета и сохраняем для высоты */
+    transition: background-color 1s ease, height 0.1s linear;
 }
 
 .bubbles-container { /* Пузырьки */
     position: absolute; bottom: 0; left: 0; width: 100%; height: var(--liquid-level, 10%);
     z-index: 2; pointer-events: none; overflow: hidden;
-    /* ИЗМЕНЕНО: Удалено clip-path: inherit; */
+    /* Контейнер для пузырьков подстраивается под уровень жидкости */
+    transition: height 0.1s linear;
 }
 
 .bubble { position: absolute; bottom: -20px; width: 8px; height: 8px; background-color: var(--bubble-color); border-radius: 50%; opacity: 0.6; animation: rise 3s infinite ease-in; }
