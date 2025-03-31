@@ -10,7 +10,7 @@
     --button-hover-bg: #71689a;
     --disabled-color: #6c6c6c;
     --flask-color: #00abc1; /* Цвет для clip-path колбы */
-    --liquid-level: 45%; /* Начальный уровень жидкости */
+    /* --liquid-level задается через JS */
     --gem-color: #ff69b4; /* Розовый цвет для иконки кристалла */
 }
 
@@ -131,7 +131,8 @@ html, body {
     position: relative;
     cursor: pointer;
     user-select: none;
-    transition: transform 0.1s ease-out;
+    /* transition убран из JS, можно оставить для других свойств */
+    transition: filter 0.1s ease-out;
     margin: 20px auto;
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
     overflow: hidden;
@@ -153,10 +154,12 @@ html, body {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: var(--liquid-level, 45%);
+    /* height теперь управляется через JS */
+    height: var(--liquid-level, 10%); /* Начальное значение для CSS */
     background-color: var(--liquid-color);
     z-index: 1;
-    transition: height 0.5s ease;
+    /* transition убран, т.к. JS обновляет слишком часто */
+    /* transition: height 0.1s linear; */ /* Можно попробовать короткий linear */
 }
 
 /* Контейнер для пузырьков */
@@ -165,11 +168,12 @@ html, body {
     bottom: 0;
     left: 0;
     width: 100%;
-    height: var(--liquid-level, 45%);
+    /* height задается через JS */
+    height: 10%; /* Начальное значение для CSS */
     z-index: 2;
     overflow: hidden;
     pointer-events: none;
-    transition: height 0.5s ease;
+    /* transition убрана */
 }
 
 /* Стиль для отдельных пузырьков */
@@ -192,10 +196,11 @@ html, body {
     100% { transform: translateY(-220px) scale(0.8); opacity: 0; }
 }
 
-/* Анимация клика по колбе */
-.cauldron:active:not(.blocked-cauldron) {
-    transform: scale(0.95);
-}
+/* --- Анимация клика УБРАНА/ЗАКОММЕНТИРОВАНА --- */
+/* .cauldron:active:not(.blocked-cauldron) { */
+/*     transform: scale(0.95); */
+/* } */
+
 
 /* --- Фидбек при клике --- */
 #click-feedback-container {
@@ -220,10 +225,9 @@ html, body {
     opacity: 1;
     animation: fadeUp 1s ease-out forwards;
     white-space: nowrap; /* Предотвращаем перенос */
+    display: inline-flex; /* Для выравнивания иконки и текста */
+    align-items: center;
 }
-
-/* Цвет фидбека для кристаллов (задается через JS) */
-/* .click-feedback.gem { color: #f1c40f; font-size: 1.3em; } */
 
 @keyframes fadeUp {
     0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
@@ -248,21 +252,21 @@ html, body {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.1s ease-out;
 }
 
-.control-button:hover {
+.control-button:hover:not(:disabled) { /* :disabled добавлено на всякий случай */
     background-color: var(--button-hover-bg);
 }
 
-.control-button:active {
+.control-button:active:not(:disabled) {
     transform: scale(0.98);
 }
 
 .telegram-feature {
     background-color: #5093d1;
 }
-.telegram-feature:hover {
+.telegram-feature:hover:not(:disabled) {
     background-color: #60a3e1;
 }
 
@@ -311,6 +315,7 @@ html, body {
     line-height: 1;
     cursor: pointer;
     opacity: 0.7;
+    transition: opacity 0.2s ease;
 }
 .close-button:hover {
     opacity: 1;
