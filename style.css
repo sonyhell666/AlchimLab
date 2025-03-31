@@ -49,12 +49,27 @@ html, body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 36px; /* Ширина самой кнопки */
+    height: 36px; /* Высота самой кнопки */
     border-radius: 50%;
 }
 .settings-button:hover { opacity: 1; background-color: rgba(255, 255, 255, 0.1); }
-.settings-button svg { display: block; width: 24px; height: 24px; fill: var(--text-color); }
+
+/* ИЗМЕНЕНО: Стиль для SVG удален, добавлен стиль для IMG */
+/*
+.settings-button svg {
+    display: block;
+    width: 24px;
+    height: 24px;
+    fill: var(--text-color);
+}
+*/
+.settings-button img {
+    display: block; /* Убирает возможное лишнее пространство под картинкой */
+    width: 24px;    /* Ширина иконки */
+    height: 24px;   /* Высота иконки */
+}
+
 
 .header { text-align: center; margin-bottom: 15px; font-size: 1.1em; opacity: 0.8; }
 
