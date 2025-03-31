@@ -46,28 +46,24 @@ html, body {
     z-index: 51;
     opacity: 0.8;
     transition: opacity 0.2s ease, background-color 0.2s ease;
-    display: inline-flex;
+    display: inline-flex; /* Важно для выравнивания */
     align-items: center;
     justify-content: center;
     width: 36px; /* Ширина самой кнопки */
     height: 36px; /* Высота самой кнопки */
     border-radius: 50%;
+    overflow: hidden; /* Добавлено, чтобы обрезать изображение, если оно все еще выходит за рамки */
 }
 .settings-button:hover { opacity: 1; background-color: rgba(255, 255, 255, 0.1); }
 
-/* ИЗМЕНЕНО: Стиль для SVG удален, добавлен стиль для IMG */
-/*
-.settings-button svg {
-    display: block;
-    width: 24px;
-    height: 24px;
-    fill: var(--text-color);
-}
-*/
+/* ИЗМЕНЕНО: Стиль для IMG внутри кнопки (Вариант 1) */
 .settings-button img {
-    display: block; /* Убирает возможное лишнее пространство под картинкой */
-    width: 24px;    /* Ширина иконки */
-    height: 24px;   /* Высота иконки */
+    display: block;
+    width: 24px;         /* Желаемая ширина */
+    height: 24px;        /* Желаемая высота */
+    max-width: 100%;     /* Ограничиваем максимальную ширину размером родителя */
+    max-height: 100%;    /* Ограничиваем максимальную высоту размером родителя */
+    object-fit: contain; /* Масштабирует изображение, сохраняя пропорции */
 }
 
 
