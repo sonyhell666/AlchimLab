@@ -1,3 +1,8 @@
+Пожалуйста, вот полный код файла `script.js` с исправленной логикой загрузки и обработки отсутствия `CloudStorage`.
+
+--- START OF FILE script.js ---
+
+```javascript
 // Файл: script.js
 document.addEventListener('DOMContentLoaded', () => {
     // Инициализация Telegram Web App
@@ -188,25 +193,152 @@ document.addEventListener('DOMContentLoaded', () => {
         { id: 'obsidian', nameKey: 'skin_obsidian_name', cost: 100, cssClass: 'skin-obsidian' },
     ];
 
-    // --- Остальные функции (createBubble, updateLiquidLevelVisual, updateDisplay, formatNumber, showClickFeedback, click handler, intervals, upgrades logic, panel logic, settings logic, sound logic, shop logic, referral logic) ---
-    // ... (весь остальной код функций без изменений по сравнению с предыдущим ответом) ...
-    // ... (createBubble) ...
-    // ... (updateLiquidLevelVisual) ...
-    // ... (updateDisplay) ...
-    // ... (formatNumber) ...
-    // ... (showClickFeedback) ...
-    // ... (cauldronElement click listener) ...
-    // ... (setInterval for auto-click) ...
-    // ... (setInterval for liquid decay) ...
-    // ... (calculateCost, renderUpgrades, buyUpgrade, recalculateBonuses) ...
-    // ... (closeSettings, closeUpgrades, closeShop) ...
-    // ... (event listeners for open/close buttons) ...
-    // ... (setLanguage, applyTranslations, updateActiveLangButton, languageOptionsContainer listener) ...
-    // ... (applySoundSettingsToUI, soundToggleCheckbox listener, volumeSlider listeners) ...
-    // ... (renderSkins, handleSkinAction, buySkin, setActiveSkin, applyCauldronSkin) ...
-    // ... (checkReferralAndBonus, handleNewReferral, handleBonusClaim, cleanBonusUrlParam, inviteFriendBtn listener) ...
+    // --- Функции для пузырьков ---
+    function createBubble() { if (!bubblesContainer) return; const b = document.createElement('div'); b.classList.add('bubble'); const s = Math.random() * 8 + 6; const d = Math.random() * 2.5 + 3; const l = Math.random() * 1.5; const h = Math.random() * 90 + 5; b.style.width = `${s}px`; b.style.height = `${s}px`; b.style.left = `${h}%`; b.style.animationDuration = `${d}s`; b.style.animationDelay = `${l}s`; bubblesContainer.appendChild(b); setTimeout(() => { b.remove(); }, (d + l) * 1000 + 100); }
+    setInterval(createBubble, 500);
 
-    // --- Сохранение/Загрузка (С УДАЛЕННОЙ ОШИБКОЙ и ПРОВЕРКОЙ CloudStorage) ---
+    // --- Функция обновления визуала жидкости и пузырьков ---
+    function updateLiquidLevelVisual(percentage) { const l = Math.max(LIQUID_MIN_LEVEL, Math.min(LIQUID_MAX_LEVEL, percentage)); if (cauldronElement) { cauldronElement.style.setProperty('--liquid-level', `${l}%`); if(bubblesContainer) { bubblesContainer.style.height = `${l}%`; } } else { console.warn("Элемент колбы не найден для обновления жидкости."); } }
+
+    // --- Общая функция обновления UI ---
+    function updateDisplay() { if (essenceCountElement) essenceCountElement.textContent = formatNumber(Math.floor(essence)); if (essencePerSecondElement && perSecondDisplayDiv) { essencePerSecondElement.textContent = formatNumber(essencePerSecond); perSecondDisplayDiv.style.display = essencePerSecond > 0 ? 'block' : 'none'; } if (gemCountElement) gemCountElement.textContent = formatNumber(gems); if (shopPanel && !shopPanel.classList.contains('hidden') && shopGemCountElement) { shopGemCountElement.textContent = formatNumber(gems); } if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) renderUpgrades(); }
+
+    // --- Функция форматирования чисел ---
+    function formatNumber(num) { if (isNaN(num) || !Number.isFinite(num)) { console.warn("formatNumber получено некорректное значение:", num); return "ERR"; } const abbreviations = ["", "K", "M", "B", "T", "q", "Q", "s", "S", "O", "N", "d", "U"]; if (num < 1000) return num.toString(); let i = 0; while (num >= 1000 && i < abbreviations.length - 1) { num /= 1000; i++; } const formattedNum = num % 1 === 0 ? num.toString() : num.toFixed(1); return formattedNum + abbreviations[i]; }
+
+    // --- Функция для отображения "+N" при клике ---
+    function showClickFeedback(amount, type = 'essence') { if (isBlocked || !clickFeedbackContainer) return; const f = document.createElement('div'); f.className = 'click-feedback'; const fmt = formatNumber(amount); if (type === 'gem') { const svgIconHtml = `<span class="gem-icon" style="display:inline-flex; vertical-align: middle; margin-left: 4px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="var(--gem-color)"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"></path></svg></span>`; f.innerHTML = `+${fmt}${svgIconHtml}`; f.style.fontSize = '1.3em'; f.style.fontWeight = 'bold'; f.style.color = 'var(--gem-color)'; } else { f.textContent = `+${fmt} 🧪`; f.style.color = 'var(--accent-color)'; } const ox = Math.random() * 60 - 30; const oy = (type === 'gem') ? (Math.random() * 20 + 15) : (Math.random() * 20 - 10); f.style.left = `calc(50% + ${ox}px)`; f.style.top = `calc(50% + ${oy}px)`; clickFeedbackContainer.appendChild(f); setTimeout(() => { f.remove(); }, 950); }
+
+    // --- Логика клика по котлу ---
+     if (cauldronElement) {
+         cauldronElement.addEventListener('click', () => {
+             const currentTime = Date.now();
+             if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('light'); }
+
+             if (isBlocked) {
+                 showTemporaryNotification(translations.autoclickerBlocked?.[currentLanguage] || "Автокликер обнаружен! Клики заблокированы.", "error");
+                 return;
+             }
+
+             if (currentTime - lastClickTime >= MIN_CLICK_INTERVAL) {
+                 warningCount = 0;
+                 lastInteractionTime = currentTime;
+
+                 let clickAmount = essencePerClick;
+                 if (Number.isFinite(clickAmount)) {
+                     essence += clickAmount;
+                     if (clickFeedbackContainer) showClickFeedback(clickAmount, 'essence');
+                 } else {
+                     console.error("Некорректное значение essencePerClick:", essencePerClick);
+                 }
+
+                 if (Math.random() < GEM_AWARD_CHANCE) {
+                     gems += GEMS_PER_AWARD;
+                     console.log(`Получен ${GEMS_PER_AWARD} кристалл(ов)! Всего: ${gems}`);
+                     if (clickFeedbackContainer) showClickFeedback(GEMS_PER_AWARD, 'gem');
+                     if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('medium'); }
+                 }
+
+                 visualLiquidLevel += LIQUID_INCREASE_PER_CLICK;
+                 visualLiquidLevel = Math.min(visualLiquidLevel, LIQUID_MAX_LEVEL);
+                 updateLiquidLevelVisual(visualLiquidLevel);
+                 updateDisplay();
+
+                 // --- Воспроизведение звука клика ---
+                 if (clickSound && isSoundEnabled) {
+                     try {
+                         clickSound.volume = soundVolume;
+                         clickSound.currentTime = 0;
+                         const playPromise = clickSound.play();
+                         if (playPromise !== undefined) {
+                             playPromise.catch(error => {
+                                 // Не выводим ошибку в консоль, если это просто блокировка автовоспроизведения
+                                 if (error.name !== 'NotAllowedError') {
+                                     console.warn("Не удалось воспроизвести звук клика:", error);
+                                 }
+                             });
+                         }
+                     } catch (err) {
+                         console.error("Ошибка при воспроизведении звука клика:", err);
+                     }
+                 }
+
+                 // Visual feedback for click
+                 cauldronElement.style.transform = 'scale(0.95)';
+                 setTimeout(() => { if (cauldronElement) cauldronElement.style.transform = 'scale(1)'; }, 80);
+
+                 lastClickTime = currentTime;
+
+             } else {
+                 warningCount++;
+                 lastInteractionTime = currentTime;
+                 console.warn(`Слишком быстрый клик, предупреждение ${warningCount}/${MAX_WARNINGS}`);
+                 showTemporaryNotification(`${translations.tooFastClick?.[currentLanguage] || "Слишком быстро!"} (${warningCount}/${MAX_WARNINGS})`, "warning");
+                 if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('medium'); }
+
+                 if (warningCount >= MAX_WARNINGS) {
+                     isBlocked = true;
+                     console.error("Обнаружен и заблокирован автокликер.");
+                     showTemporaryNotification(translations.autoclickerBlocked?.[currentLanguage] || "Автокликер обнаружен! Клики заблокированы.", "error");
+                     if (tg?.HapticFeedback) { tg.HapticFeedback.notificationOccurred('error'); }
+                     if (cauldronElement) cauldronElement.classList.add('blocked-cauldron');
+                 }
+             }
+         });
+     } else {
+         console.error("Элемент колбы не найден!");
+     }
+
+    // --- Логика авто-клика ---
+    setInterval(() => { if (!isBlocked && essencePerSecond > 0 && Number.isFinite(essencePerSecond)) { const essenceToAdd = essencePerSecond / 10; if (Number.isFinite(essenceToAdd)) { essence += essenceToAdd; updateDisplay(); } else { console.warn("Рассчитана некорректная порция эссенции в секунду."); } } }, 100);
+
+    // --- Интервал для уменьшения уровня жидкости ---
+    setInterval(() => { const currentTime = Date.now(); if (currentTime - lastInteractionTime > IDLE_TIMEOUT && visualLiquidLevel > LIQUID_MIN_LEVEL) { visualLiquidLevel -= LIQUID_DECAY_RATE; visualLiquidLevel = Math.max(visualLiquidLevel, LIQUID_MIN_LEVEL); } updateLiquidLevelVisual(visualLiquidLevel); }, LIQUID_UPDATE_INTERVAL);
+
+    // --- Логика улучшений ---
+    function calculateCost(upgrade) { if (!upgrade || typeof upgrade.baseCost !== 'number' || typeof upgrade.costMultiplier !== 'number' || typeof upgrade.currentLevel !== 'number') { console.error("Некорректные данные улучшения для расчета стоимости:", upgrade); return Infinity; } return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel)); }
+    function renderUpgrades() { if (!upgradesListElement) { console.error("Элемент списка улучшений не найден!"); return; } upgradesListElement.innerHTML = ''; upgrades.sort((a, b) => (a.requiredEssence || 0) - (b.requiredEssence || 0)); if (upgrades.length === 0) { upgradesListElement.innerHTML = `<li><p>Улучшения не определены.</p></li>`; return; } const currentEssenceFloored = Math.floor(essence); upgrades.forEach(upgrade => { const cost = calculateCost(upgrade); if (!Number.isFinite(cost)) { console.error("Пропуск рендера улучшения с неверной стоимостью:", upgrade.id); return; } const required = upgrade.requiredEssence || 0; const isLocked = currentEssenceFloored < required; const canAfford = currentEssenceFloored >= cost; const listItem = document.createElement('li'); if (isLocked) { listItem.classList.add('locked'); } else if (!canAfford) { listItem.classList.add('cannot-afford'); } const translatedName = translations[upgrade.nameKey]?.[currentLanguage] || upgrade.nameKey; const translatedDesc = translations[upgrade.descKey]?.[currentLanguage] || upgrade.descKey; const buyButtonText = translations.buyButton?.[currentLanguage] || "Купить"; const requirementPrefix = translations.requirementPrefix?.[currentLanguage] || "Нужно"; const requirementInfoPrefix = translations.requirementInfoPrefix?.[currentLanguage] || "Требуется"; let buttonText = buyButtonText; let isButtonDisabled = false; if (isLocked) { isButtonDisabled = true; buttonText = `${requirementPrefix} ${formatNumber(required)} 🧪`; } else if (!canAfford) { isButtonDisabled = true; } listItem.innerHTML = `<div class="upgrade-info"><h3>${translatedName} (Ур. ${upgrade.currentLevel})</h3><p>${translatedDesc}</p><p class="upgrade-cost">Цена: ${formatNumber(cost)} 🧪</p>${isLocked ? `<p class="requirement-info">${requirementInfoPrefix}: ${formatNumber(required)} 🧪</p>` : ''}</div><button class="buy-upgrade-btn" data-upgrade-id="${upgrade.id}">${buttonText}</button>`; const buyButton = listItem.querySelector('.buy-upgrade-btn'); if (buyButton) { buyButton.disabled = isButtonDisabled; if (!isLocked) { buyButton.addEventListener('click', (event) => { event.stopPropagation(); if (!buyButton.disabled) { buyUpgrade(upgrade.id); } }); } } upgradesListElement.appendChild(listItem); }); }
+    function buyUpgrade(upgradeId) { if (isBlocked) { showTemporaryNotification(translations.actionBlocked?.[currentLanguage] || "Действие заблокировано.", "error"); return; } const upgrade = upgrades.find(up => up.id === upgradeId); if (!upgrade) { console.error("Улучшение не найдено:", upgradeId); return; } const required = upgrade.requiredEssence || 0; if (Math.floor(essence) < required) { showTemporaryNotification(`${translations.needMoreEssence?.[currentLanguage] || "Нужно больше эссенции!"} ${formatNumber(required)} 🧪`, "warning"); if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning'); return; } const cost = calculateCost(upgrade); if (!Number.isFinite(cost)) { showTemporaryNotification(translations.invalidCostError?.[currentLanguage] || "Ошибка: Неверная стоимость улучшения!", "error"); return; } if (essence >= cost) { essence -= cost; upgrade.currentLevel++; recalculateBonuses(); updateDisplay(); renderUpgrades(); saveGame(); if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('light'); } } else { showTemporaryNotification(translations.notEnoughEssence?.[currentLanguage] || "Недостаточно эссенции!", "warning"); if (tg?.HapticFeedback) { tg.HapticFeedback.notificationOccurred('warning'); } } }
+    function recalculateBonuses() { essencePerClick = 1; essencePerSecond = 0; upgrades.forEach(upgrade => { if (upgrade.currentLevel > 0 && Number.isFinite(upgrade.value) && typeof upgrade.type === 'string') { if (upgrade.type === 'click') { essencePerClick += upgrade.value * upgrade.currentLevel; } else if (upgrade.type === 'auto') { essencePerSecond += upgrade.value * upgrade.currentLevel; } } else if (upgrade.currentLevel > 0) { console.warn("Улучшение имеет уровень > 0, но неверные данные бонуса:", upgrade); } }); if (!Number.isFinite(essencePerClick) || essencePerClick < 1) { console.error("Пересчет привел к неверному essencePerClick:", essencePerClick); essencePerClick = 1; } if (!Number.isFinite(essencePerSecond) || essencePerSecond < 0) { console.error("Пересчет привел к неверному essencePerSecond:", essencePerSecond); essencePerSecond = 0; } }
+
+    // --- Открытие/Закрытие панелей ---
+    function closeSettings() { if (settingsPanel) settingsPanel.classList.add('hidden'); }
+    function closeUpgrades() { if (upgradesPanel) upgradesPanel.classList.add('hidden'); }
+    function closeShop() { if (shopPanel) shopPanel.classList.add('hidden'); }
+    if (openUpgradesBtn && upgradesPanel) { openUpgradesBtn.addEventListener('click', () => { renderUpgrades(); upgradesPanel.classList.remove('hidden'); closeSettings(); closeShop(); }); } else { console.error("Кнопка открытия улучшений или панель не найдена."); }
+    if (closeUpgradesBtn && upgradesPanel) { closeUpgradesBtn.addEventListener('click', closeUpgrades); } else { console.error("Кнопка закрытия улучшений или панель не найдена."); }
+    if (settingsBtn && settingsPanel) { settingsBtn.addEventListener('click', () => { applySoundSettingsToUI(); updateActiveLangButton(); settingsPanel.classList.remove('hidden'); closeUpgrades(); closeShop(); }); } else { console.error("Кнопка настроек или панель не найдена."); }
+    if (closeSettingsBtn && settingsPanel) { closeSettingsBtn.addEventListener('click', closeSettings); } else { console.error("Кнопка закрытия настроек или панель не найдена."); }
+    if (settingsPanel) { settingsPanel.addEventListener('click', (e) => { if (e.target === settingsPanel) closeSettings(); }); }
+    if (shopBtn && shopPanel) { shopBtn.addEventListener('click', () => { if (shopGemCountElement) shopGemCountElement.textContent = formatNumber(gems); renderSkins(); shopPanel.classList.remove('hidden'); closeUpgrades(); closeSettings(); if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }); } else { console.error("Кнопка магазина или панель не найдена."); }
+    if (closeShopBtn && shopPanel) { closeShopBtn.addEventListener('click', closeShop); } else { console.error("Кнопка закрытия магазина или панель не найдена."); }
+
+    // --- Логика Настроек ---
+    function setLanguage(lang) { if (translations.greetingBase[lang]) { currentLanguage = lang; console.log(`Язык изменен на: ${currentLanguage}`); applyTranslations(); updateActiveLangButton(); saveGame(); if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) { renderUpgrades(); } if (shopPanel && !shopPanel.classList.contains('hidden')) { renderSkins(); } } else { console.warn(`Язык "${lang}" не найден в переводах.`); } }
+    function applyTranslations() { if (userGreetingElement) { let greeting = translations.greetingBase[currentLanguage] || "Лаборатория"; if (userName) { greeting += ` ${userName}`; } userGreetingElement.textContent = greeting; } document.querySelectorAll('[data-translate]').forEach(element => { const key = element.dataset.translate; if (!element.closest('.setting-item')) { const translation = translations[key]?.[currentLanguage]; if (translation) { element.textContent = translation; } else { console.warn(`Ключ перевода "${key}" не найден для языка "${currentLanguage}".`); } } }); const perSecTextNode = perSecondDisplayDiv?.lastChild; if (perSecTextNode && perSecTextNode.nodeType === Node.TEXT_NODE) { perSecTextNode.textContent = ` ${translations.perSec?.[currentLanguage] || 'в сек'}`; } document.querySelectorAll('.setting-item label[data-translate]').forEach(element => { const key = element.dataset.translate; const translation = translations[key]?.[currentLanguage]; if (translation) { element.textContent = translation; } else { console.warn(`Ключ перевода (label) "${key}" не найден для языка "${currentLanguage}".`); } }); document.querySelectorAll('.settings-content h3[data-translate]').forEach(element => { const key = element.dataset.translate; const translation = translations[key]?.[currentLanguage]; if (translation) { element.textContent = translation; } else { console.warn(`Ключ перевода (h3) "${key}" не найден для языка "${currentLanguage}".`); } }); }
+    function updateActiveLangButton() { if (!languageOptionsContainer) return; languageOptionsContainer.querySelectorAll('.lang-btn').forEach(button => { button.classList.toggle('active', button.dataset.lang === currentLanguage); }); }
+    if (languageOptionsContainer) { languageOptionsContainer.addEventListener('click', (event) => { if (event.target.classList.contains('lang-btn')) { const lang = event.target.dataset.lang; if (lang && lang !== currentLanguage) { setLanguage(lang); } } }); } else { console.error("Контейнер выбора языка не найден."); }
+
+    // --- Логика настроек звука ---
+    function applySoundSettingsToUI() { if (soundToggleCheckbox && volumeSlider && volumeValueDisplay) { soundToggleCheckbox.checked = isSoundEnabled; volumeSlider.value = Math.round(soundVolume * 100); volumeValueDisplay.textContent = `${volumeSlider.value}%`; volumeSlider.disabled = !isSoundEnabled; volumeValueDisplay.classList.toggle('disabled', !isSoundEnabled); } else { console.warn("Элементы настроек звука не найдены в DOM."); } }
+    if (soundToggleCheckbox) { soundToggleCheckbox.addEventListener('change', () => { isSoundEnabled = soundToggleCheckbox.checked; console.log(`Звук ${isSoundEnabled ? 'включен' : 'выключен'}`); applySoundSettingsToUI(); saveGame(); if(tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }); }
+    if (volumeSlider) { volumeSlider.addEventListener('input', () => { const volumeValue = parseInt(volumeSlider.value, 10); soundVolume = volumeValue / 100; if (volumeValueDisplay) { volumeValueDisplay.textContent = `${volumeValue}%`; } }); volumeSlider.addEventListener('change', () => { console.log(`Громкость установлена на: ${Math.round(soundVolume * 100)}%`); saveGame(); if (clickSound && isSoundEnabled) { try { clickSound.volume = soundVolume; clickSound.currentTime = 0; clickSound.play().catch(e => {}); } catch (err) {} } }); }
+
+    // --- Логика магазина ---
+    function renderSkins() { if (!skinsListElement) { console.error("Элемент списка скинов не найден!"); return; } skinsListElement.innerHTML = ''; availableSkins.forEach(skin => { const isOwned = ownedSkins.includes(skin.id); const isActive = activeSkinId === skin.id; const canAfford = gems >= skin.cost; const listItem = document.createElement('li'); listItem.dataset.skinId = skin.id; if (isActive) { listItem.classList.add('active-skin'); } const translatedName = translations[skin.nameKey]?.[currentLanguage] || skin.nameKey; const buyButtonText = translations.buyButton?.[currentLanguage] || "Купить"; const selectButtonText = translations.selectButton?.[currentLanguage] || "Выбрать"; const selectedButtonText = translations.selectedButton?.[currentLanguage] || "Выбрано"; const gemIconSvg = `<span class="gem-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/></svg></span>`; let actionButtonHtml = ''; if (isActive) { actionButtonHtml = `<button class="skin-action-btn selected-btn" disabled>${selectedButtonText}</button>`; } else if (isOwned) { actionButtonHtml = `<button class="skin-action-btn select-btn">${selectButtonText}</button>`; } else { actionButtonHtml = `<button class="skin-action-btn buy-btn" ${!canAfford ? 'disabled' : ''}>${buyButtonText}</button>`; } listItem.innerHTML = `<div class="skin-preview ${skin.cssClass || ''}"></div><div class="skin-info"><h3>${translatedName}</h3>${skin.cost > 0 ? `<p class="skin-cost">${gemIconSvg} ${formatNumber(skin.cost)}</p>` : ''}</div>${actionButtonHtml}`; const actionButton = listItem.querySelector('.skin-action-btn'); if (actionButton && !actionButton.classList.contains('selected-btn')) { actionButton.addEventListener('click', () => { if (!actionButton.disabled) { handleSkinAction(skin.id); } }); } skinsListElement.appendChild(listItem); }); }
+    function handleSkinAction(skinId) { if (isBlocked) { showTemporaryNotification(translations.actionBlocked?.[currentLanguage] || "Действие заблокировано.", "error"); return; } const skin = availableSkins.find(s => s.id === skinId); if (!skin) return; const isOwned = ownedSkins.includes(skinId); if (isOwned) { if (activeSkinId !== skinId) { setActiveSkin(skinId); } } else { buySkin(skinId); } }
+    function buySkin(skinId) { const skin = availableSkins.find(s => s.id === skinId); if (!skin || ownedSkins.includes(skinId) || skin.cost <= 0) return; if (gems >= skin.cost) { gems -= skin.cost; ownedSkins.push(skinId); console.log(`Скин куплен: ${skinId}. Осталось кристаллов: ${gems}`); showTemporaryNotification(translations.skinPurchaseSuccess?.[currentLanguage] || "Скин куплен!", "success"); if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); updateDisplay(); renderSkins(); setActiveSkin(skinId); } else { console.log(`Недостаточно кристаллов для покупки скина: ${skinId}. Нужно: ${skin.cost}, Есть: ${gems}`); showTemporaryNotification(translations.notEnoughGems?.[currentLanguage] || "Недостаточно кристаллов!", "warning"); if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning'); } }
+    function setActiveSkin(skinId) { if (!ownedSkins.includes(skinId)) { console.error(`Попытка активировать не купленный скин: ${skinId}`); return; } if (activeSkinId !== skinId) { activeSkinId = skinId; console.log(`Активный скин установлен: ${skinId}`); applyCauldronSkin(); if (shopPanel && !shopPanel.classList.contains('hidden')) { renderSkins(); } saveGame(); showTemporaryNotification(translations.skinSelected?.[currentLanguage] || "Скин выбран!", "info"); if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); } }
+    function applyCauldronSkin() { if (!cauldronElement) return; const activeSkinDefinition = availableSkins.find(s => s.id === activeSkinId); const skinClass = activeSkinDefinition?.cssClass; availableSkins.forEach(skin => { if (skin.cssClass) { cauldronElement.classList.remove(skin.cssClass); } }); if (skinClass) { cauldronElement.classList.add(skinClass); console.log(`Применен класс скина: ${skinClass} к колбе.`); } else { console.warn(`Не найден CSS класс для активного скина ID: ${activeSkinId}. Используется вид по умолчанию.`); } }
+
+    // --- Логика реферальной системы ---
+    function checkReferralAndBonus() { const startParam = tg.initDataUnsafe?.start_param; const urlParams = new URLSearchParams(window.location.search); const claimBonusParam = urlParams.get('claimBonus'); console.log("Start Param:", startParam, "Claim Bonus Param:", claimBonusParam); if (claimBonusParam) { handleBonusClaim(claimBonusParam); } else if (startParam && !isNaN(parseInt(startParam))) { handleNewReferral(startParam); } }
+    function handleNewReferral(inviterId) { tg.CloudStorage.getItem('gameState', (error, value) => { if (error) { console.error("Ошибка CloudStorage при проверке реферала:", error); return; } let isConsideredNew = true; if (value) { try { const savedState = JSON.parse(value); const thresholdEssence = 100; const significantUpgrades = savedState.upgrades?.some(u => u.level > 0 && u.id !== 'click1' && u.id !== 'auto1'); if ((savedState.essence && savedState.essence > thresholdEssence) || significantUpgrades || (savedState.gems && savedState.gems > 0)) { isConsideredNew = false; console.log("Проверка реферала: Пользователь не считается новым по прогрессу."); } else { console.log("Проверка реферала: Пользователь считается новым (или существующий с минимальным прогрессом)."); } } catch (parseError) { console.error("Ошибка парсинга gameState при проверке реферала", parseError); } } else { console.log("Проверка реферала: gameState не найден, пользователь новый."); } if (isConsideredNew) { console.log(`Обработка реферала: Пользователь новый или с мин. прогрессом. ID пригласившего: ${inviterId}. Отправка данных боту...`); if (tg.sendData) { const dataToSend = JSON.stringify({ type: 'referral_registered', inviter_id: inviterId, referred_user_id: tg.initDataUnsafe?.user?.id }); try { tg.sendData(dataToSend); console.log("Данные регистрации реферала отправлены:", dataToSend); showTemporaryNotification(translations.welcomeReferral?.[currentLanguage] || "Добро пожаловать! Ваш пригласитель получит бонус.", "success"); saveGame(); } catch (sendError) { console.error("Ошибка отправки данных реферала через tg.sendData:", sendError); showTemporaryNotification(translations.referralRegErrorBot?.[currentLanguage] || "Не удалось зарегистрировать приглашение (ошибка бота).", "error"); } } else { console.error("tg.sendData недоступен для отправки информации о реферале."); showTemporaryNotification(translations.referralRegErrorFunc?.[currentLanguage] || "Не удалось зарегистрировать приглашение (функция недоступна).", "error"); } } else { console.log("Пользователь не новый, регистрация реферала пропущена."); } }); }
+    function handleBonusClaim(referralId) { console.log(`Попытка получения бонуса за ID реферала: ${referralId}`); if (!referralId || typeof referralId !== 'string' || referralId.trim() === '') { console.warn("Неверный ID реферала для получения бонуса."); cleanBonusUrlParam(); return; } tg.CloudStorage.getItem('claimed_bonuses', (error, value) => { if (error) { console.error("Ошибка CloudStorage при получении полученных бонусов:", error); showTemporaryNotification(translations.bonusCheckError?.[currentLanguage] || "Ошибка проверки бонуса!", "error"); cleanBonusUrlParam(); return; } let claimedBonuses = []; if (value) { try { claimedBonuses = JSON.parse(value); if (!Array.isArray(claimedBonuses)) { console.warn("Данные полученных бонусов не массив, сброс."); claimedBonuses = []; } } catch (parseError) { console.error("Ошибка парсинга claimed_bonuses:", parseError); claimedBonuses = []; } } if (claimedBonuses.includes(referralId)) { console.log(`Бонус за ID реферала ${referralId} уже был получен.`); showTemporaryNotification(translations.bonusAlreadyClaimed?.[currentLanguage] || "Бонус уже получен.", "warning"); } else { const bonusAmount = 50000; if (Number.isFinite(essence)) { essence += bonusAmount; console.log(`Бонус успешно получен за ${referralId}! Добавлено ${bonusAmount} эссенции.`); const reasonText = translations.bonusReasonFriend?.[currentLanguage] || "за приглашенного друга!"; showTemporaryNotification(`+${formatNumber(bonusAmount)} 🧪 ${reasonText}`, "success"); updateDisplay(); claimedBonuses.push(referralId); tg.CloudStorage.setItem('claimed_bonuses', JSON.stringify(claimedBonuses), (setError) => { if (setError) { console.error("Ошибка CloudStorage при сохранении обновленных полученных бонусов:", setError); } else { console.log("Список полученных бонусов обновлен в CloudStorage."); saveGame(); } }); } else { console.error("Не могу добавить бонус, текущая эссенция не является числом:", essence); showTemporaryNotification(translations.bonusAddError?.[currentLanguage] || "Ошибка добавления бонуса!", "error"); } } cleanBonusUrlParam(); }); }
+    function cleanBonusUrlParam() { try { const currentUrl = new URL(window.location); if (currentUrl.searchParams.has('claimBonus')) { currentUrl.searchParams.delete('claimBonus'); window.history.replaceState({}, document.title, currentUrl.toString()); console.log("Параметр URL claimBonus очищен."); } } catch (urlError) { console.warn("Не удалось очистить параметр URL claimBonus:", urlError); } }
+    if (inviteFriendBtn) { inviteFriendBtn.addEventListener('click', () => { if (tg?.initDataUnsafe?.user?.id) { const botUsername = 'AlchimLaboratory_Bot'; const appName = 'AlchimLab'; const userId = tg.initDataUnsafe.user.id; const referralLink = `https://t.me/${botUsername}/${appName}?start=${userId}`; const shareText = translations.shareText?.[currentLanguage] || 'Присоединяйся к моей Алхимической Лаборатории в Telegram! 🧪⚗️ Кликай и создавай эликсиры!'; const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText)}`; tg.openTelegramLink(shareUrl); console.log('Сгенерирована ссылка для репоста:', referralLink); if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); } else { console.error('Невозможно сгенерировать ссылку-приглашение: ID пользователя или контекст Telegram WebApp недоступен.'); showTemporaryNotification(translations.inviteLinkError?.[currentLanguage] || 'Не удалось создать ссылку-приглашение.', 'error'); if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('error'); } }); } else { console.error("Кнопка приглашения друга не найдена."); }
+
+    // --- Сохранение/Загрузка (Исправленная логика) ---
     function saveGame() {
         // --- Проверка CloudStorage ---
         if (!tg?.CloudStorage || !tg.CloudStorage.setItem) {
@@ -250,29 +382,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadGame() {
-        console.log("[Load] Попытка загрузки..."); // Лог: Начало загрузки
+        console.log("[Load] Попытка загрузки...");
         isBlocked = false; warningCount = 0; // Сброс блока при загрузке
         if (cauldronElement) cauldronElement.classList.remove('blocked-cauldron');
 
-        // --- ИСПРАВЛЕНИЕ: Удалено ошибочное слово "Попытка" ---
-
-        // --- Проверка CloudStorage ---
+        // --- Проверка CloudStorage API ---
         if (!tg?.CloudStorage || !tg.CloudStorage.getItem) {
-            console.warn("[Load] CloudStorage недоступен в этом окружении. Запуск новой игры без загрузки.");
-            resetGameData();
-            applyTranslations(); updateDisplay(); applyCauldronSkin(); applySoundSettingsToUI(); updateLiquidLevelVisual(LIQUID_MIN_LEVEL);
-            showTemporaryNotification("Прогресс не будет сохранен в этой версии Telegram.", "warning");
-            return;
+            console.warn("[Load] CloudStorage недоступен в этом окружении. Запуск новой игры без загрузки/сохранения.");
+            resetGameData(); // Сброс к дефолту
+            // --- НАЧАЛО: Пост-загрузочная настройка ДЛЯ СЛУЧАЯ БЕЗ CloudStorage ---
+            applyTranslations();
+            updateDisplay();
+            applyCauldronSkin();      // Применить дефолтный скин
+            applySoundSettingsToUI(); // Применить дефолтные настройки звука
+            visualLiquidLevel = LIQUID_MIN_LEVEL;
+            lastInteractionTime = Date.now();
+            updateLiquidLevelVisual(visualLiquidLevel);
+            console.log(`[Load] Запуск без CloudStorage завершен.`);
+            showTemporaryNotification("Прогресс не будет сохранен.", "warning");
+            // --- КОНЕЦ: Пост-загрузочная настройка ---
+            return; // Важно: выходим из функции loadGame
         }
-        // --- Конец проверки ---
+        // --- Конец проверки CloudStorage API ---
 
         tg.CloudStorage.getItem('gameState', (error, value) => {
             console.log("[Load Callback] Получен ответ от CloudStorage.getItem.");
             let loadedSuccessfully = false;
+            let needsReset = false; // Флаг, что нужно сбросить данные
+
             if (error) {
                 console.error("[Load Callback] Ошибка при получении данных из CloudStorage:", error);
                 showTemporaryNotification(translations.loadError?.[currentLanguage] || "Ошибка загрузки прогресса!", "error");
-                resetGameData();
+                needsReset = true; // Ошибка получения -> сброс
             } else if (value) {
                 console.log(`[Load Callback] Получены данные из CloudStorage (${value.length} байт). Попытка парсинга...`);
                 try {
@@ -289,38 +430,53 @@ document.addEventListener('DOMContentLoaded', () => {
                     let loadedVolume = Number(savedState.soundVolume); soundVolume = (Number.isFinite(loadedVolume) && loadedVolume >= 0 && loadedVolume <= 1) ? loadedVolume : 0.5; if (!(Number.isFinite(loadedVolume) && loadedVolume >= 0 && loadedVolume <= 1)) { console.warn(`[Load Validation] Некорректная громкость ${savedState.soundVolume}, сброс.`);}
                     // --- Конец загрузки с валидацией ---
                     recalculateBonuses();
-                    console.log("[Load] Состояние игры успешно загружено и применено.");
-                    loadedSuccessfully = true;
+                    console.log("[Load] Состояние игры успешно загружено и валидировано.");
+                    loadedSuccessfully = true; // Успех!
                 } catch (parseError) {
                     console.error("[Load Parse] Ошибка при парсинге JSON из CloudStorage:", parseError, "Полученное значение:", value);
                     showTemporaryNotification(translations.readError?.[currentLanguage] || "Ошибка чтения данных сохранения!", "error");
-                    resetGameData();
+                    needsReset = true; // Ошибка парсинга -> сброс
                 }
             } else {
+                // Данных нет, но ошибки получения тоже не было - это новая игра
                 console.log("[Load Callback] Сохраненное состояние не найдено в CloudStorage. Новая игра.");
+                needsReset = true; // Новая игра -> сброс к дефолту
+            }
+
+            // --- Сброс данных, если необходимо ---
+            if (needsReset) {
                 resetGameData();
             }
-            // --- Пост-загрузочная настройка ---
-            checkReferralAndBonus(); applyTranslations(); updateDisplay(); applyCauldronSkin(); applySoundSettingsToUI();
-            visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel);
-            console.log(`[Load] Загрузка завершена. Essence: ${essence}, Gems: ${gems}, Active Skin: ${activeSkinId}, Sound: ${isSoundEnabled}, Volume: ${soundVolume}`);
-            if (!loadedSuccessfully && !error && !value) { console.log("[Load] Это первый запуск."); }
-        });
-    }
 
+            // --- НАЧАЛО: Пост-загрузочная настройка (выполняется всегда после обработки данных) ---
+            checkReferralAndBonus();
+            applyTranslations();      // Применить язык (загруженный или дефолтный)
+            updateDisplay();          // Обновить счетчики (загруженные или 0)
+            applyCauldronSkin();      // Применить скин (загруженный или дефолтный)
+            applySoundSettingsToUI(); // Применить настройки звука (загруженные или дефолтные)
+            visualLiquidLevel = LIQUID_MIN_LEVEL; // Всегда начинаем с пустой колбы визуально
+            lastInteractionTime = Date.now();
+            updateLiquidLevelVisual(visualLiquidLevel); // Обновить визуал жидкости
+            console.log(`[Load] Загрузка завершена. Состояние: Essence: ${essence}, Gems: ${gems}, Active Skin: ${activeSkinId}, Sound: ${isSoundEnabled}, Volume: ${soundVolume}`);
+            // --- КОНЕЦ: Пост-загрузочная настройка ---
+
+        }); // Конец колбэка getItem
+    }
 
     function resetGameData() {
         console.log("Сброс данных игры к значениям по умолчанию.");
-        isBlocked = false; warningCount = 0;
-        if (cauldronElement) cauldronElement.classList.remove('blocked-cauldron');
-        essence = 0; gems = 0;
+        // Не сбрасываем isBlocked и warningCount здесь, т.к. они не сохраняются
+        essence = 0;
+        gems = 0;
         upgrades.forEach(upgrade => upgrade.currentLevel = 0);
-        currentLanguage = 'ru';
-        ownedSkins = ['default']; activeSkinId = 'default';
-        isSoundEnabled = true; soundVolume = 0.5;
-        recalculateBonuses();
-        visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now();
+        // currentLanguage не сбрасываем, пусть остается выбранный пользователем
+        ownedSkins = ['default'];
+        activeSkinId = 'default';
+        isSoundEnabled = true; // Сбрасываем звук на вкл
+        soundVolume = 0.5;    // Сбрасываем громкость на 50%
+        recalculateBonuses(); // Пересчитать бонусы для нулей
     }
+
 
     // --- Функция уведомлений ---
     function showTemporaryNotification(message, type = "info") { const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); void notification.offsetWidth; requestAnimationFrame(() => { notification.style.opacity = '1'; notification.style.bottom = '80px'; }); setTimeout(() => { notification.style.opacity = '0'; notification.style.bottom = '70px'; setTimeout(() => { if (notification.parentNode) { notification.remove(); } }, 500); }, 2500); }
