@@ -1,18 +1,16 @@
 /* Базовые стили и переменные */
 :root {
-    --primary-bg: #2e2a40; /* Темно-фиолетовый фон лаборатории */
-    --secondary-bg: #4a4466; /* Цвет панелей */
-    --accent-color: #76d7c4; /* Бирюзовый для акцентов */
-    --text-color: #f0f0f0; /* Светлый текст */
-    --liquid-color: #a569bd; /* Фиолетовая жидкость (НЕ ИСПОЛЬЗУЕТСЯ ДЛЯ НОВОЙ КОЛБЫ)*/
-    --bubble-color: #e8daef; /* Цвет пузырьков (НЕ ИСПОЛЬЗУЕТСЯ ДЛЯ НОВОЙ КОЛБЫ) */
+    --primary-bg: #2e2a40;
+    --secondary-bg: #4a4466;
+    --accent-color: #76d7c4;
+    --text-color: #f0f0f0;
+    --liquid-color: #a569bd; /* НЕ ИСПОЛЬЗУЕТСЯ */
+    --bubble-color: #e8daef; /* НЕ ИСПОЛЬЗУЕТСЯ */
     --button-bg: #5d5480;
     --button-hover-bg: #71689a;
     --disabled-color: #6c6c6c;
-
-    /* Добавляем цвета для новой колбы */
-    --flask-color: #00abc1; /* Цвет колбы с картинки */
-    --flask-highlight: white; /* Цвет бликов */
+    --flask-color: #00abc1; /* Цвет для clip-path колбы */
+    --flask-highlight: white; /* НЕ ИСПОЛЬЗУЕТСЯ */
 }
 
 * {
@@ -27,8 +25,8 @@ html, body {
                  Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     background-color: var(--primary-bg);
     color: var(--text-color);
-    overflow: hidden; /* Предотвращаем скролл основной страницы */
-    -webkit-tap-highlight-color: transparent; /* Убираем подсветку при тапе */
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .app-container {
@@ -51,7 +49,7 @@ html, body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    position: relative; /* Для позиционирования фидбека */
+    position: relative;
 }
 
 .essence-display {
@@ -64,89 +62,57 @@ html, body {
 .essence-icon {
     display: inline-block;
     margin-right: 5px;
-    font-size: 0.9em; /* Немного меньше основного числа */
+    font-size: 0.9em;
 }
 
 .per-second-display {
-    font-size: 0.4em; /* Меньший размер для дохода в секунду */
+    font-size: 0.4em;
     font-weight: normal;
     opacity: 0.7;
     margin-top: 5px;
 }
 
-/* --- Новая Колба Эрленмейера --- */
-.cauldron { /* Оставляем класс .cauldron, чтобы не менять JS */
-    width: 0; /* Ширина верхушки конуса */
-    height: 0; /* Для создания фигуры через border */
-    border-left: 65px solid transparent; /* Половина ширины основания */
-    border-right: 65px solid transparent; /* Половина ширины основания */
-    border-bottom: 110px solid var(--flask-color); /* Высота и цвет конуса */
-    position: relative; /* Для позиционирования горлышка и бликов */
+/* --- Новая Колба с использованием clip-path --- */
+.cauldron { /* Оставляем класс .cauldron */
+    /* Задаем базовые размеры прямоугольника, который будем обрезать */
+    /* Подберите размеры, чтобы форма выглядела пропорционально */
+    width: 140px;
+    height: 200px; /* Высота должна быть больше ширины для такой формы */
+    background-color: var(--flask-color); /* Цвет колбы */
+    position: relative; /* Может понадобиться для позиционирования контейнера */
     cursor: pointer;
     user-select: none;
     transition: transform 0.1s ease-out;
-    margin-bottom: 30px; /* Отступ снизу, если нужно */
-    /* Сбрасываем старые стили, если они не перезаписались */
-    background-color: transparent;
+    margin: 20px auto; /* Пример центрирования и отступов */
+
+    /* Применяем вашу точную форму */
+    clip-path: polygon(59.80% 41.70%,58.98% 38.59%,59.00% 18.11%,60.23% 12.98%,62.02% 8.06%,37.89% 8.03%,40.71% 13.82%,41.43% 39.72%,23.95% 76.28%,23.04% 83.57%,24.75% 88.61%,27.08% 91.60%,30.28% 93.09%,73.20% 93.08%,76.73% 89.35%,78.77% 85.05%,77.87% 79.08%);
+
+    /* Сбрасываем стили от предыдущих версий, если они остались */
+    border: none;
     border-radius: 0;
-    border-top: none; /* Убираем верхнюю границу, если она была */
-    overflow: visible;
+    overflow: hidden; /* Можно оставить, не помешает */
     box-shadow: none;
 }
 
-/* Горлышко колбы */
-.cauldron::before {
-    content: '';
-    position: absolute;
-    bottom: 110px; /* Позиционируем над конусом (равно высоте border-bottom) */
-    left: -25px; /* (Ширина горлышка / 2) */
-    width: 50px; /* Ширина горлышка */
-    height: 55px; /* Высота горлышка */
-    background-color: var(--flask-color); /* Тот же цвет */
-    /* Скругление верхнего края горлышка */
-    border-radius: 5px 5px 0 0;
-    /* Сбрасываем старые стили */
-    border: none;
-    transform: none;
-    box-shadow: none;
-}
-
-/* Блики/Пузырьки */
-.cauldron::after {
-    content: '';
-    position: absolute;
-    /* Позиционирование первого (большого) круга */
-    bottom: 15px; /* Отступ от нижнего края конуса */
-    left: -15px; /* Отступ от левого края конуса (подбирать) */
-    width: 18px; /* Размер большого круга */
-    height: 18px; /* Размер большого круга */
-    background-color: var(--flask-highlight);
-    border-radius: 50%;
-    /* Создание второго (маленького) круга с помощью тени */
-    box-shadow: 25px 8px 0 -3px var(--flask-highlight), /* Горизонтальное смещение, Вертикальное, Размытие(0), Расширение(-), Цвет */
-                25px 8px 0 -3px var(--flask-highlight); /* Дублируем для четкости */
-    /* Сбрасываем старые стили */
-    border: none;
-    transform: none;
-    opacity: 1; /* Убедимся, что блики видны */
-    animation: none; /* Убираем старую анимацию пузырьков */
-    pointer-events: none; /* Блики не должны мешать клику */
-}
-
-/* Анимация клика остается */
+/* Анимация клика */
 .cauldron:active {
     transform: scale(0.95);
 }
+
+/* УБЕДИТЕСЬ, ЧТО УДАЛЕНЫ СТИЛИ ДЛЯ .cauldron::before, .cauldron::after, */
+/* .cauldron-liquid, .cauldron-bubbles И @keyframes bubble */
 
 
 /* --- Фидбек при клике --- */
 #click-feedback-container {
     position: absolute;
-    /* Позиционируем над колбой, можно подстроить top */
-    top: -50px; /* Примерно над горлышком */
+    /* Позиция относительно ВЕРХНЕГО КРАЯ .cauldron */
+    /* Попробуйте подобрать top, чтобы было над колбой */
+    top: 0px;
     left: 50%;
     transform: translateX(-50%);
-    width: 150px; /* Расширим область немного */
+    width: 150px;
     height: 100px;
     pointer-events: none;
     z-index: 10;
@@ -166,7 +132,7 @@ html, body {
 
 @keyframes fadeUp {
     0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); } /* Улетает вверх */
+    100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); }
 }
 
 
@@ -174,9 +140,9 @@ html, body {
 .controls {
     margin-top: 20px;
     display: flex;
-    justify-content: space-around; /* Равномерное распределение кнопок */
+    justify-content: space-around;
     padding: 10px 0;
-    background-color: rgba(0, 0, 0, 0.1); /* Легкий фон для зоны кнопок */
+    background-color: rgba(0, 0, 0, 0.1);
     border-radius: 8px;
 }
 
@@ -199,8 +165,8 @@ html, body {
     transform: scale(0.98);
 }
 
-.telegram-feature { /* Стиль для кнопок Telegram-интеграции */
-    background-color: #5093d1; /* Синеватый цвет */
+.telegram-feature {
+    background-color: #5093d1;
 }
 .telegram-feature:hover {
     background-color: #60a3e1;
@@ -208,17 +174,17 @@ html, body {
 
 /* --- Панель улучшений --- */
 .upgrades-panel {
-    position: fixed; /* Поверх всего */
+    position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 60%; /* Занимает часть экрана снизу */
+    height: 60%;
     background-color: var(--secondary-bg);
     border-top-left-radius: 15px;
     border-top-right-radius: 15px;
     box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
     padding: 15px;
-    transform: translateY(100%); /* Скрыта внизу */
+    transform: translateY(100%);
     transition: transform 0.3s ease-out;
     display: flex;
     flex-direction: column;
@@ -226,7 +192,7 @@ html, body {
 }
 
 .upgrades-panel:not(.hidden) {
-    transform: translateY(0); /* Показываем */
+    transform: translateY(0);
 }
 
 .panel-header {
@@ -258,9 +224,8 @@ html, body {
 
 #upgrades-list {
     list-style: none;
-    overflow-y: auto; /* Добавляем скролл, если улучшений много */
+    overflow-y: auto;
     flex-grow: 1;
-    /* Добавим немного отступа справа для скроллбара, если он появится */
     padding-right: 5px;
 }
 
@@ -270,7 +235,6 @@ html, body {
     align-items: center;
     padding: 12px 5px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    /* Плавный переход для opacity при разблокировке */
     transition: opacity 0.3s ease, background-color 0.3s ease;
 }
 #upgrades-list li:last-child {
@@ -309,28 +273,24 @@ html, body {
     cursor: pointer;
     font-weight: bold;
     transition: background-color 0.2s ease, opacity 0.2s ease, color 0.2s ease;
-    min-width: 90px; /* Чтобы кнопки с разным текстом были примерно одинаковой ширины */
+    min-width: 90px;
     text-align: center;
 }
 
 .buy-upgrade-btn:hover:not(:disabled) {
-    background-color: #88e8d8; /* Светлее при наведении */
+    background-color: #88e8d8;
 }
 
 .buy-upgrade-btn:disabled {
     background-color: var(--disabled-color);
-    color: #a0a0a0; /* Более бледный текст для неактивной кнопки */
+    color: #a0a0a0;
     cursor: not-allowed;
-    opacity: 0.7; /* Чуть менее прозрачная, чем сама li.locked */
+    opacity: 0.7;
 }
 
-/* --- Класс для скрытия элементов --- */
-.hidden {
-    display: none; /* Или используйте transform/opacity для анимации */
-}
+.hidden { display: none; }
 
-/* --- Адаптивность (очень базовая) --- */
-@media (min-width: 600px) { /* Для больших экранов - можно сделать шире */
+@media (min-width: 600px) {
     .upgrades-panel {
         left: 50%;
         transform: translate(-50%, 100%);
@@ -342,47 +302,42 @@ html, body {
     }
 }
 
-/* --- Стили для заблокированных улучшений --- */
 #upgrades-list li.locked {
-    opacity: 0.5; /* Делаем их полупрозрачными */
-    background-color: rgba(0, 0, 0, 0.15); /* Слегка затемняем фон */
+    opacity: 0.5;
+    background-color: rgba(0, 0, 0, 0.15);
 }
 
-/* Текст внутри заблокированного элемента */
 #upgrades-list li.locked .upgrade-info h3,
 #upgrades-list li.locked .upgrade-info p:not(.requirement-info) {
-    color: #b0b0b0; /* Делаем текст сероватым */
+    color: #b0b0b0;
     opacity: 0.8;
 }
 
-/* Кнопка внутри заблокированного элемента */
 #upgrades-list li.locked .buy-upgrade-btn {
-    background-color: #555; /* Темно-серый фон для кнопки требования */
+    background-color: #555;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--accent-color); /* Текст требования выделяем цветом */
-    font-size: 0.8em; /* Можно сделать текст требования чуть меньше */
-    opacity: 1; /* Непрозрачная кнопка, чтобы текст требования был читаем */
+    color: var(--accent-color);
+    font-size: 0.8em;
+    opacity: 1;
 }
 
-/* Стиль для текста с требованием (добавлен в JS) */
 .requirement-info {
-    font-size: 0.75em; /* Меньше основного описания */
-    color: var(--accent-color); /* Выделяем цветом требования */
-    opacity: 1; /* Непрозрачный, чтобы был виден на фоне locked */
+    font-size: 0.75em;
+    color: var(--accent-color);
+    opacity: 1;
     margin-top: 5px;
     font-weight: bold;
 }
 
-/* --- Стили для уведомлений --- */
 .notification {
     position: fixed;
-    bottom: 70px; /* Поднимаем немного выше из-за панели кнопок */
+    bottom: 70px;
     left: 50%;
     transform: translateX(-50%);
     padding: 10px 20px;
     border-radius: 8px;
     color: white;
-    z-index: 1001; /* Выше панелей */
+    z-index: 1001;
     opacity: 0;
     transition: opacity 0.5s ease, bottom 0.3s ease;
     text-align: center;
