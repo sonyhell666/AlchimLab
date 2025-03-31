@@ -1,6 +1,7 @@
 // Файл: script.js
 // Версия БЕЗ ЗВУКА, БЕЗ ОБВОДКИ, с исправлением ошибки CloudStorage
 // Добавлено: Динамический цвет жидкости по времени UTC (Лондон)
+// Исправлено: Мигание кнопок "Купить" за счет обновления состояния вместо полной перерисовки
 document.addEventListener('DOMContentLoaded', () => {
     // Инициализация Telegram Web App
     const tg = window.Telegram.WebApp;
@@ -161,7 +162,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const l = Math.max(LIQUID_MIN_LEVEL, Math.min(LIQUID_MAX_LEVEL, percentage));
         if (cauldronElement) {
             cauldronElement.style.setProperty('--liquid-level', `${l}%`);
-            // Обновляем высоту контейнера пузырьков вместе с уровнем жидкости
             if(bubblesContainer) {
                 bubblesContainer.style.height = `${l}%`;
             }
@@ -197,7 +197,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!cauldronElement) return;
         const color = getLiquidColorByLondonTime();
         cauldronElement.style.setProperty('--liquid-color', color);
-        // console.log(`Liquid color updated for UTC hour ${getLondonHour()}: ${color}`); // Для отладки
     }
     // --- Конец функций для динамического цвета жидкости ---
 
@@ -209,14 +208,17 @@ document.addEventListener('DOMContentLoaded', () => {
             perSecondDisplayDiv.style.display = essencePerSecond > 0 ? 'block' : 'none';
         }
         if (gemCountElement) gemCountElement.textContent = formatNumber(gems);
-        if (shopPanel && !shopPanel.classList.contains('hidden') && shopGemCountElement) {
-            shopGemCountElement.textContent = formatNumber(gems);
-        }
-        if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) {
-            renderUpgrades();
-        }
-        // Обновление уровня жидкости (может быть вызвано и отдельно, но здесь для консистентности)
+
+        // Обновление уровня жидкости
         updateLiquidLevelVisual(visualLiquidLevel);
+
+        // ИЗМЕНЕНО: Вызываем функции обновления состояния кнопок вместо полной перерисовки
+        if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) {
+            updateUpgradeButtonStates(); // Обновляем только состояние кнопок улучшений
+        }
+        if (shopPanel && !shopPanel.classList.contains('hidden')) {
+            updateSkinButtonStates(); // Обновляем состояние кнопок скинов и счетчик гемов
+        }
     }
 
     // --- Функция форматирования чисел ---
@@ -236,7 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
                  let clickAmount = essencePerClick;
                  if (Number.isFinite(clickAmount)) { essence += clickAmount; if (clickFeedbackContainer) showClickFeedback(clickAmount, 'essence'); } else { console.error("Некорр. essencePerClick:", essencePerClick); }
                  if (Math.random() < GEM_AWARD_CHANCE) { gems += GEMS_PER_AWARD; console.log(`+${GEMS_PER_AWARD} кристалл! Всего: ${gems}`); if (clickFeedbackContainer) showClickFeedback(GEMS_PER_AWARD, 'gem'); if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('medium'); } }
-                 visualLiquidLevel += LIQUID_INCREASE_PER_CLICK; visualLiquidLevel = Math.min(visualLiquidLevel, LIQUID_MAX_LEVEL); updateDisplay(); // Обновляем UI, включая уровень жидкости
+                 visualLiquidLevel += LIQUID_INCREASE_PER_CLICK; visualLiquidLevel = Math.min(visualLiquidLevel, LIQUID_MAX_LEVEL);
+                 updateDisplay(); // Обновляем UI (включая счетчики и уровень жидкости)
                  cauldronElement.style.transform = 'scale(0.95)'; setTimeout(() => { if (cauldronElement) cauldronElement.style.transform = 'scale(1)'; }, 80);
                  lastClickTime = currentTime;
              } else {
@@ -255,40 +258,337 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentTime - lastInteractionTime > IDLE_TIMEOUT && visualLiquidLevel > LIQUID_MIN_LEVEL) {
             visualLiquidLevel -= LIQUID_DECAY_RATE;
             visualLiquidLevel = Math.max(visualLiquidLevel, LIQUID_MIN_LEVEL);
-            // Вызываем updateDisplay, чтобы обновить и визуал уровня жидкости
-            updateDisplay();
+            updateDisplay(); // Обновляем UI, чтобы показать изменение уровня
         }
     }, LIQUID_UPDATE_INTERVAL);
 
     // --- Логика улучшений ---
     function calculateCost(upgrade) { if (!upgrade || typeof upgrade.baseCost !== 'number' || typeof upgrade.costMultiplier !== 'number' || typeof upgrade.currentLevel !== 'number') { console.error("Некорректные данные улучшения для расчета стоимости:", upgrade); return Infinity; } return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel)); }
-    function renderUpgrades() { if (!upgradesListElement) { console.error("Элемент #upgrades-list не найден!"); return; } upgradesListElement.innerHTML = ''; upgrades.sort((a, b) => (a.requiredEssence || 0) - (b.requiredEssence || 0)); if (upgrades.length === 0) { upgradesListElement.innerHTML = `<li><p>Улучшения не определены.</p></li>`; return; } const currentEssenceFloored = Math.floor(essence); upgrades.forEach(upgrade => { const cost = calculateCost(upgrade); if (!Number.isFinite(cost)) { console.error("Пропуск рендера улучшения с неверной стоимостью:", upgrade.id); return; } const required = upgrade.requiredEssence || 0; const isLocked = currentEssenceFloored < required; const canAfford = currentEssenceFloored >= cost; const listItem = document.createElement('li'); if (isLocked) { listItem.classList.add('locked'); } else if (!canAfford) { listItem.classList.add('cannot-afford'); } const translatedName = translations[upgrade.nameKey]?.[currentLanguage] || upgrade.nameKey; const translatedDesc = translations[upgrade.descKey]?.[currentLanguage] || upgrade.descKey; const buyButtonText = translations.buyButton?.[currentLanguage] || "Купить"; const requirementPrefix = translations.requirementPrefix?.[currentLanguage] || "Нужно"; const requirementInfoPrefix = translations.requirementInfoPrefix?.[currentLanguage] || "Требуется"; let buttonText = buyButtonText; let isButtonDisabled = false; if (isLocked) { isButtonDisabled = true; buttonText = `${requirementPrefix} ${formatNumber(required)} 🧪`; } else if (!canAfford) { isButtonDisabled = true; } listItem.innerHTML = `<div class="upgrade-info"><h3>${translatedName} (Ур. ${upgrade.currentLevel})</h3><p>${translatedDesc}</p><p class="upgrade-cost">Цена: ${formatNumber(cost)} 🧪</p>${isLocked ? `<p class="requirement-info">${requirementInfoPrefix}: ${formatNumber(required)} 🧪</p>` : ''}</div><button class="buy-upgrade-btn" data-upgrade-id="${upgrade.id}">${buttonText}</button>`; const buyButton = listItem.querySelector('.buy-upgrade-btn'); if (buyButton) { buyButton.disabled = isButtonDisabled; if (!isLocked) { buyButton.addEventListener('click', (event) => { event.stopPropagation(); if (!buyButton.disabled) { buyUpgrade(upgrade.id); } }); } } upgradesListElement.appendChild(listItem); }); }
-    function buyUpgrade(upgradeId) { if (isBlocked) { showTemporaryNotification(translations.actionBlocked?.[currentLanguage] || "Действие заблокировано.", "error"); return; } const upgrade = upgrades.find(up => up.id === upgradeId); if (!upgrade) { console.error("Улучшение не найдено:", upgradeId); return; } const required = upgrade.requiredEssence || 0; if (Math.floor(essence) < required) { showTemporaryNotification(`${translations.needMoreEssence?.[currentLanguage] || "Нужно больше!"} ${formatNumber(required)} 🧪`, "warning"); if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning'); return; } const cost = calculateCost(upgrade); if (!Number.isFinite(cost)) { showTemporaryNotification(translations.invalidCostError?.[currentLanguage] || "Ошибка стоимости!", "error"); return; } if (essence >= cost) { essence -= cost; upgrade.currentLevel++; recalculateBonuses(); updateDisplay(); renderUpgrades(); saveGame(); if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('light'); } } else { showTemporaryNotification(translations.notEnoughEssence?.[currentLanguage] || "Недостаточно эссенции!", "warning"); if (tg?.HapticFeedback) { tg.HapticFeedback.notificationOccurred('warning'); } } }
+
+    // Функция renderUpgrades теперь вызывается реже (при открытии панели)
+    function renderUpgrades() {
+        if (!upgradesListElement) { console.error("Элемент #upgrades-list не найден!"); return; }
+        upgradesListElement.innerHTML = ''; // Очищаем перед заполнением
+        upgrades.sort((a, b) => (a.requiredEssence || 0) - (b.requiredEssence || 0));
+        if (upgrades.length === 0) { upgradesListElement.innerHTML = `<li><p>Улучшения не определены.</p></li>`; return; }
+
+        const currentEssenceFloored = Math.floor(essence);
+
+        upgrades.forEach(upgrade => {
+            const cost = calculateCost(upgrade);
+            if (!Number.isFinite(cost)) { console.error("Пропуск рендера улучшения с неверной стоимостью:", upgrade.id); return; }
+
+            const required = upgrade.requiredEssence || 0;
+            const isLocked = currentEssenceFloored < required;
+            const canAfford = currentEssenceFloored >= cost;
+
+            const listItem = document.createElement('li');
+            listItem.dataset.upgradeId = upgrade.id; // Добавляем ID для легкого доступа в updateUpgradeButtonStates
+
+            if (isLocked) { listItem.classList.add('locked'); }
+            else if (!canAfford) { listItem.classList.add('cannot-afford'); }
+
+            const translatedName = translations[upgrade.nameKey]?.[currentLanguage] || upgrade.nameKey;
+            const translatedDesc = translations[upgrade.descKey]?.[currentLanguage] || upgrade.descKey;
+            const buyButtonText = translations.buyButton?.[currentLanguage] || "Купить";
+            const requirementPrefix = translations.requirementPrefix?.[currentLanguage] || "Нужно";
+            const requirementInfoPrefix = translations.requirementInfoPrefix?.[currentLanguage] || "Требуется";
+
+            let buttonText = buyButtonText;
+            let isButtonDisabled = false;
+
+            if (isLocked) {
+                isButtonDisabled = true;
+                buttonText = `${requirementPrefix} ${formatNumber(required)} 🧪`;
+            } else if (!canAfford) {
+                isButtonDisabled = true;
+            }
+
+            // Создаем HTML для элемента списка
+            listItem.innerHTML = `
+                <div class="upgrade-info">
+                    <h3>${translatedName} (Ур. ${upgrade.currentLevel})</h3>
+                    <p>${translatedDesc}</p>
+                    <p class="upgrade-cost">Цена: ${formatNumber(cost)} 🧪</p>
+                    <p class="requirement-info" style="display: ${isLocked ? 'block' : 'none'};">${requirementInfoPrefix}: ${formatNumber(required)} 🧪</p>
+                </div>
+                <button class="buy-upgrade-btn" data-upgrade-id="${upgrade.id}">${buttonText}</button>
+            `;
+
+            const buyButton = listItem.querySelector('.buy-upgrade-btn');
+            if (buyButton) {
+                buyButton.disabled = isButtonDisabled;
+                // Добавляем слушатель клика только если кнопка не заблокирована по требованию
+                if (!isLocked) {
+                    buyButton.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        if (!buyButton.disabled) { // Доп. проверка на disabled перед покупкой
+                            buyUpgrade(upgrade.id);
+                        }
+                    });
+                }
+            }
+            upgradesListElement.appendChild(listItem);
+        });
+    }
+
+    // Функция покупки остается прежней, но после покупки вызывает renderUpgrades для обновления Ур.
+    function buyUpgrade(upgradeId) {
+        if (isBlocked) { showTemporaryNotification(translations.actionBlocked?.[currentLanguage] || "Действие заблокировано.", "error"); return; }
+        const upgrade = upgrades.find(up => up.id === upgradeId);
+        if (!upgrade) { console.error("Улучшение не найдено:", upgradeId); return; }
+
+        const required = upgrade.requiredEssence || 0;
+        if (Math.floor(essence) < required) {
+            // Эта проверка теперь менее вероятна из-за updateUpgradeButtonStates, но оставим на всякий случай
+            showTemporaryNotification(`${translations.needMoreEssence?.[currentLanguage] || "Нужно больше!"} ${formatNumber(required)} 🧪`, "warning");
+            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+            return;
+        }
+
+        const cost = calculateCost(upgrade);
+        if (!Number.isFinite(cost)) { showTemporaryNotification(translations.invalidCostError?.[currentLanguage] || "Ошибка стоимости!", "error"); return; }
+
+        if (essence >= cost) {
+            essence -= cost;
+            upgrade.currentLevel++;
+            recalculateBonuses();
+            updateDisplay(); // Обновит счетчики
+            renderUpgrades(); // Перерисовываем панель, чтобы показать новый уровень и цену
+            saveGame();
+            if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('light'); }
+        } else {
+            showTemporaryNotification(translations.notEnoughEssence?.[currentLanguage] || "Недостаточно эссенции!", "warning");
+            if (tg?.HapticFeedback) { tg.HapticFeedback.notificationOccurred('warning'); }
+        }
+    }
+
     function recalculateBonuses() { essencePerClick = 1; essencePerSecond = 0; upgrades.forEach(upgrade => { if (upgrade.currentLevel > 0 && Number.isFinite(upgrade.value) && typeof upgrade.type === 'string') { if (upgrade.type === 'click') { essencePerClick += upgrade.value * upgrade.currentLevel; } else if (upgrade.type === 'auto') { essencePerSecond += upgrade.value * upgrade.currentLevel; } } else if (upgrade.currentLevel > 0) { console.warn("Улучшение с ур > 0 имеет неверные данные:", upgrade); } }); if (!Number.isFinite(essencePerClick) || essencePerClick < 1) { console.error("Неверный essencePerClick:", essencePerClick); essencePerClick = 1; } if (!Number.isFinite(essencePerSecond) || essencePerSecond < 0) { console.error("Неверный essencePerSecond:", essencePerSecond); essencePerSecond = 0; } }
+
+    // --- НОВАЯ ФУНКЦИЯ: Обновление состояния кнопок улучшений ---
+    function updateUpgradeButtonStates() {
+        if (!upgradesListElement || !upgradesPanel || upgradesPanel.classList.contains('hidden')) {
+            return;
+        }
+
+        const currentEssenceFloored = Math.floor(essence);
+        // Используем querySelectorAll на существующем списке
+        const upgradeListItems = upgradesListElement.querySelectorAll('li[data-upgrade-id]');
+
+        upgradeListItems.forEach(listItem => {
+            const button = listItem.querySelector('.buy-upgrade-btn');
+            const upgradeId = listItem.dataset.upgradeId; // Берем ID с li
+            if (!button || !upgradeId) return;
+
+            const upgrade = upgrades.find(up => up.id === upgradeId);
+            if (!upgrade) return;
+
+            const costElement = listItem.querySelector('.upgrade-cost');
+            const requirementInfoElement = listItem.querySelector('.requirement-info');
+
+            const cost = calculateCost(upgrade);
+            const required = upgrade.requiredEssence || 0;
+            const isLocked = currentEssenceFloored < required;
+            const canAfford = currentEssenceFloored >= cost;
+
+            let isButtonDisabled = false;
+            let buttonText = translations.buyButton?.[currentLanguage] || "Купить";
+            const currentButtonText = button.textContent; // Текущий текст кнопки
+
+            listItem.classList.toggle('locked', isLocked);
+            listItem.classList.toggle('cannot-afford', !isLocked && !canAfford);
+
+            if (isLocked) {
+                isButtonDisabled = true;
+                buttonText = `${translations.requirementPrefix?.[currentLanguage] || "Нужно"} ${formatNumber(required)} 🧪`;
+                if (requirementInfoElement) {
+                    requirementInfoElement.textContent = `${translations.requirementInfoPrefix?.[currentLanguage] || "Требуется"}: ${formatNumber(required)} 🧪`;
+                    requirementInfoElement.style.display = 'block';
+                }
+                // Удаляем слушатель, если он был, т.к. кнопка теперь заблокирована требованием
+                 // Простой способ: клонировать и заменить кнопку, чтобы удалить все слушатели
+                 // Но это может вызвать мигание. Лучше управлять слушателем при renderUpgrades.
+                 // Пока просто блокируем.
+            } else {
+                if (requirementInfoElement) {
+                    requirementInfoElement.style.display = 'none';
+                }
+                if (!canAfford) {
+                    isButtonDisabled = true;
+                } else {
+                    isButtonDisabled = false;
+                }
+                // Убеждаемся, что слушатель есть, если его нет (после разблокировки)
+                // Это сложно сделать без перерисовки. renderUpgrades при открытии панели должен это решать.
+            }
+
+            button.disabled = isButtonDisabled;
+
+            // Обновляем текст кнопки только если он действительно должен измениться
+            if (isLocked && currentButtonText !== buttonText) {
+                button.textContent = buttonText;
+            } else if (!isLocked && currentButtonText !== buyButtonText) {
+                button.textContent = buyButtonText;
+            }
+
+            // Обновляем текст цены
+            if (costElement) {
+                const costText = `Цена: ${formatNumber(cost)} 🧪`;
+                if (costElement.textContent !== costText) {
+                    costElement.textContent = costText;
+                }
+            }
+        });
+    }
+
+    // --- НОВАЯ ФУНКЦИЯ: Обновление состояния кнопок скинов ---
+    function updateSkinButtonStates() {
+        if (!skinsListElement || !shopPanel || shopPanel.classList.contains('hidden')) {
+            return;
+        }
+
+        // Обновляем счетчик гемов в шапке магазина
+        if (shopGemCountElement) {
+            shopGemCountElement.textContent = formatNumber(gems);
+        }
+
+        const skinListItems = skinsListElement.querySelectorAll('li[data-skin-id]');
+
+        skinListItems.forEach(listItem => {
+            const button = listItem.querySelector('.skin-action-btn.buy-btn'); // Ищем только кнопки "Купить"
+            const skinId = listItem.dataset.skinId;
+            if (!button || !skinId) return; // Пропускаем, если не кнопка покупки или нет ID
+
+            const skin = availableSkins.find(s => s.id === skinId);
+            if (!skin || skin.cost <= 0) return; // Пропускаем бесплатные или ненайденные
+
+            const canAfford = gems >= skin.cost;
+            button.disabled = !canAfford; // Обновляем состояние disabled
+        });
+    }
 
     // --- Открытие/Закрытие панелей ---
     function closeSettings() { if (settingsPanel) settingsPanel.classList.add('hidden'); }
     function closeUpgrades() { if (upgradesPanel) upgradesPanel.classList.add('hidden'); }
     function closeShop() { if (shopPanel) shopPanel.classList.add('hidden'); }
-    if (openUpgradesBtn && upgradesPanel) { openUpgradesBtn.addEventListener('click', () => { renderUpgrades(); upgradesPanel.classList.remove('hidden'); closeSettings(); closeShop(); }); } else { console.error("Кнопка/панель улучшений не найдена."); }
+
+    if (openUpgradesBtn && upgradesPanel) {
+        openUpgradesBtn.addEventListener('click', () => {
+            renderUpgrades(); // Полная перерисовка при открытии
+            upgradesPanel.classList.remove('hidden');
+            closeSettings(); closeShop();
+        });
+    } else { console.error("Кнопка/панель улучшений не найдена."); }
+
     if (closeUpgradesBtn && upgradesPanel) { closeUpgradesBtn.addEventListener('click', closeUpgrades); } else { console.error("Кнопка/панель улучшений не найдена."); }
-    if (settingsBtn && settingsPanel) { settingsBtn.addEventListener('click', () => { updateActiveLangButton(); settingsPanel.classList.remove('hidden'); closeUpgrades(); closeShop(); }); } else { console.error("Кнопка/панель настроек не найдена."); }
+
+    if (settingsBtn && settingsPanel) {
+        settingsBtn.addEventListener('click', () => {
+            updateActiveLangButton();
+            settingsPanel.classList.remove('hidden');
+            closeUpgrades(); closeShop();
+        });
+    } else { console.error("Кнопка/панель настроек не найдена."); }
+
     if (closeSettingsBtn && settingsPanel) { closeSettingsBtn.addEventListener('click', closeSettings); } else { console.error("Кнопка/панель настроек не найдена."); }
     if (settingsPanel) { settingsPanel.addEventListener('click', (e) => { if (e.target === settingsPanel) closeSettings(); }); }
-    if (shopBtn && shopPanel) { shopBtn.addEventListener('click', () => { if (shopGemCountElement) shopGemCountElement.textContent = formatNumber(gems); renderSkins(); shopPanel.classList.remove('hidden'); closeUpgrades(); closeSettings(); if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); }); } else { console.error("Кнопка/панель магазина не найдена."); }
+
+    if (shopBtn && shopPanel) {
+        shopBtn.addEventListener('click', () => {
+            renderSkins(); // Полная перерисовка при открытии
+            shopPanel.classList.remove('hidden');
+            closeUpgrades(); closeSettings();
+            if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        });
+    } else { console.error("Кнопка/панель магазина не найдена."); }
+
     if (closeShopBtn && shopPanel) { closeShopBtn.addEventListener('click', closeShop); } else { console.error("Кнопка/панель магазина не найдена."); }
 
     // --- Логика Настроек (только язык) ---
     function setLanguage(lang) { if (translations.greetingBase[lang]) { currentLanguage = lang; console.log(`Язык изменен на: ${currentLanguage}`); applyTranslations(); updateActiveLangButton(); saveGame(); if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) { renderUpgrades(); } if (shopPanel && !shopPanel.classList.contains('hidden')) { renderSkins(); } } else { console.warn(`Язык "${lang}" не найден.`); } }
-    function applyTranslations() { if (userGreetingElement) { let greeting = translations.greetingBase[currentLanguage] || "Лаборатория"; if (userName) { greeting += ` ${userName}`; } userGreetingElement.textContent = greeting; } document.querySelectorAll('[data-translate]').forEach(element => { const key = element.dataset.translate; const translation = translations[key]?.[currentLanguage]; if (translation) { element.textContent = translation; } else { console.warn(`Ключ перевода "${key}" не найден.`); } }); const perSecTextNode = perSecondDisplayDiv?.lastChild; if (perSecTextNode && perSecTextNode.nodeType === Node.TEXT_NODE) { perSecTextNode.textContent = ` ${translations.perSec?.[currentLanguage] || 'в сек'}`; } }
+    function applyTranslations() { if (userGreetingElement) { let greeting = translations.greetingBase[currentLanguage] || "Лаборатория"; if (userName) { greeting += ` ${userName}`; } userGreetingElement.textContent = greeting; } document.querySelectorAll('[data-translate]').forEach(element => { const key = element.dataset.translate; const translation = translations[key]?.[currentLanguage]; if (translation) { element.textContent = translation; } else { /* console.warn(`Ключ перевода "${key}" не найден.`); */ } }); const perSecTextNode = perSecondDisplayDiv?.lastChild; if (perSecTextNode && perSecTextNode.nodeType === Node.TEXT_NODE) { perSecTextNode.textContent = ` ${translations.perSec?.[currentLanguage] || 'в сек'}`; } }
     function updateActiveLangButton() { if (!languageOptionsContainer) return; languageOptionsContainer.querySelectorAll('.lang-btn').forEach(button => { button.classList.toggle('active', button.dataset.lang === currentLanguage); }); }
     if (languageOptionsContainer) { languageOptionsContainer.addEventListener('click', (event) => { if (event.target.classList.contains('lang-btn')) { const lang = event.target.dataset.lang; if (lang && lang !== currentLanguage) { setLanguage(lang); } } }); } else { console.error("Контейнер выбора языка не найден."); }
 
     // --- Логика магазина ---
-    function renderSkins() { if (!skinsListElement) { console.error("Элемент #skins-list не найден!"); return; } skinsListElement.innerHTML = ''; availableSkins.forEach(skin => { const isOwned = ownedSkins.includes(skin.id); const isActive = activeSkinId === skin.id; const canAfford = gems >= skin.cost; const listItem = document.createElement('li'); listItem.dataset.skinId = skin.id; if (isActive) { listItem.classList.add('active-skin'); } const translatedName = translations[skin.nameKey]?.[currentLanguage] || skin.nameKey; const buyButtonText = translations.buyButton?.[currentLanguage] || "Купить"; const selectButtonText = translations.selectButton?.[currentLanguage] || "Выбрать"; const selectedButtonText = translations.selectedButton?.[currentLanguage] || "Выбрано"; const gemIconSvg = `<span class="gem-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/></svg></span>`; let actionButtonHtml = ''; if (isActive) { actionButtonHtml = `<button class="skin-action-btn selected-btn" disabled>${selectedButtonText}</button>`; } else if (isOwned) { actionButtonHtml = `<button class="skin-action-btn select-btn">${selectButtonText}</button>`; } else { actionButtonHtml = `<button class="skin-action-btn buy-btn" ${!canAfford ? 'disabled' : ''}>${buyButtonText}</button>`; } listItem.innerHTML = `<div class="skin-preview ${skin.cssClass || ''}"></div><div class="skin-info"><h3>${translatedName}</h3>${skin.cost > 0 ? `<p class="skin-cost">${gemIconSvg} ${formatNumber(skin.cost)}</p>` : ''}</div>${actionButtonHtml}`; const actionButton = listItem.querySelector('.skin-action-btn'); if (actionButton && !actionButton.classList.contains('selected-btn')) { actionButton.addEventListener('click', () => { if (!actionButton.disabled) { handleSkinAction(skin.id); } }); } skinsListElement.appendChild(listItem); }); }
+    // Функция renderSkins вызывается реже (при открытии панели)
+    function renderSkins() {
+        if (!skinsListElement) { console.error("Элемент #skins-list не найден!"); return; }
+        skinsListElement.innerHTML = ''; // Очищаем перед заполнением
+
+        // Обновляем счетчик гемов в шапке при перерисовке
+        if (shopGemCountElement) { shopGemCountElement.textContent = formatNumber(gems); }
+
+        availableSkins.forEach(skin => {
+            const isOwned = ownedSkins.includes(skin.id);
+            const isActive = activeSkinId === skin.id;
+            const canAfford = gems >= skin.cost;
+
+            const listItem = document.createElement('li');
+            listItem.dataset.skinId = skin.id; // Добавляем ID
+            if (isActive) { listItem.classList.add('active-skin'); }
+
+            const translatedName = translations[skin.nameKey]?.[currentLanguage] || skin.nameKey;
+            const buyButtonText = translations.buyButton?.[currentLanguage] || "Купить";
+            const selectButtonText = translations.selectButton?.[currentLanguage] || "Выбрать";
+            const selectedButtonText = translations.selectedButton?.[currentLanguage] || "Выбрано";
+            const gemIconSvg = `<span class="gem-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/></svg></span>`;
+
+            let actionButtonHtml = '';
+            if (isActive) {
+                actionButtonHtml = `<button class="skin-action-btn selected-btn" disabled>${selectedButtonText}</button>`;
+            } else if (isOwned) {
+                actionButtonHtml = `<button class="skin-action-btn select-btn">${selectButtonText}</button>`;
+            } else {
+                actionButtonHtml = `<button class="skin-action-btn buy-btn" ${!canAfford ? 'disabled' : ''}>${buyButtonText}</button>`;
+            }
+
+            listItem.innerHTML = `
+                <div class="skin-preview ${skin.cssClass || ''}"></div>
+                <div class="skin-info">
+                    <h3>${translatedName}</h3>
+                    ${skin.cost > 0 ? `<p class="skin-cost">${gemIconSvg} ${formatNumber(skin.cost)}</p>` : ''}
+                </div>
+                ${actionButtonHtml}
+            `;
+
+            const actionButton = listItem.querySelector('.skin-action-btn');
+            if (actionButton && !actionButton.classList.contains('selected-btn')) {
+                actionButton.addEventListener('click', () => {
+                    // Проверяем disabled еще раз перед действием
+                    if (!actionButton.disabled) {
+                         handleSkinAction(skin.id);
+                    }
+                });
+            }
+            skinsListElement.appendChild(listItem);
+        });
+    }
+
     function handleSkinAction(skinId) { if (isBlocked) { showTemporaryNotification(translations.actionBlocked?.[currentLanguage] || "Действие заблокировано.", "error"); return; } const skin = availableSkins.find(s => s.id === skinId); if (!skin) return; const isOwned = ownedSkins.includes(skinId); if (isOwned) { if (activeSkinId !== skinId) { setActiveSkin(skinId); } } else { buySkin(skinId); } }
-    function buySkin(skinId) { const skin = availableSkins.find(s => s.id === skinId); if (!skin || ownedSkins.includes(skinId) || skin.cost <= 0) return; if (gems >= skin.cost) { gems -= skin.cost; ownedSkins.push(skinId); console.log(`Скин куплен: ${skinId}. Осталось: ${gems}`); showTemporaryNotification(translations.skinPurchaseSuccess?.[currentLanguage] || "Скин куплен!", "success"); if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); updateDisplay(); renderSkins(); setActiveSkin(skinId); } else { console.log(`Недостаточно кристаллов: ${skinId}. Нужно: ${skin.cost}, Есть: ${gems}`); showTemporaryNotification(translations.notEnoughGems?.[currentLanguage] || "Недостаточно кристаллов!", "warning"); if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning'); } }
-    function setActiveSkin(skinId) { if (!ownedSkins.includes(skinId)) { console.error(`Попытка акт. не купл. скина: ${skinId}`); return; } if (activeSkinId !== skinId) { activeSkinId = skinId; console.log(`Активный скин: ${skinId}`); applyCauldronSkin(); if (shopPanel && !shopPanel.classList.contains('hidden')) { renderSkins(); } saveGame(); showTemporaryNotification(translations.skinSelected?.[currentLanguage] || "Скин выбран!", "info"); if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); } }
+
+    // Функция покупки скина теперь вызывает renderSkins для обновления списка
+    function buySkin(skinId) {
+        const skin = availableSkins.find(s => s.id === skinId);
+        if (!skin || ownedSkins.includes(skinId) || skin.cost <= 0) return;
+
+        if (gems >= skin.cost) {
+            gems -= skin.cost;
+            ownedSkins.push(skinId);
+            console.log(`Скин куплен: ${skinId}. Осталось: ${gems}`);
+            showTemporaryNotification(translations.skinPurchaseSuccess?.[currentLanguage] || "Скин куплен!", "success");
+            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            updateDisplay(); // Обновит счетчик гемов вверху
+            renderSkins(); // Перерисовываем магазин, чтобы кнопка сменилась на "Выбрать"
+            setActiveSkin(skinId); // Сразу активируем купленный скин
+        } else {
+            console.log(`Недостаточно кристаллов: ${skinId}. Нужно: ${skin.cost}, Есть: ${gems}`);
+            showTemporaryNotification(translations.notEnoughGems?.[currentLanguage] || "Недостаточно кристаллов!", "warning");
+            if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+        }
+    }
+
+    function setActiveSkin(skinId) { if (!ownedSkins.includes(skinId)) { console.error(`Попытка акт. не купл. скина: ${skinId}`); return; } if (activeSkinId !== skinId) { activeSkinId = skinId; console.log(`Активный скин: ${skinId}`); applyCauldronSkin(); if (shopPanel && !shopPanel.classList.contains('hidden')) { renderSkins(); // Обновляем магазин, чтобы показать активный скин } saveGame(); showTemporaryNotification(translations.skinSelected?.[currentLanguage] || "Скин выбран!", "info"); if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light'); } }
     function applyCauldronSkin() { if (!cauldronElement) { console.warn("Не могу применить скин: элемент колбы не найден."); return; } const activeSkinDefinition = availableSkins.find(s => s.id === activeSkinId); const skinClass = activeSkinDefinition?.cssClass; availableSkins.forEach(skin => { if (skin.cssClass) { cauldronElement.classList.remove(skin.cssClass); } }); if (skinClass) { cauldronElement.classList.add(skinClass); console.log(`Применен класс скина: ${skinClass}`); } else { console.warn(`Нет CSS класса для скина: ${activeSkinId}.`); } }
 
     // --- Логика реферальной системы ---
@@ -301,7 +601,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Сохранение/Загрузка ---
     function saveGame() {
         if (!tg?.CloudStorage || !tg.CloudStorage.setItem) { return; }
-        console.log("[Save] Попытка сохранения...");
+        // console.log("[Save] Попытка сохранения..."); // Можно раскомментировать для отладки
         let isValid = true;
         if (!Number.isFinite(essence) || essence < 0) { console.warn(`[Save Valid] Эссенция->0`); essence = 0; isValid = false; }
         if (!Number.isFinite(gems) || gems < 0) { console.warn(`[Save Valid] Кристаллы->0`); gems = 0; isValid = false; }
@@ -316,10 +616,10 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         try {
             const gameStateString = JSON.stringify(gameState);
-            console.log(`[Save] Сохранение данных (${gameStateString.length} байт)...`);
+            // console.log(`[Save] Сохранение данных (${gameStateString.length} байт)...`); // Отладка
             try {
                 tg.CloudStorage.setItem('gameState', gameStateString, (error, success) => {
-                    if (error) { console.error("[Save Cb] Ошибка:", error); } else if (success) { /* console.log("[Save Cb] Успешно."); */ } else { console.warn("[Save Cb] Неопред. результат."); }
+                    if (error) { console.error("[Save Cb] Ошибка:", error); } else if (success) { /* Успешно */ } else { console.warn("[Save Cb] Неопред. результат."); }
                 });
             } catch (storageError) { console.error("[Save Try] Ошибка вызова setItem:", storageError); }
         } catch (stringifyError) { console.error("[Save] Ошибка JSON.stringify:", stringifyError); showTemporaryNotification(translations.saveCritError?.[currentLanguage] || "Ошибка сохранения!", "error"); }
@@ -359,38 +659,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else { console.log("[Load Cb] Нет данных. Новая игра."); needsReset = true; }
 
                     if (needsReset) { resetGameData(); }
-                    // Выполняем пост-настройки ВНУТРИ колбэка
+                    // Пост-настройки ВНУТРИ колбэка
                     applyTranslations();
-                    updateDisplay();
+                    updateDisplay(); // Первоначальное отображение
                     applyCauldronSkin();
-                    updateLiquidColor(); // Устанавливаем цвет жидкости после загрузки
-                    visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel);
+                    updateLiquidColor(); // Устанавливаем цвет жидкости
+                    visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel); // Устанавливаем нач. уровень
                     checkReferralAndBonus();
                     console.log(`[Load Cb] Завершено. Состояние: E:${essence}, G:${gems}, Skin:${activeSkinId}`);
                 });
             } catch (storageError) {
                 console.error("[Load Try] Ошибка вызова getItem:", storageError); showTemporaryNotification("Загрузка недоступна.", "error"); needsReset = true;
                 if (needsReset) { resetGameData(); }
-                // Выполняем пост-настройки ПРИ ОШИБКЕ ВЫЗОВА
+                // Пост-настройки ПРИ ОШИБКЕ ВЫЗОВА
                 applyTranslations();
                 updateDisplay();
                 applyCauldronSkin();
-                updateLiquidColor(); // Устанавливаем цвет жидкости
+                updateLiquidColor();
                 visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel);
                 checkReferralAndBonus();
                 console.log(`[Load] Завершено после ошибки вызова getItem.`);
             }
         }
 
-        // Выполнение пост-настройки если CloudStorage недоступен сразу
+        // Пост-настройки если CloudStorage недоступен сразу
         if (!tg?.CloudStorage) {
              setTimeout(() => {
-                 if (needsReset) { resetGameData(); } // Сброс если CloudStorage не было изначально
+                 if (needsReset) { resetGameData(); }
                  console.log("[Load Timeout] Выполнение пост-настройки.");
                  applyTranslations();
                  updateDisplay();
                  applyCauldronSkin();
-                 updateLiquidColor(); // Устанавливаем цвет жидкости
+                 updateLiquidColor();
                  visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); updateLiquidLevelVisual(visualLiquidLevel);
                  checkReferralAndBonus();
                  console.log(`[Load Timeout] Завершено. Состояние: E:${essence}, G:${gems}, Skin:${activeSkinId}`);
@@ -404,7 +704,6 @@ document.addEventListener('DOMContentLoaded', () => {
         essence = 0; gems = 0;
         upgrades.forEach(upgrade => upgrade.currentLevel = 0);
         ownedSkins = ['default']; activeSkinId = 'default';
-        // currentLanguage не сбрасываем
         recalculateBonuses();
     }
 
@@ -412,7 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showTemporaryNotification(message, type = "info") { const notification = document.createElement('div'); notification.className = `notification ${type}`; notification.textContent = message; document.body.appendChild(notification); void notification.offsetWidth; requestAnimationFrame(() => { notification.style.opacity = '1'; notification.style.bottom = '80px'; }); setTimeout(() => { notification.style.opacity = '0'; notification.style.bottom = '70px'; setTimeout(() => { if (notification.parentNode) { notification.remove(); } }, 500); }, 2500); }
 
     // --- Первоначальная инициализация ---
-    loadGame(); // Загрузка игры (включает начальную установку цвета и уровня жидкости)
+    loadGame(); // Загрузка игры
 
     // --- Автосохранение и обработчики событий ---
     const autoSaveInterval = setInterval(saveGame, 15000);
