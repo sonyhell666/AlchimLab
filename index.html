@@ -23,13 +23,17 @@
                 </div>
             </div>
 
+            <!-- Обновленная колба -->
             <div id="cauldron" class="cauldron">
-                <div class="cauldron-liquid"></div>
-                <div class="cauldron-bubbles">
-                    <span></span><span></span><span></span><span></span>
+                <!-- Удален старый div для жидкости (теперь используется ::before) -->
+                <!-- Добавлен новый пустой контейнер для пузырьков (будут добавлены через JS) -->
+                <div class="bubbles-container" id="bubbles-container">
+                    <!-- Сюда JS будет добавлять <div class="bubble"></div> -->
                 </div>
-                <div id="click-feedback-container"></div> <!-- Для отображения "+1" при клике -->
             </div>
+            <!-- Контейнер для фидбека (+1) перемещен СНАРУЖИ колбы -->
+            <div id="click-feedback-container"></div>
+
         </div>
 
         <div class="controls">
@@ -42,7 +46,7 @@
         <div id="upgrades-panel" class="upgrades-panel hidden">
             <div class="panel-header">
                 <h2>Улучшения</h2>
-                <button id="close-upgrades-btn" class="close-button">&times;</button>
+                <button id="close-upgrades-btn" class="close-button">×</button>
             </div>
             <ul id="upgrades-list">
                 <!-- Улучшения будут добавлены сюда через JS -->
