@@ -3,7 +3,7 @@
 // Добавлено: Динамический цвет жидкости, Обводка колбы, Отладочные логи
 // Исправлено: Мигание кнопок
 // Упрощен конец файла для поиска SyntaxError
-// ЗАКОММЕНТИРОВАНЫ ПОСЛЕДНИЕ БЛОКИ ДЛЯ ПОИСКА ОШИБКИ
+// РАСКОММЕНТИРОВАНЫ ПОСЛЕДНИЕ БЛОКИ, чтобы исправить ошибку
 document.addEventListener('DOMContentLoaded', () => {
     // Инициализация Telegram Web App
     const tg = window.Telegram.WebApp;
@@ -736,16 +736,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Автосохранение и обработчики событий ---
-    /* ЗАКОММЕНТИРОВАНО ДЛЯ ПОИСКА ОШИБКИ
+    // ЗАКОММЕНТИРОВАНО ДЛЯ ПОИСКА ОШИБКИ // Можно оставить эту строку комментария или удалить
     const autoSaveInterval = setInterval(saveGame, 15000);
     window.addEventListener('beforeunload', saveGame);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { saveGame(); } });
     if (tg?.onEvent) { tg.onEvent('viewportChanged', (event) => { if (event.isStateStable) { console.log("Viewport stable, save."); saveGame(); } }); }
-    */
+    // */ // <--- Убрана лишняя строка комментария
 
     // --- Интервал для обновления цвета жидкости ---
-    /* ЗАКОММЕНТИРОВАНО ДЛЯ ПОИСКА ОШИБКИ
+    // ЗАКОММЕНТИРОВАНО ДЛЯ ПОИСКА ОШИБКИ // Можно оставить эту строку комментария или удалить
     const liquidColorUpdateInterval = setInterval(updateLiquidColor, 5 * 60 * 1000); // Обновлять каждые 5 минут
-    */
+    // */ // <--- Убрана лишняя строка комментария
 
-}); // Конец DOMContentLoaded - Строка ~749 (или около того)
+}); // Конец DOMContentLoaded
