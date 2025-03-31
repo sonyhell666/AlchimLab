@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const upgradesPanel = document.getElementById('upgrades-panel');
     const upgradesListElement = document.getElementById('upgrades-list');
     const userGreetingElement = document.getElementById('user-greeting');
-    const inviteFriendBtn = document.getElementById('invite-friend-btn'); // Сама переменная не меняется
+    const inviteFriendBtn = document.getElementById('invite-friend-btn');
     const bubblesContainer = document.getElementById('bubbles-container');
     const perSecondDisplayDiv = document.getElementById('per-second-display');
     const settingsBtn = document.getElementById('settings-btn');
@@ -83,7 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
         bonusReasonFriend: { ru: "за приглашенного друга!", en: "for invited friend!" },
         bonusAddError: { ru: "Ошибка добавления бонуса!", en: "Bonus add error!" },
         inviteLinkError: { ru: "Не удалось создать ссылку-приглашение.", en: "Failed to create invite link." },
-        // ИЗМЕНЕНО: Текст для шаринга остался тем же, но убедись, что он подходит
         shareText: { ru: 'Присоединяйся к моей Алхимической Лаборатории в Telegram! 🧪⚗️ Кликай и создавай эликсиры!', en: 'Join my Alchemy Lab in Telegram! 🧪⚗️ Click and create elixirs!' },
         comingSoon: { ru: "Скоро...", en: "Coming Soon..." },
         // --- Названия и описания улучшений ---
@@ -115,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Определения улучшений с ключами перевода ---
     const upgrades = [
-        // ... (без изменений) ...
         { id: 'click1', nameKey: 'upgrade_click1_name', descKey: 'upgrade_click1_desc', baseCost: 15, costMultiplier: 1.4, type: 'click', value: 1, currentLevel: 0, requiredEssence: 0 },
         { id: 'auto1', nameKey: 'upgrade_auto1_name', descKey: 'upgrade_auto1_desc', baseCost: 60, costMultiplier: 1.6, type: 'auto', value: 1, currentLevel: 0, requiredEssence: 0 },
         { id: 'click2', nameKey: 'upgrade_click2_name', descKey: 'upgrade_click2_desc', baseCost: 300, costMultiplier: 1.5, type: 'click', value: 5, currentLevel: 0, requiredEssence: 500 },
@@ -131,30 +129,23 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     // --- Функции для пузырьков ---
-    // ... (без изменений) ...
     function createBubble() { if (!bubblesContainer) return; const b = document.createElement('div'); b.classList.add('bubble'); const s = Math.random() * 8 + 6; const d = Math.random() * 2.5 + 3; const l = Math.random() * 1.5; const h = Math.random() * 90 + 5; b.style.width = `${s}px`; b.style.height = `${s}px`; b.style.left = `${h}%`; b.style.animationDuration = `${d}s`; b.style.animationDelay = `${l}s`; bubblesContainer.appendChild(b); setTimeout(() => { b.remove(); }, (d + l) * 1000 + 100); }
     setInterval(createBubble, 500);
 
-
     // --- Функция обновления визуала жидкости и пузырьков ---
-    // ... (без изменений) ...
     function updateLiquidLevelVisual(percentage) { const l = Math.max(LIQUID_MIN_LEVEL, Math.min(LIQUID_MAX_LEVEL, percentage)); if (cauldronElement) { cauldronElement.style.setProperty('--liquid-level', `${l}%`); if(bubblesContainer) { bubblesContainer.style.height = `${l}%`; } } else { console.warn("Cauldron element not found for liquid update."); } }
 
     // --- Общая функция обновления UI ---
-    // ... (без изменений) ...
     function updateDisplay() { if (essenceCountElement) essenceCountElement.textContent = formatNumber(Math.floor(essence)); if (essencePerSecondElement && perSecondDisplayDiv) { essencePerSecondElement.textContent = formatNumber(essencePerSecond); perSecondDisplayDiv.style.display = essencePerSecond > 0 ? 'block' : 'none'; } if (gemCountElement) gemCountElement.textContent = formatNumber(gems); if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) renderUpgrades(); }
 
     // --- Функция форматирования чисел ---
-    // ... (без изменений) ...
     function formatNumber(num) { if (isNaN(num) || !Number.isFinite(num)) { console.warn("formatNumber received invalid input:", num); return "ERR"; } if (num < 1000) return num.toString(); if (num < 1e6) return (num / 1e3).toFixed(1).replace('.0', '') + 'K'; if (num < 1e9) return (num / 1e6).toFixed(1).replace('.0', '') + 'M'; return (num / 1e9).toFixed(1).replace('.0', '') + 'B'; }
 
     // --- Функция для отображения "+N" при клике ---
-    // ... (без изменений) ...
     function showClickFeedback(amount, type = 'essence') { if (isBlocked || !clickFeedbackContainer) return; const f = document.createElement('div'); f.className = 'click-feedback'; const fmt = formatNumber(amount); if (type === 'gem') { const i = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="var(--gem-color)" style="vertical-align:middle;margin-left:4px;"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/></svg>`; f.innerHTML = `+${fmt}${i}`; f.style.fontSize = '1.3em'; f.style.fontWeight = 'bold'; f.style.color = '#f0f0f0'; } else { f.textContent = `+${fmt} 🧪`; f.style.color = 'var(--accent-color)'; } const ox = Math.random() * 60 - 30; const oy = (type === 'gem') ? (Math.random() * 20 + 15) : (Math.random() * 20 - 10); f.style.left = `calc(50% + ${ox}px)`; f.style.top = `calc(50% + ${oy}px)`; clickFeedbackContainer.appendChild(f); setTimeout(() => { f.remove(); }, 950); }
 
     // --- Логика клика по котлу ---
-    // ... (без изменений) ...
-    if (cauldronElement) {
+     if (cauldronElement) {
          cauldronElement.addEventListener('click', () => {
              const currentTime = Date.now();
              if (tg?.HapticFeedback) { tg.HapticFeedback.impactOccurred('light'); }
@@ -220,7 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
      }
 
     // --- Логика авто-клика ---
-    // ... (без изменений) ...
     setInterval(() => {
         if (!isBlocked && essencePerSecond > 0 && Number.isFinite(essencePerSecond)) {
              const essenceToAdd = essencePerSecond / 10; // Add 1/10th every 100ms
@@ -234,7 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
      }, 100);
 
     // --- Интервал для уменьшения уровня жидкости ---
-    // ... (без изменений) ...
     setInterval(() => {
         const currentTime = Date.now();
         // Only decay if idle and above minimum
@@ -247,7 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Логика улучшений ---
-    // ... (без изменений) ...
     function calculateCost(upgrade) {
         if (!upgrade || typeof upgrade.baseCost !== 'number' || typeof upgrade.costMultiplier !== 'number' || typeof upgrade.currentLevel !== 'number') {
              console.error("Invalid upgrade data for cost calculation:", upgrade);
@@ -256,7 +244,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel));
     }
 
-    // ... (renderUpgrades, buyUpgrade, recalculateBonuses - без изменений) ...
     function renderUpgrades() {
         if (!upgradesListElement) {
             console.error("Upgrades list element not found!");
@@ -338,7 +325,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
     function buyUpgrade(upgradeId) {
         if (isBlocked) {
             showTemporaryNotification(translations.actionBlocked?.[currentLanguage] || "Action blocked.", "error");
@@ -358,7 +344,6 @@ document.addEventListener('DOMContentLoaded', () => {
              if (tg?.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
              return;
          }
-
 
         const cost = calculateCost(upgrade);
          if (!Number.isFinite(cost)) {
@@ -391,29 +376,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     essencePerSecond += upgrade.value * upgrade.currentLevel;
                 }
             } else if (upgrade.currentLevel > 0) {
-                 // Log if an active upgrade has invalid data, but don't stop calculation
                  console.warn("Upgrade has level > 0 but invalid bonus data:", upgrade);
             }
         });
 
-        // Sanity checks after calculation
         if (!Number.isFinite(essencePerClick) || essencePerClick < 1) {
              console.error("Recalculation resulted in invalid essencePerClick:", essencePerClick);
-             essencePerClick = 1; // Reset to minimum safe value
+             essencePerClick = 1;
         }
         if (!Number.isFinite(essencePerSecond) || essencePerSecond < 0) {
              console.error("Recalculation resulted in invalid essencePerSecond:", essencePerSecond);
-             essencePerSecond = 0; // Reset to minimum safe value
+             essencePerSecond = 0;
         }
-
-        // No need to call updateDisplay() here, it's called after buyUpgrade or loadGame
     }
 
     // --- Открытие/Закрытие панелей ---
-    // ... (без изменений) ...
     if (openUpgradesBtn && upgradesPanel) {
         openUpgradesBtn.addEventListener('click', () => {
-            renderUpgrades(); // Render/update list when opening
+            renderUpgrades();
             upgradesPanel.classList.remove('hidden');
         });
     } else { console.error("Upgrade open button or panel not found."); }
@@ -432,20 +412,18 @@ document.addEventListener('DOMContentLoaded', () => {
         closeSettingsBtn.addEventListener('click', closeSettings);
     } else { console.error("Settings close button not found."); }
 
-    // Close settings panel if clicking outside the box
     if (settingsPanel) {
         settingsPanel.addEventListener('click', (e) => {
-            if (e.target === settingsPanel) { // Check if the click was directly on the overlay
+            if (e.target === settingsPanel) {
                 closeSettings();
             }
         });
     }
 
     // --- Логика настроек ---
-    // ... (без изменений) ...
     function openSettings() {
         if (settingsPanel) {
-            updateActiveLangButton(); // Ensure correct button is highlighted
+            updateActiveLangButton();
             settingsPanel.classList.remove('hidden');
         }
     }
@@ -455,13 +433,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     function setLanguage(lang) {
-        if (translations.greetingBase[lang]) { // Check if language is supported
+        if (translations.greetingBase[lang]) {
             currentLanguage = lang;
             console.log(`Language changed to: ${currentLanguage}`);
-            applyTranslations(); // Update all text elements
-            updateActiveLangButton(); // Update button highlight
-            saveGame(); // Save the new language setting
-            // If upgrades panel is open, re-render it with new translations
+            applyTranslations();
+            updateActiveLangButton();
+            saveGame();
              if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) {
                  renderUpgrades();
              }
@@ -471,7 +448,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function applyTranslations() {
-        // Update user greeting
         if (userGreetingElement) {
             let greeting = translations.greetingBase[currentLanguage] || "Laboratory";
             if (userName) {
@@ -480,19 +456,15 @@ document.addEventListener('DOMContentLoaded', () => {
             userGreetingElement.textContent = greeting;
         }
 
-        // Update all elements with data-translate attribute
         document.querySelectorAll('[data-translate]').forEach(element => {
             const key = element.dataset.translate;
             const translation = translations[key]?.[currentLanguage];
             if (translation) {
-                // Simple text update for most elements
                 element.textContent = translation;
             } else {
                  console.warn(`Translation key "${key}" for language "${currentLanguage}" not found.`);
-                 // Optionally leave the original text or set a default
             }
         });
-        // Explicitly update dynamic parts if needed (e.g., button text in upgrades is handled by renderUpgrades)
     }
 
 
@@ -503,7 +475,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Add event listener for language buttons
     if (languageOptionsContainer) {
         languageOptionsContainer.addEventListener('click', (event) => {
             if (event.target.classList.contains('lang-btn')) {
@@ -516,7 +487,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else { console.error("Language options container not found."); }
 
     // --- Логика реферальной системы ---
-    // ... (без изменений, включая inviteFriendBtn listener) ...
     function checkReferralAndBonus() {
         const startParam = tg.initDataUnsafe?.start_param;
         const urlParams = new URLSearchParams(window.location.search);
@@ -525,20 +495,16 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Start Param:", startParam, "Claim Bonus Param:", claimBonusParam);
 
         if (startParam && !isNaN(parseInt(startParam))) {
-            // Found a potential inviter ID in start_param
             handleNewReferral(startParam);
         } else if (claimBonusParam) {
-            // Found a bonus claim ID in URL parameters
             handleBonusClaim(claimBonusParam);
         }
     }
 
     function handleNewReferral(inviterId) {
-        // Check if the user is actually new (minimal progress)
         tg.CloudStorage.getItem('gameState', (error, value) => {
             if (error) {
                  console.error("CloudStorage error checking for referral:", error);
-                 // Proceed without sending data, maybe notify user?
                  return;
              }
 
@@ -546,9 +512,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (value) {
                  try {
                      const savedState = JSON.parse(value);
-                     // Define "new": less than X essence, no significant upgrades, few gems?
-                     const thresholdEssence = 100; // Example threshold
-                     const nonBaseUpgrades = savedState.upgrades?.some(u => u.level > 0 && u.id !== 'click1'); // Check if any non-basic upgrade bought
+                     const thresholdEssence = 100;
+                     const nonBaseUpgrades = savedState.upgrades?.some(u => u.level > 0 && u.id !== 'click1');
                      if ((savedState.essence && savedState.essence > thresholdEssence) ||
                          nonBaseUpgrades ||
                          (savedState.gems && savedState.gems > 0))
@@ -560,7 +525,6 @@ document.addEventListener('DOMContentLoaded', () => {
                      }
                  } catch (parseError) {
                      console.error("Error parsing gameState during referral check", parseError);
-                     // Treat as potentially new if data is corrupt
                  }
              } else {
                  console.log("Referral check: No gameState found, user is new.");
@@ -568,9 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isConsideredNew) {
                  console.log(`Processing referral: User is new or has minimal progress. Inviter ID: ${inviterId}. Sending data to bot...`);
-                 // Save the game state immediately *before* sending data, might include initial state
                  saveGame();
-                 // Send data to the bot about the registration
                  if (tg.sendData) {
                      const dataToSend = JSON.stringify({
                          type: 'referral_registered',
@@ -594,7 +556,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
     function handleBonusClaim(referralId) {
         console.log(`Attempting to claim bonus for referral ID: ${referralId}`);
         if (!referralId || typeof referralId !== 'string' || referralId.trim() === '') {
@@ -602,7 +563,6 @@ document.addEventListener('DOMContentLoaded', () => {
              return;
          }
 
-        // Check if this bonus has already been claimed
         tg.CloudStorage.getItem('claimed_bonuses', (error, value) => {
              if (error) {
                  console.error("CloudStorage error getting claimed bonuses:", error);
@@ -620,7 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      }
                  } catch (parseError) {
                      console.error("Error parsing claimed_bonuses:", parseError);
-                     claimedBonuses = []; // Reset if data is corrupt
+                     claimedBonuses = [];
                  }
              }
 
@@ -628,8 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  console.log(`Bonus for referral ID ${referralId} has already been claimed.`);
                  showTemporaryNotification(translations.bonusAlreadyClaimed?.[currentLanguage] || "Bonus already claimed.", "warning");
              } else {
-                 // Award the bonus
-                 const bonusAmount = 50000; // Define bonus amount
+                 const bonusAmount = 50000;
                  if (Number.isFinite(essence)) {
                      essence += bonusAmount;
                      console.log(`Bonus claimed successfully for ${referralId}! Added ${bonusAmount} essence.`);
@@ -637,14 +596,12 @@ document.addEventListener('DOMContentLoaded', () => {
                      showTemporaryNotification(`+${formatNumber(bonusAmount)} 🧪 ${reasonText}`, "success");
                      updateDisplay();
 
-                     // Add this ID to the list of claimed bonuses and save
                      claimedBonuses.push(referralId);
                      tg.CloudStorage.setItem('claimed_bonuses', JSON.stringify(claimedBonuses), (setError) => {
                          if (setError) {
                              console.error("CloudStorage error saving updated claimed bonuses:", setError);
                          } else {
                              console.log("Claimed bonuses list updated in CloudStorage.");
-                             // Save the main game state as well, since essence changed
                              saveGame();
                          }
                      });
@@ -654,7 +611,6 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
             }
 
-            // Clean the 'claimBonus' parameter from the URL to prevent re-claiming on refresh
              try {
                  const currentUrl = new URL(window.location);
                  currentUrl.searchParams.delete('claimBonus');
@@ -666,24 +622,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
-    // Invite Friend Button Logic (функциональность не меняется)
     if (inviteFriendBtn) {
         inviteFriendBtn.addEventListener('click', () => {
             if (tg?.initDataUnsafe?.user?.id) {
-                const botUsername = 'AlchimLaboratory_Bot'; // Replace with your bot's username
-                const appName = 'AlchimLab'; // The app name used in botfather for the Mini App link (optional but good practice)
+                const botUsername = 'AlchimLaboratory_Bot';
+                const appName = 'AlchimLab';
                 const userId = tg.initDataUnsafe.user.id;
-                // Construct the referral link: t.me/YourBot/YourApp?start=referrer_user_id
-                 const referralLink = `https://t.me/${botUsername}/${appName}?start=${userId}`; // Use appName if you set one
-
-                // Construct the share text
+                 const referralLink = `https://t.me/${botUsername}/${appName}?start=${userId}`;
                 const shareText = translations.shareText?.[currentLanguage] || 'Join my Alchemy Lab in Telegram! 🧪⚗️ Click and create elixirs!';
-
-                // Construct the Telegram share URL
                  const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText)}`;
-
-                // Open the share link
                 tg.openTelegramLink(shareUrl);
                 console.log('Generated share link:', referralLink);
                 if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
@@ -698,14 +645,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Сохранение/Загрузка ---
-    // ... (без изменений) ...
     function saveGame() {
         if (!tg?.CloudStorage) {
             console.error("CloudStorage is not available for saving.");
-            return; // Cannot save
+            return;
         }
-
-        // Ensure numeric values are valid before saving
          if (!Number.isFinite(essence)) {
              console.warn(`Invalid essence value (${essence}) detected during save. Resetting to 0.`);
              essence = 0;
@@ -714,47 +658,38 @@ document.addEventListener('DOMContentLoaded', () => {
              console.warn(`Invalid gems value (${gems}) detected during save. Resetting to 0.`);
              gems = 0;
          }
-
         const gameState = {
             essence: essence,
             gems: gems,
             upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel })),
             language: currentLanguage
-            // Add any other state variables here (e.g., last online time, boost end times)
         };
-
         try {
             const gameStateString = JSON.stringify(gameState);
             tg.CloudStorage.setItem('gameState', gameStateString, (error) => {
                 if (error) {
                     console.error("CloudStorage setItem error:", error);
-                    // Maybe show a non-critical notification?
-                } else {
-                    // console.log("Game state saved successfully."); // Optional: uncomment for debugging
                 }
             });
         } catch (stringifyError) {
              console.error("Error stringifying game state:", stringifyError);
-             // This is a critical error, maybe notify the user
              showTemporaryNotification(translations.saveCritError?.[currentLanguage] || "Critical save error!", "error");
         }
     }
 
     function loadGame() {
-        // Reset potential blocking from previous session
          isBlocked = false;
          warningCount = 0;
          if (cauldronElement) cauldronElement.classList.remove('blocked-cauldron');
 
-
         if (!tg?.CloudStorage) {
             console.error("CloudStorage is not available for loading.");
-            resetGameData(); // Start fresh if storage unavailable
-            applyTranslations(); // Apply default translations
+            resetGameData();
+            applyTranslations();
             updateDisplay();
              updateLiquidLevelVisual(LIQUID_MIN_LEVEL);
             showTemporaryNotification(translations.loadErrorStartNew?.[currentLanguage] || "Failed to load progress. Starting new game.", "warning");
-            return; // Cannot load
+            return;
         }
 
         console.log("Attempting to load game state...");
@@ -763,160 +698,124 @@ document.addEventListener('DOMContentLoaded', () => {
             if (error) {
                 console.error("CloudStorage getItem error:", error);
                 showTemporaryNotification(translations.loadError?.[currentLanguage] || "Error loading progress!", "error");
-                resetGameData(); // Reset on load error
+                resetGameData();
             } else if (value) {
                 console.log("Received game state data from CloudStorage:", value.length, "bytes");
                 try {
                     const savedState = JSON.parse(value);
-
-                    // Load essence, ensuring it's a valid number
                      essence = Number(savedState.essence) || 0;
                      if (!Number.isFinite(essence)) {
                          console.warn("Loaded invalid essence value, resetting to 0.");
                          essence = 0;
                      }
-
-                    // Load gems, ensuring it's a valid number
                      gems = Number(savedState.gems) || 0;
                      if (!Number.isFinite(gems)) {
                          console.warn("Loaded invalid gems value, resetting to 0.");
                          gems = 0;
                      }
-
-
-                    // Load language, falling back to 'ru' if invalid/missing
                     currentLanguage = savedState.language || 'ru';
-                    if (!translations.greetingBase[currentLanguage]) { // Validate language
+                    if (!translations.greetingBase[currentLanguage]) {
                         console.warn(`Loaded unsupported language "${currentLanguage}", falling back to 'ru'.`);
                         currentLanguage = 'ru';
                     }
-
-                    // Load upgrade levels
                     if (Array.isArray(savedState.upgrades)) {
                         upgrades.forEach(upgrade => {
                             const savedUpgrade = savedState.upgrades.find(su => su.id === upgrade.id);
                             upgrade.currentLevel = (savedUpgrade && Number.isFinite(Number(savedUpgrade.level))) ? Number(savedUpgrade.level) : 0;
-                            if (upgrade.currentLevel < 0) upgrade.currentLevel = 0; // Sanity check
+                            if (upgrade.currentLevel < 0) upgrade.currentLevel = 0;
                         });
                     } else {
-                         // If no upgrades array in save, reset all levels
                          upgrades.forEach(upgrade => upgrade.currentLevel = 0);
                     }
-
-                    recalculateBonuses(); // Calculate bonuses based on loaded levels
+                    recalculateBonuses();
                     console.log("Game state loaded successfully.");
                     loadedSuccessfully = true;
 
                 } catch (parseError) {
                     console.error("Error parsing loaded game state:", parseError);
                     showTemporaryNotification(translations.readError?.[currentLanguage] || "Error reading save data!", "error");
-                    resetGameData(); // Reset if data is corrupt
+                    resetGameData();
                 }
             } else {
-                // No saved data found
                 console.log("No saved game state found. Starting fresh.");
-                resetGameData(); // Initialize a fresh game state
+                resetGameData();
             }
-
-            // After loading or resetting:
-            checkReferralAndBonus(); // Check for referrals/bonuses regardless of load success
-            applyTranslations(); // Apply loaded or default language
-            updateDisplay(); // Update UI with loaded/reset values
-            visualLiquidLevel = LIQUID_MIN_LEVEL; // Reset visual liquid level
-            lastInteractionTime = Date.now(); // Reset idle timer
+            checkReferralAndBonus();
+            applyTranslations();
+            updateDisplay();
+            visualLiquidLevel = LIQUID_MIN_LEVEL;
+            lastInteractionTime = Date.now();
             updateLiquidLevelVisual(visualLiquidLevel);
-
         });
     }
 
-    // Function to reset all game variables to default state
-    // ... (без изменений) ...
     function resetGameData() {
         console.log("Resetting game data to defaults.");
         isBlocked = false;
         warningCount = 0;
         if (cauldronElement) cauldronElement.classList.remove('blocked-cauldron');
-
         essence = 0;
         gems = 0;
         upgrades.forEach(upgrade => upgrade.currentLevel = 0);
-        currentLanguage = 'ru'; // Reset language to default
-        recalculateBonuses(); // Recalculate bonuses (will be base values)
+        currentLanguage = 'ru';
+        recalculateBonuses();
         visualLiquidLevel = LIQUID_MIN_LEVEL;
         lastInteractionTime = Date.now();
     }
 
 
     // --- Функция уведомлений ---
-    // ... (без изменений) ...
     function showTemporaryNotification(message, type = "info") {
         const notification = document.createElement('div');
-        notification.className = `notification ${type}`; // Add type class (info, error, warning, success)
+        notification.className = `notification ${type}`;
         notification.textContent = message;
-
         document.body.appendChild(notification);
-
-        // Trigger fade-in and slide-up
         setTimeout(() => {
             notification.style.opacity = '1';
-            notification.style.bottom = '80px'; // Final position
-        }, 10); // Short delay to allow element rendering before transition starts
-
-        // Start fade-out and removal after a delay
+            notification.style.bottom = '80px';
+        }, 10);
         setTimeout(() => {
             notification.style.opacity = '0';
-            notification.style.bottom = '70px'; // Slightly slide down on fade out
-            // Remove the element after the fade-out transition completes
+            notification.style.bottom = '70px';
             setTimeout(() => {
                 notification.remove();
-            }, 500); // Match transition duration in CSS for opacity
-        }, 2500); // How long the notification stays visible
+            }, 500);
+        }, 2500);
     }
 
 
     // --- Обработчик клика по кнопке Магазина ---
-    // ... (без изменений) ...
     if (shopBtn) {
         shopBtn.addEventListener('click', () => {
-            // Используем текст из переводов
-            const message = translations.comingSoon[currentLanguage] || "Coming Soon..."; // Fallback text
-            showTemporaryNotification(message, "info"); // Показываем уведомление типа 'info'
+            const message = translations.comingSoon[currentLanguage] || "Coming Soon...";
+            showTemporaryNotification(message, "info");
              if (tg?.HapticFeedback) {
-                 tg.HapticFeedback.impactOccurred('light'); // Легкая вибрация при клике
+                 tg.HapticFeedback.impactOccurred('light');
              }
         });
     } else {
-        console.error("Shop button element not found!"); // Log error if button isn't found
+        console.error("Shop button element not found!");
     }
 
 
     // --- Первоначальная инициализация ---
-    loadGame(); // Load saved state or initialize new game
+    loadGame();
 
 
     // --- Автосохранение и обработчики событий ---
-    // ... (без изменений) ...
-    const autoSaveInterval = setInterval(saveGame, 15000); // Save every 15 seconds
-
-    // Save before the user leaves the page/app
+    const autoSaveInterval = setInterval(saveGame, 15000);
     window.addEventListener('beforeunload', saveGame);
-
-    // Save when the app becomes hidden (e.g., user switches tabs/apps)
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
             saveGame();
         }
     });
-
-    // Save when the Telegram viewport changes state (e.g., resizing)
     if (tg?.onEvent) {
         tg.onEvent('viewportChanged', (event) => {
-            // Save when viewport stabilizes after changes
              if (event.isStateStable) {
                  saveGame();
             }
         });
     }
-
 
 }); // Конец DOMContentLoaded
