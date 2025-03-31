@@ -23,8 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Переменные для защиты от автокликера ---
     let lastClickTime = 0; // Время последнего ЗАСЧИТАННОГО клика
-    // !!! ИЗМЕНЕНИЕ ЗДЕСЬ: Интервал для ~15 кликов/сек !!!
-    const MIN_CLICK_INTERVAL = 67; // 1000 / 15 ≈ 66.67 -> 67 мс
+    const MIN_CLICK_INTERVAL = 67; // 1000 / 15 ≈ 67 мс
     const MAX_WARNINGS = 3; // Количество предупреждений до блокировки
     let warningCount = 0; // Текущий счетчик предупреждений
     let isBlocked = false; // Флаг блокировки игрока
@@ -36,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Определения улучшений ---
     const upgrades = [
+        // ... (ваш массив upgrades остается без изменений) ...
         // --- Начальный Тир (Доступны сразу) ---
         { id: 'click1', name: 'Улучшенный рецепт', description: '+1 к клику', baseCost: 15, costMultiplier: 1.4, type: 'click', value: 1, currentLevel: 0, requiredEssence: 0 },
         { id: 'auto1', name: 'Гомункул-Помощник', description: '+1 в секунду', baseCost: 60, costMultiplier: 1.6, type: 'auto', value: 1, currentLevel: 0, requiredEssence: 0 },
@@ -59,7 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
          { id: 'auto7', name: 'Поток Чистой Магии', description: '+5000 в секунду', baseCost: 50000000, costMultiplier: 2.1, type: 'auto', value: 5000, currentLevel: 0, requiredEssence: 60000000 },
     ];
 
-
     // --- Функции обновления UI ---
     function updateEssenceDisplay() {
         if (essenceCountElement) {
@@ -70,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Форматирование больших чисел (для наглядности)
     function formatNumber(num) {
         if (isNaN(num) || !Number.isFinite(num)) {
              console.warn("formatNumber received invalid input:", num);
@@ -85,6 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Логика клика по котлу (с защитой) ---
     if (cauldronElement) {
         cauldronElement.addEventListener('click', () => {
+             // Вибрация при клике (легкая)
+             if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+
             if (isBlocked) {
                 showTemporaryNotification("Автокликер обнаружен! Возможность кликать заблокирована.", "error");
                 return;
@@ -92,45 +95,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const currentTime = Date.now();
 
-            // --- ПРОВЕРКА ИНТЕРВАЛА ---
             if (currentTime - lastClickTime >= MIN_CLICK_INTERVAL) {
-                // Валидный клик
-                warningCount = 0; // Сбрасываем счетчик предупреждений
-
+                warningCount = 0;
                 if (Number.isFinite(essencePerClick)) {
                     essence += essencePerClick;
                     updateEssenceDisplay();
-
                     if (clickFeedbackContainer) {
                         showClickFeedback(`+${formatNumber(essencePerClick)}`);
                     }
-
                     cauldronElement.style.transform = 'scale(0.95)';
                     setTimeout(() => {
                         cauldronElement.style.transform = 'scale(1)';
                     }, 80);
-
-                    // Обновляем lastClickTime ТОЛЬКО для ВАЛИДНЫХ кликов
                     lastClickTime = currentTime;
-
                 } else {
                     console.error("Invalid essencePerClick value:", essencePerClick);
                 }
-
             } else {
-                // Клик слишком частый
                 warningCount++;
-                // НЕ обновляем lastClickTime здесь, чтобы следующий клик сравнивался с последним валидным
-
                 console.warn(`Autoclicker warning ${warningCount}/${MAX_WARNINGS}`);
                 showTemporaryNotification(`Слишком частый клик! Предупреждение ${warningCount}/${MAX_WARNINGS}`, "warning");
-
-                // Проверка на блокировку
+                 // Вибрация при предупреждении (средняя)
+                 if (tg && tg.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
                 if (warningCount >= MAX_WARNINGS) {
                     isBlocked = true;
                     console.error("Player blocked due to suspected autoclicker.");
                     showTemporaryNotification("Автокликер обнаружен! Возможность кликать заблокирована.", "error");
-
+                     // Вибрация при блокировке (сильная)
+                    if (tg && tg.HapticFeedback) {
+                        tg.HapticFeedback.notificationOccurred('error');
+                    }
                     if(cauldronElement) {
                         cauldronElement.classList.add('blocked-cauldron');
                         cauldronElement.style.cursor = 'not-allowed';
@@ -141,7 +137,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.error("Cauldron element not found!");
     }
-
 
     // --- Функция для отображения "+1" при клике ---
     function showClickFeedback(text) {
@@ -161,16 +156,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Логика авто-клика (пассивный доход) ---
     setInterval(() => {
-        if (essencePerSecond > 0 && Number.isFinite(essencePerSecond)) {
-            const essenceToAdd = essencePerSecond / 10;
+        if (!isBlocked && essencePerSecond > 0 && Number.isFinite(essencePerSecond)) { // Добавил проверку !isBlocked
+            const essenceToAdd = essencePerSecond / 10; // Начисляем 10 раз в секунду
             if (Number.isFinite(essenceToAdd)) {
                 essence += essenceToAdd;
-                updateEssenceDisplay();
+                updateEssenceDisplay(); // Обновляем чаще для плавной анимации счета
             } else {
                  console.warn("Skipping auto-click: essenceToAdd resulted in invalid number", essenceToAdd);
             }
         }
-    }, 100);
+    }, 100); // Интервал 100мс = 10 раз в секунду
 
     // --- Логика улучшений ---
     function calculateCost(upgrade) {
@@ -181,14 +176,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel));
     }
 
-    // ОБНОВЛЕННАЯ ФУНКЦИЯ RENDERUPGRADES (с показом заблокированных)
     function renderUpgrades() {
         if (!upgradesListElement) {
              console.error("Upgrades list element not found!");
              return;
         }
         upgradesListElement.innerHTML = '';
-
         upgrades.sort((a, b) => (a.requiredEssence || 0) - (b.requiredEssence || 0));
 
         if (upgrades.length === 0) {
@@ -204,12 +197,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const requirement = upgrade.requiredEssence || 0;
+            // Используем Math.floor(essence) для сравнения с требованием
             const isLocked = Math.floor(essence) < requirement;
             const canAfford = essence >= cost;
 
             const li = document.createElement('li');
             if (isLocked) {
-                li.classList.add('locked');
+                li.classList.add('locked'); // Класс для серых/недоступных улучшений
+            } else if (!canAfford) {
+                 li.classList.add('cannot-afford'); // Доп. класс для тех, что доступны, но не хватает средств
             }
 
             let buttonText = 'Купить';
@@ -219,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 buttonDisabled = 'disabled';
                 buttonText = `Нужно ${formatNumber(requirement)} 🧪`;
             } else if (!canAfford) {
-                buttonDisabled = 'disabled';
+                buttonDisabled = 'disabled'; // Кнопка неактивна, если не хватает средств
             }
 
             li.innerHTML = `
@@ -235,15 +231,16 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             const buyButton = li.querySelector('.buy-upgrade-btn');
-            if (buyButton) {
+            if (buyButton && !isLocked) { // Вешаем обработчик только если улучшение не заблокировано по требованию
                 buyButton.addEventListener('click', () => {
-                    buyUpgrade(upgrade.id);
+                    if (!buyButton.disabled) { // Доп. проверка, что кнопка активна
+                       buyUpgrade(upgrade.id);
+                    }
                 });
             }
             upgradesListElement.appendChild(li);
         });
     }
-
 
     function buyUpgrade(upgradeId) {
         if (isBlocked) {
@@ -258,14 +255,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const requirement = upgrade.requiredEssence || 0;
+        // Повторная проверка на всякий случай
         if (Math.floor(essence) < requirement) {
-            console.log("Attempted to buy a locked upgrade:", upgradeId);
+            console.log("Attempted to buy a locked upgrade (should not happen if UI is correct):", upgradeId);
             showTemporaryNotification(`Сначала накопите ${formatNumber(requirement)} эссенции!`, "error");
             return;
         }
 
         const cost = calculateCost(upgrade);
-         if (!Number.isFinite(cost)) {
+        if (!Number.isFinite(cost)) {
              console.error("Cannot buy upgrade with invalid cost:", upgradeId);
              showTemporaryNotification("Ошибка: неверная стоимость улучшения!", "error");
              return;
@@ -276,43 +274,60 @@ document.addEventListener('DOMContentLoaded', () => {
             upgrade.currentLevel++;
             recalculateBonuses();
             updateEssenceDisplay();
-            renderUpgrades();
+            renderUpgrades(); // Перерисовываем улучшения, чтобы обновить стоимость и, возможно, доступность следующих
+             // Вибрация при успешной покупке
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
         } else {
             console.log("Недостаточно эссенции!");
             showTemporaryNotification("Недостаточно эссенции!", "error");
+             // Вибрация при неудачной покупке
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('warning');
+            }
         }
     }
 
     function recalculateBonuses() {
-        essencePerClick = 1;
-        essencePerSecond = 0;
+        essencePerClick = 1; // Начинаем с базового клика
+        essencePerSecond = 0; // Начинаем с нуля пассивного дохода
 
         upgrades.forEach(upgrade => {
+            // Учитываем только улучшения с уровнем > 0
             if (upgrade.currentLevel > 0 && Number.isFinite(upgrade.value) && typeof upgrade.type === 'string') {
+                // Применяем бонус за КАЖДЫЙ уровень улучшения
                 if (upgrade.type === 'click') {
                     essencePerClick += upgrade.value * upgrade.currentLevel;
                 } else if (upgrade.type === 'auto') {
                     essencePerSecond += upgrade.value * upgrade.currentLevel;
                 }
             } else if (upgrade.currentLevel > 0) {
-                 console.warn("Invalid upgrade data in recalculateBonuses:", upgrade);
+                 // Предупреждение, если данные улучшения некорректны, но уровень > 0
+                 console.warn("Invalid upgrade data in recalculateBonuses for active upgrade:", upgrade);
             }
         });
 
+        // Дополнительные проверки на NaN/Infinity после всех расчетов
         if (!Number.isFinite(essencePerClick)) {
              console.error("recalculateBonuses resulted in invalid essencePerClick:", essencePerClick);
-             essencePerClick = 1;
+             essencePerClick = 1; // Сброс к безопасному значению
         }
-         if (!Number.isFinite(essencePerSecond)) {
+        if (!Number.isFinite(essencePerSecond)) {
              console.error("recalculateBonuses resulted in invalid essencePerSecond:", essencePerSecond);
-             essencePerSecond = 0;
+             essencePerSecond = 0; // Сброс к безопасному значению
         }
+
+         // Обновляем отображение дохода в секунду сразу после пересчета
+         if (essencePerSecondElement) {
+             essencePerSecondElement.textContent = formatNumber(essencePerSecond);
+         }
     }
 
     // --- Открытие/Закрытие панели улучшений ---
      if (openUpgradesBtn && upgradesPanel) {
         openUpgradesBtn.addEventListener('click', () => {
-            renderUpgrades();
+            renderUpgrades(); // Обновляем список перед показом
             upgradesPanel.classList.remove('hidden');
         });
      } else {
@@ -327,18 +342,27 @@ document.addEventListener('DOMContentLoaded', () => {
          console.error("Close upgrades button or panel not found!");
      }
 
-    // --- Логика кнопки "Друзья" (заглушка) ---
+    // --- Логика кнопки "Друзья" (С ВАШИМИ ДАННЫМИ) ---
     if (inviteFriendBtn) {
         inviteFriendBtn.addEventListener('click', () => {
-            console.log('Кнопка "Друзья" нажата. Нужна интеграция с Telegram API.');
-            if (tg && tg.showPopup) {
-                tg.showPopup({
-                    title: 'Пригласить друзей',
-                    message: 'Эта функция пока в разработке. Вы сможете приглашать друзей и получать бонусы!',
-                    buttons: [{ type: 'ok' }]
-                });
+            if (tg) {
+                 // Простой вариант: предложить поделиться ссылкой на ваше WebApp
+                 // Используем ваши данные из скриншота:
+                 const botUsername = 'AlchimLaboratory_Bot'; // Ваше имя пользователя бота (без @)
+                 const appName = 'AlchimLab';              // Короткое имя вашего WebApp
+                 // Добавляем ID пользователя для возможной реферальной системы
+                 const userId = (tg.initDataUnsafe?.user?.id) ? `?start=${tg.initDataUnsafe.user.id}` : '';
+                 const shareUrl = `https://t.me/${botUsername}/${appName}${userId}`;
+                 const shareText = 'Заходи в мою Алхимическую Лабораторию в Telegram! 🧪⚗️ Кликай и создавай эликсиры!';
+
+                // Используем метод Telegram для шаринга
+                tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`);
+
+                console.log('Предложено поделиться ссылкой:', shareUrl);
             } else {
-                 alert('Эта функция пока в разработке.');
+                 console.error('Не удалось получить доступ к функциям Telegram для шаринга.');
+                 // Можно показать уведомление пользователю
+                 showTemporaryNotification('Не удалось создать ссылку для приглашения.', 'error');
             }
         });
     } else {
@@ -346,25 +370,55 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- Сохранение/Загрузка ---
+    // --- Сохранение/Загрузка через CloudStorage ---
+
+    // НОВАЯ ФУНКЦИЯ saveGame (для CloudStorage)
     function saveGame() {
-        if (!Number.isFinite(essence)) {
-             console.error("Attempting to save invalid essence value:", essence);
-             essence = 0;
+        // Проверяем доступность CloudStorage
+        if (!tg || !tg.CloudStorage) {
+            console.error("Telegram CloudStorage is not available for saving.");
+            return; // Не можем сохранить
         }
+
+        if (!Number.isFinite(essence)) {
+            console.error("Attempting to save invalid essence value:", essence);
+            essence = 0; // Безопасное значение по умолчанию
+        }
+
         const gameState = {
             essence: essence,
+            // Сохраняем только необходимые данные из улучшений
             upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel }))
+            // Добавьте сюда другие важные переменные состояния, если они появятся (например, время последнего визита для оффлайн прогресса)
         };
+
         try {
-            localStorage.setItem('alchemistClickerSave', JSON.stringify(gameState));
-             console.log("Игра сохранена");
+            const gameStateString = JSON.stringify(gameState);
+            // Ограничим частоту вывода в консоль, чтобы не засорять при частых сохранениях
+            // if (Math.random() < 0.1) { // Примерно раз в 10 сохранений
+            //      console.log("Attempting to save to CloudStorage:", gameStateString.length + " bytes");
+            // }
+
+            // Используем CloudStorage.setItem с ключом 'gameState'
+            tg.CloudStorage.setItem('gameState', gameStateString, (error) => {
+                if (error) {
+                    console.error("Ошибка сохранения в CloudStorage:", error);
+                    // Можно добавить логику повторной попытки или уведомление пользователя при критических ошибках
+                    // showTemporaryNotification("Ошибка сохранения прогресса!", "error");
+                } else {
+                    // Успешное сохранение обычно не требует вывода в консоль или уведомления
+                    // console.log("Игра успешно сохранена в CloudStorage");
+                }
+            });
+
         } catch (e) {
-            console.error("Ошибка сохранения в localStorage:", e);
-            showTemporaryNotification("Ошибка сохранения прогресса!", "error");
+            // Ошибка при JSON.stringify
+            console.error("Ошибка при подготовке данных для сохранения (JSON.stringify):", e);
+            showTemporaryNotification("Критическая ошибка сохранения!", "error");
         }
     }
 
+    // НОВАЯ ФУНКЦИЯ loadGame (для CloudStorage)
     function loadGame() {
         // Сброс состояния блокировки при загрузке
         isBlocked = false;
@@ -372,94 +426,168 @@ document.addEventListener('DOMContentLoaded', () => {
         if(cauldronElement) {
              cauldronElement.classList.remove('blocked-cauldron');
              cauldronElement.style.cursor = 'pointer';
+         }
+
+        // Проверяем доступность CloudStorage
+        if (!tg || !tg.CloudStorage) {
+            console.error("Telegram CloudStorage is not available for loading. Loading defaults.");
+            resetGameData(); // Загружаем стандартные значения
+            updateEssenceDisplay(); // Обновляем UI
+            showTemporaryNotification("Не удалось загрузить прогресс. Начинаем новую игру.", "warning");
+            return;
         }
 
+        console.log("Attempting to load from CloudStorage with key 'gameState'...");
 
-        const savedState = localStorage.getItem('alchemistClickerSave');
-        if (savedState) {
-            try {
-                const gameState = JSON.parse(savedState);
-                essence = Number(gameState.essence) || 0;
-                 if (!Number.isFinite(essence)) essence = 0;
+        // Используем CloudStorage.getItem с ключом 'gameState'
+        tg.CloudStorage.getItem('gameState', (error, value) => {
+            let loadedSuccessfully = false;
+            if (error) {
+                console.error("Ошибка загрузки из CloudStorage:", error);
+                showTemporaryNotification("Ошибка загрузки прогресса! Начинаем новую игру.", "error");
+                resetGameData(); // Сброс к начальным значениям при ошибке
+            } else if (value) {
+                // Данные получены
+                console.log("Data received from CloudStorage:", value.length + " bytes");
+                try {
+                    const gameState = JSON.parse(value);
 
-                upgrades.forEach(upgrade => {
-                    const savedUpgrade = gameState.upgrades.find(su => su.id === upgrade.id);
-                    upgrade.currentLevel = savedUpgrade ? (Number(savedUpgrade.level) || 0) : 0;
-                    if (!Number.isFinite(upgrade.currentLevel)) upgrade.currentLevel = 0;
-                });
+                    // Применяем загруженное состояние
+                    // Используем || 0 для подстраховки от undefined/null/NaN
+                    essence = Number(gameState.essence) || 0;
+                    if (!Number.isFinite(essence)) essence = 0; // Доп. проверка на конечность числа
 
-                recalculateBonuses();
-                console.log("Игра загружена");
+                    // Обновляем уровни улучшений
+                    upgrades.forEach(upgrade => {
+                        // Ищем сохраненное улучшение по ID
+                        const savedUpgrade = gameState.upgrades?.find(su => su.id === upgrade.id); // gameState.upgrades может отсутствовать в старых сохранениях
+                        // Применяем уровень, если он найден и валиден, иначе 0
+                        upgrade.currentLevel = (savedUpgrade && Number.isFinite(Number(savedUpgrade.level))) ? Number(savedUpgrade.level) : 0;
+                    });
 
-            } catch (e) {
-                console.error("Ошибка загрузки сохранения:", e);
-                localStorage.removeItem('alchemistClickerSave');
-                resetGameData();
+                    recalculateBonuses(); // Пересчитываем бонусы на основе загруженных уровней
+                    console.log("Игра успешно загружена из CloudStorage");
+                    loadedSuccessfully = true; // Флаг успешной загрузки
+
+                } catch (e) {
+                    // Ошибка парсинга JSON (данные повреждены или несовместимый формат)
+                    console.error("Ошибка парсинга данных из CloudStorage:", e);
+                    showTemporaryNotification("Ошибка чтения сохраненных данных! Начинаем новую игру.", "error");
+                    resetGameData(); // Сброс к начальным значениям
+                }
+            } else {
+                // Ключ 'gameState' не найден (первый запуск или данные были удалены)
+                console.log("Сохранение 'gameState' в CloudStorage не найдено, начинаем новую игру.");
+                resetGameData(); // Начинаем с начальных значений
             }
-        } else {
-             console.log("Сохранение не найдено, начинаем новую игру.");
-             resetGameData();
-        }
+
+            // Обновляем интерфейс ПОСЛЕ завершения асинхронной операции загрузки или сброса
+            updateEssenceDisplay();
+            // renderUpgrades(); // Можно раскомментировать, если панель улучшений видна по умолчанию
+
+             // Опциональное уведомление об успешной загрузке (возможно, излишне)
+             // if (loadedSuccessfully) {
+             //    showTemporaryNotification("Прогресс загружен", "info");
+             // }
+        });
+
+        // ВАЖНО: Код здесь выполнится ДО того, как данные будут фактически загружены из CloudStorage.
+        // Вся логика, зависящая от загруженных данных, должна быть ВНУТРИ callback-функции getItem.
     }
 
+    // Функция сброса данных игры к начальным значениям
     function resetGameData() {
-        // Сброс состояния блокировки
         isBlocked = false;
         warningCount = 0;
-         if(cauldronElement) {
+        if(cauldronElement) {
              cauldronElement.classList.remove('blocked-cauldron');
              cauldronElement.style.cursor = 'pointer';
          }
 
         essence = 0;
-        upgrades.forEach(u => u.currentLevel = 0);
-        recalculateBonuses();
+        upgrades.forEach(u => u.currentLevel = 0); // Сбрасываем уровни всех улучшений
+        recalculateBonuses(); // Пересчитываем бонусы (они станут базовыми)
+        console.log("Game data reset to default values.");
     }
 
     // --- Функция для временных уведомлений ---
     function showTemporaryNotification(message, type = "info") {
+        // ... (код функции showTemporaryNotification остается без изменений) ...
          const notification = document.createElement('div');
         notification.className = `notification ${type}`;
         notification.textContent = message;
         notification.style.position = 'fixed';
-        notification.style.bottom = '70px';
+        notification.style.bottom = '70px'; // Положение над нижними кнопками
         notification.style.left = '50%';
         notification.style.transform = 'translateX(-50%)';
         notification.style.padding = '10px 20px';
         notification.style.borderRadius = '8px';
-        // Задаем цвет фона в зависимости от типа
-        if (type === 'error') {
-            notification.style.backgroundColor = '#e74c3c'; // Красный для ошибок
-        } else if (type === 'warning') {
-            notification.style.backgroundColor = '#f39c12'; // Оранжевый для предупреждений
-        } else {
-            notification.style.backgroundColor = '#3498db'; // Синий по умолчанию (info)
-        }
+        notification.style.backgroundColor = '#333'; // Темный фон по умолчанию
         notification.style.color = 'white';
         notification.style.zIndex = '1000';
         notification.style.opacity = '0';
-        notification.style.transition = 'opacity 0.5s ease';
+        notification.style.transition = 'opacity 0.5s ease, bottom 0.3s ease'; // Плавное появление/исчезание
+        notification.style.textAlign = 'center';
+        notification.style.maxWidth = '80%';
+
+        // Задаем цвет фона в зависимости от типа
+        if (type === 'error') {
+            notification.style.backgroundColor = '#e74c3c'; // Красный
+        } else if (type === 'warning') {
+            notification.style.backgroundColor = '#f39c12'; // Оранжевый
+        } else if (type === 'success') { // Добавим тип "success"
+            notification.style.backgroundColor = '#2ecc71'; // Зеленый
+        } else { // info
+             notification.style.backgroundColor = '#3498db'; // Синий
+        }
+
         document.body.appendChild(notification);
-        setTimeout(() => { notification.style.opacity = '1'; }, 10);
+
+        // Анимация появления
+        setTimeout(() => {
+             notification.style.opacity = '1';
+             notification.style.bottom = '80px'; // Немного приподнять
+        }, 10); // Небольшая задержка для срабатывания transition
+
+        // Анимация исчезновения
         setTimeout(() => {
             notification.style.opacity = '0';
-            setTimeout(() => { notification.remove(); }, 500);
-        }, 2500);
+            notification.style.bottom = '70px'; // Опустить обратно
+            setTimeout(() => { notification.remove(); }, 500); // Удалить из DOM после завершения анимации
+        }, 2500); // Уведомление видно 2.5 секунды
     }
 
 
     // --- Первоначальная инициализация ---
-    loadGame(); // Загружаем игру (пересчитывает бонусы и сбрасывает блокировку)
-    updateEssenceDisplay(); // Первичная отрисовка счета и дохода в сек
+    loadGame(); // Загружаем игру ИЗ CloudStorage (асинхронно!)
+    // updateEssenceDisplay(); // НЕ вызываем здесь, т.к. loadGame сделает это внутри callback
 
-    // --- Автосохранение и обработчики событий видимости ---
-    setInterval(saveGame, 30000);
+    // --- Автосохранение и обработчики событий видимости/закрытия ---
+    // Сохраняем чаще, но CloudStorage может троттлить запросы, если они слишком частые
+    setInterval(saveGame, 15000); // Сохраняем каждые 15 секунд
 
+    // Сохранение при сворачивании или закрытии вкладки/приложения
     window.addEventListener('beforeunload', saveGame);
-     document.addEventListener('visibilitychange', () => {
+    document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'hidden') {
             saveGame();
         }
     });
+
+     // --- Дополнительно: Сохранение при закрытии WebApp через Telegram ---
+     // Этот обработчик может сработать не на всех платформах/версиях ТГ, но стоит добавить
+     if (tg && tg.onEvent) {
+        tg.onEvent('viewportChanged', (event) => {
+            // Проверяем, не закрывается ли окно WebApp
+            if (!event.isStateStable) {
+                // Состояние меняется, возможно, окно сворачивается или закрывается
+                // На всякий случай сохраняем
+                 saveGame();
+            }
+        });
+         // Также можно попробовать событие 'mainButtonClicked', если у вас есть MainButton
+         // tg.onEvent('mainButtonClicked', saveGame);
+     }
+
 
 }); // Конец DOMContentLoaded
