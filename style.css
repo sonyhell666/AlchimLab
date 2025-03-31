@@ -13,13 +13,14 @@
     --gem-color: #ff69b4;
     /* --liquid-level задается через JS */
 
-    /* --- НАЧАЛО: Переменные цвета обводки для скинов --- */
-    --skin-default-border-color: #007a8c; /* Немного темнее основного цвета */
-    --skin-gold-border-color: #b8860b;   /* Темное золото */
-    --skin-crystal-border-color: rgba(255, 255, 255, 0.7); /* Белая полупрозрачная */
-    --skin-obsidian-border-color: #555; /* Темно-серый */
+    /* --- НАЧАЛО: Переменные цвета КОНТУРА для скинов --- */
+    /* Используем более контрастные цвета или цвета, которые будут хорошо видны */
+    --skin-default-outline-color: #005f6f; /* Еще темнее */
+    --skin-gold-outline-color: #daa520;   /* Золотисто-коричневый */
+    --skin-crystal-outline-color: #ffffff; /* Полностью белый для контраста */
+    --skin-obsidian-outline-color: #777;  /* Светлее фона обсидиана */
     /* Добавьте сюда переменные для новых скинов */
-    /* --- КОНЕЦ: Переменные цвета обводки --- */
+    /* --- КОНЕЦ: Переменные цвета контура --- */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -170,18 +171,19 @@ html, body {
     user-select: none;
     margin: 20px auto;
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
-    /* --- НАЧАЛО: Добавляем обводку --- */
-    border: 3px solid var(--current-border-color, transparent); /* Обводка 3px, цвет берется из переменной */
-    /* --- КОНЕЦ: Добавляем обводку --- */
-    border-radius: 0; /* Убедимся, что border-radius не мешает clip-path */
-    box-shadow: none;
-    will-change: transform, background, border-color; /* Добавляем border-color в will-change */
-    overflow: visible; /* Позволяем border'у быть видимым */
-    /* Переменная для текущего цвета обводки */
-    --current-border-color: transparent; /* Значение по умолчанию */
+    /* --- НАЧАЛО: Убираем border, добавляем box-shadow --- */
+    /* border: 3px solid var(--current-border-color, transparent); /* УДАЛЕНО */
+    border: none; /* Убедимся, что рамки точно нет */
+    box-shadow: 0 0 0 3px var(--current-outline-color, transparent); /* Создаем эффект обводки тенью толщиной 3px */
+    /* --- КОНЕЦ: Убираем border, добавляем box-shadow --- */
+    border-radius: 0;
+    will-change: transform, background, box-shadow; /* Заменяем border-color на box-shadow */
+    overflow: visible; /* Должен быть visible для тени */
+    /* Переменная для текущего цвета контура */
+    --current-outline-color: transparent; /* Значение по умолчанию */
     transition: transform 0.1s ease-out, filter 0.1s ease-out,
                 background-color 0.3s ease, background-image 0.3s ease,
-                border-color 0.3s ease; /* Добавляем border-color в transition */
+                box-shadow 0.3s ease; /* Заменяем border-color на box-shadow */
 }
 
 .cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(70%); }
@@ -276,7 +278,6 @@ html, body {
 .settings-panel:not(.hidden) { opacity: 1; pointer-events: auto; }
 .settings-box { width: 90%; max-width: 400px; max-height: 80vh; border-radius: 15px; /* Наследует стили фона/тени из общего стиля панелей */ }
 .settings-content { padding: 10px 0; overflow-y: auto; flex-grow: 1; }
-.settings-content h3 { margin-bottom: 10px; font-size: 1.1em; opacity: 0.9; } /* Убрал border и отступы отсюда */
 .language-options { display: flex; gap: 10px; flex-wrap: wrap; }
 .lang-btn { padding: 8px 16px; font-size: 0.9em; background-color: var(--button-bg); color: var(--text-color); border: 2px solid transparent; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, border-color 0.2s ease; }
 .lang-btn:hover { background-color: var(--button-hover-bg); }
@@ -354,25 +355,30 @@ html, body {
 
 .skin-preview {
     width: 80px;
-    height: 90px; /* Соотношение примерно как у основной колбы */
+    height: 90px;
     margin-bottom: 10px;
-    border-radius: 5px; /* Небольшое скругление для превью */
-    background-color: #ccc; /* Placeholder цвет */
+    border-radius: 5px;
+    background-color: #ccc;
     background-size: cover;
     background-position: center;
-    position: relative; /* Для позиционирования внутренних элементов, если нужно */
-     /* Применяем такой же clip-path, как у основной колбы */
+    position: relative;
     -webkit-clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
     clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
-    border: 1px solid rgba(255, 255, 255, 0.1); /* Добавим слабую рамку для превью */
+    /* --- НАЧАЛО: Используем тень и для превью --- */
+    /* border: 1px solid rgba(255, 255, 255, 0.1); /* УДАЛЕНО */
+    border: none; /* Убедимся, что рамки нет */
+    box-shadow: 0 0 0 2px var(--preview-outline-color, rgba(255, 255, 255, 0.1)); /* Тень 2px для превью */
+    /* --- КОНЕЦ: Используем тень и для превью --- */
+    --preview-outline-color: rgba(255, 255, 255, 0.1); /* Переменная для цвета тени превью */
+    transition: box-shadow 0.3s ease; /* Анимация тени */
 }
 
-/* Стили для разных скинов в превью (добавляются через JS) */
-/* Используем переменные для обводки и здесь, чтобы было соответствие */
-.skin-preview.skin-default { background-color: var(--flask-color); border-color: var(--skin-default-border-color); }
-.skin-preview.skin-gold { background-color: #ffd700; background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080); border-color: var(--skin-gold-border-color); }
-.skin-preview.skin-crystal { background-color: #add8e6; background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%); border-color: var(--skin-crystal-border-color); }
-.skin-preview.skin-obsidian { background-color: #333; background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d); border-color: var(--skin-obsidian-border-color); }
+/* Устанавливаем цвет тени для превью каждого скина */
+.skin-preview.skin-default { background-color: var(--flask-color); --preview-outline-color: var(--skin-default-outline-color); }
+.skin-preview.skin-gold { background-color: #ffd700; background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080); --preview-outline-color: var(--skin-gold-outline-color); }
+.skin-preview.skin-crystal { background-color: #add8e6; background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%); --preview-outline-color: var(--skin-crystal-outline-color); }
+.skin-preview.skin-obsidian { background-color: #333; background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d); --preview-outline-color: var(--skin-obsidian-outline-color); }
+
 
 .skin-info {
     width: 100%; /* Занимает всю ширину карточки */
@@ -460,26 +466,26 @@ html, body {
     opacity: 0.7;
 }
 
-/* Стили для самой колбы (устанавливают фон и переменную обводки) */
+/* Стили для самой колбы (устанавливают фон и переменную контура) */
 .cauldron.skin-default {
     background-color: var(--flask-color);
     background-image: none;
-    --current-border-color: var(--skin-default-border-color);
+    --current-outline-color: var(--skin-default-outline-color);
 }
 .cauldron.skin-gold {
     background-color: #ffd700;
     background-image: linear-gradient(45deg, #f0c040, #ffd700, #f8e080);
-    --current-border-color: var(--skin-gold-border-color);
+    --current-outline-color: var(--skin-gold-outline-color);
 }
 .cauldron.skin-crystal {
     background-color: #add8e6;
     background-image: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
-    --current-border-color: var(--skin-crystal-border-color);
+    --current-outline-color: var(--skin-crystal-outline-color);
 }
 .cauldron.skin-obsidian {
     background-color: #333;
     background-image: linear-gradient(0deg, #1a1a1a, #4d4d4d);
-    --current-border-color: var(--skin-obsidian-border-color);
+    --current-outline-color: var(--skin-obsidian-outline-color);
 }
 
 
@@ -533,23 +539,39 @@ html, body {
     accent-color: var(--accent-color); /* Цвет ползунка и трека (в современных браузерах) */
     height: 6px; /* Сделаем трек чуть толще */
     border-radius: 3px;
+    background: rgba(0, 0, 0, 0.2); /* Фон трека */
+    outline: none; /* Убираем стандартный outline */
+     -webkit-appearance: none; /* Убираем стандартный вид для WebKit */
+    appearance: none;
 }
-/* Стили для ползунка (кроссбраузерность может потребовать -webkit- и -moz- префиксов) */
+/* Стили для ползунка WebKit (Chrome, Safari) */
 .settings-slider::-webkit-slider-thumb {
     -webkit-appearance: none; /* Override default look */
     appearance: none;
-    width: 16px; /* Ширина ползунка */
-    height: 16px; /* Высота ползунка */
+    width: 18px; /* Ширина ползунка */
+    height: 18px; /* Высота ползунка */
     background: var(--accent-color); /* Цвет ползунка */
     border-radius: 50%; /* Круглый ползунок */
     cursor: pointer;
+    border: 2px solid var(--primary-bg); /* Обводка цветом фона для контраста */
+    margin-top: -6px; /* Центрируем ползунок относительно трека */
 }
+/* Стили для ползунка Firefox */
 .settings-slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
+    width: 14px; /* Чуть меньше для Firefox */
+    height: 14px;
     background: var(--accent-color);
     border-radius: 50%;
     cursor: pointer;
+    border: 2px solid var(--primary-bg);
+}
+/* Стили для трека Firefox */
+.settings-slider::-moz-range-track {
+    width: 100%;
+    height: 6px;
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
     border: none; /* Убираем стандартную рамку Firefox */
 }
 
@@ -569,9 +591,11 @@ html, body {
 }
 .settings-slider:disabled::-webkit-slider-thumb {
     background: var(--disabled-color);
+    border-color: var(--secondary-bg); /* Меняем цвет обводки на фоне */
 }
 .settings-slider:disabled::-moz-range-thumb {
     background: var(--disabled-color);
+    border-color: var(--secondary-bg);
 }
 
 .sound-volume-container .volume-percentage.disabled {
