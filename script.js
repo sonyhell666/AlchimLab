@@ -15,14 +15,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const upgradesPanel = document.getElementById('upgrades-panel');
     const upgradesListElement = document.getElementById('upgrades-list');
     const userGreetingElement = document.getElementById('user-greeting');
-    const inviteFriendBtn = document.getElementById('invite-friend-btn');
+    const inviteFriendBtn = document.getElementById('invite-friend-btn'); // Сама переменная не меняется
     const bubblesContainer = document.getElementById('bubbles-container');
     const perSecondDisplayDiv = document.getElementById('per-second-display');
     const settingsBtn = document.getElementById('settings-btn');
     const settingsPanel = document.getElementById('settings-panel');
     const closeSettingsBtn = document.getElementById('close-settings-btn');
     const languageOptionsContainer = settingsPanel ? settingsPanel.querySelector('.language-options') : null;
-    const shopBtn = document.getElementById('shop-btn'); // <-- Добавлено
+    const shopBtn = document.getElementById('shop-btn');
 
     // --- Игровые переменные (состояние) ---
     let essence = 0;
@@ -56,7 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
         greetingBase: { ru: "Лаборатория", en: "Laboratory" },
         perSec: { ru: "в сек", en: "/ sec" },
         upgradesButton: { ru: "Улучшения", en: "Upgrades" },
-        friendsButton: { ru: "Друзья", en: "Friends" },
+        // ИЗМЕНЕНО: Ключ и текст для кнопки "Пригласить друзей"
+        inviteFriendsButton: { ru: "Пригласить друзей", en: "Invite Friends" },
         upgradesTitle: { ru: "Улучшения", en: "Upgrades" },
         settingsTitle: { ru: "Настройки", en: "Settings" },
         languageTitle: { ru: "Язык", en: "Language" },
@@ -82,8 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
         bonusReasonFriend: { ru: "за приглашенного друга!", en: "for invited friend!" },
         bonusAddError: { ru: "Ошибка добавления бонуса!", en: "Bonus add error!" },
         inviteLinkError: { ru: "Не удалось создать ссылку-приглашение.", en: "Failed to create invite link." },
+        // ИЗМЕНЕНО: Текст для шаринга остался тем же, но убедись, что он подходит
         shareText: { ru: 'Присоединяйся к моей Алхимической Лаборатории в Telegram! 🧪⚗️ Кликай и создавай эликсиры!', en: 'Join my Alchemy Lab in Telegram! 🧪⚗️ Click and create elixirs!' },
-        comingSoon: { ru: "Скоро...", en: "Coming Soon..." }, // <-- Добавлено
+        comingSoon: { ru: "Скоро...", en: "Coming Soon..." },
         // --- Названия и описания улучшений ---
         upgrade_click1_name: { ru: "Улучшенный рецепт", en: "Improved Recipe" },
         upgrade_click1_desc: { ru: "+1 к клику", en: "+1 per click" },
@@ -113,6 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Определения улучшений с ключами перевода ---
     const upgrades = [
+        // ... (без изменений) ...
         { id: 'click1', nameKey: 'upgrade_click1_name', descKey: 'upgrade_click1_desc', baseCost: 15, costMultiplier: 1.4, type: 'click', value: 1, currentLevel: 0, requiredEssence: 0 },
         { id: 'auto1', nameKey: 'upgrade_auto1_name', descKey: 'upgrade_auto1_desc', baseCost: 60, costMultiplier: 1.6, type: 'auto', value: 1, currentLevel: 0, requiredEssence: 0 },
         { id: 'click2', nameKey: 'upgrade_click2_name', descKey: 'upgrade_click2_desc', baseCost: 300, costMultiplier: 1.5, type: 'click', value: 5, currentLevel: 0, requiredEssence: 500 },
@@ -128,22 +131,29 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     // --- Функции для пузырьков ---
+    // ... (без изменений) ...
     function createBubble() { if (!bubblesContainer) return; const b = document.createElement('div'); b.classList.add('bubble'); const s = Math.random() * 8 + 6; const d = Math.random() * 2.5 + 3; const l = Math.random() * 1.5; const h = Math.random() * 90 + 5; b.style.width = `${s}px`; b.style.height = `${s}px`; b.style.left = `${h}%`; b.style.animationDuration = `${d}s`; b.style.animationDelay = `${l}s`; bubblesContainer.appendChild(b); setTimeout(() => { b.remove(); }, (d + l) * 1000 + 100); }
     setInterval(createBubble, 500);
 
+
     // --- Функция обновления визуала жидкости и пузырьков ---
+    // ... (без изменений) ...
     function updateLiquidLevelVisual(percentage) { const l = Math.max(LIQUID_MIN_LEVEL, Math.min(LIQUID_MAX_LEVEL, percentage)); if (cauldronElement) { cauldronElement.style.setProperty('--liquid-level', `${l}%`); if(bubblesContainer) { bubblesContainer.style.height = `${l}%`; } } else { console.warn("Cauldron element not found for liquid update."); } }
 
     // --- Общая функция обновления UI ---
+    // ... (без изменений) ...
     function updateDisplay() { if (essenceCountElement) essenceCountElement.textContent = formatNumber(Math.floor(essence)); if (essencePerSecondElement && perSecondDisplayDiv) { essencePerSecondElement.textContent = formatNumber(essencePerSecond); perSecondDisplayDiv.style.display = essencePerSecond > 0 ? 'block' : 'none'; } if (gemCountElement) gemCountElement.textContent = formatNumber(gems); if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) renderUpgrades(); }
 
     // --- Функция форматирования чисел ---
+    // ... (без изменений) ...
     function formatNumber(num) { if (isNaN(num) || !Number.isFinite(num)) { console.warn("formatNumber received invalid input:", num); return "ERR"; } if (num < 1000) return num.toString(); if (num < 1e6) return (num / 1e3).toFixed(1).replace('.0', '') + 'K'; if (num < 1e9) return (num / 1e6).toFixed(1).replace('.0', '') + 'M'; return (num / 1e9).toFixed(1).replace('.0', '') + 'B'; }
 
     // --- Функция для отображения "+N" при клике ---
+    // ... (без изменений) ...
     function showClickFeedback(amount, type = 'essence') { if (isBlocked || !clickFeedbackContainer) return; const f = document.createElement('div'); f.className = 'click-feedback'; const fmt = formatNumber(amount); if (type === 'gem') { const i = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="var(--gem-color)" style="vertical-align:middle;margin-left:4px;"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/></svg>`; f.innerHTML = `+${fmt}${i}`; f.style.fontSize = '1.3em'; f.style.fontWeight = 'bold'; f.style.color = '#f0f0f0'; } else { f.textContent = `+${fmt} 🧪`; f.style.color = 'var(--accent-color)'; } const ox = Math.random() * 60 - 30; const oy = (type === 'gem') ? (Math.random() * 20 + 15) : (Math.random() * 20 - 10); f.style.left = `calc(50% + ${ox}px)`; f.style.top = `calc(50% + ${oy}px)`; clickFeedbackContainer.appendChild(f); setTimeout(() => { f.remove(); }, 950); }
 
     // --- Логика клика по котлу ---
+    // ... (без изменений) ...
     if (cauldronElement) {
          cauldronElement.addEventListener('click', () => {
              const currentTime = Date.now();
@@ -210,6 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
      }
 
     // --- Логика авто-клика ---
+    // ... (без изменений) ...
     setInterval(() => {
         if (!isBlocked && essencePerSecond > 0 && Number.isFinite(essencePerSecond)) {
              const essenceToAdd = essencePerSecond / 10; // Add 1/10th every 100ms
@@ -223,6 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
      }, 100);
 
     // --- Интервал для уменьшения уровня жидкости ---
+    // ... (без изменений) ...
     setInterval(() => {
         const currentTime = Date.now();
         // Only decay if idle and above minimum
@@ -235,6 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Логика улучшений ---
+    // ... (без изменений) ...
     function calculateCost(upgrade) {
         if (!upgrade || typeof upgrade.baseCost !== 'number' || typeof upgrade.costMultiplier !== 'number' || typeof upgrade.currentLevel !== 'number') {
              console.error("Invalid upgrade data for cost calculation:", upgrade);
@@ -243,6 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMultiplier, upgrade.currentLevel));
     }
 
+    // ... (renderUpgrades, buyUpgrade, recalculateBonuses - без изменений) ...
     function renderUpgrades() {
         if (!upgradesListElement) {
             console.error("Upgrades list element not found!");
@@ -395,8 +409,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // No need to call updateDisplay() here, it's called after buyUpgrade or loadGame
     }
 
-
     // --- Открытие/Закрытие панелей ---
+    // ... (без изменений) ...
     if (openUpgradesBtn && upgradesPanel) {
         openUpgradesBtn.addEventListener('click', () => {
             renderUpgrades(); // Render/update list when opening
@@ -428,6 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Логика настроек ---
+    // ... (без изменений) ...
     function openSettings() {
         if (settingsPanel) {
             updateActiveLangButton(); // Ensure correct button is highlighted
@@ -501,6 +516,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else { console.error("Language options container not found."); }
 
     // --- Логика реферальной системы ---
+    // ... (без изменений, включая inviteFriendBtn listener) ...
     function checkReferralAndBonus() {
         const startParam = tg.initDataUnsafe?.start_param;
         const urlParams = new URLSearchParams(window.location.search);
@@ -651,7 +667,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // Invite Friend Button Logic
+    // Invite Friend Button Logic (функциональность не меняется)
     if (inviteFriendBtn) {
         inviteFriendBtn.addEventListener('click', () => {
             if (tg?.initDataUnsafe?.user?.id) {
@@ -682,6 +698,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Сохранение/Загрузка ---
+    // ... (без изменений) ...
     function saveGame() {
         if (!tg?.CloudStorage) {
             console.error("CloudStorage is not available for saving.");
@@ -809,14 +826,11 @@ document.addEventListener('DOMContentLoaded', () => {
             lastInteractionTime = Date.now(); // Reset idle timer
             updateLiquidLevelVisual(visualLiquidLevel);
 
-            // Optional: Save immediately after load to ensure CloudStorage has the sanitized/reset state
-             if (loadedSuccessfully || !value) { // Save if loaded ok or if it was a fresh start
-                 // saveGame(); // Consider if needed - might be redundant with auto-save
-             }
         });
     }
 
     // Function to reset all game variables to default state
+    // ... (без изменений) ...
     function resetGameData() {
         console.log("Resetting game data to defaults.");
         isBlocked = false;
@@ -834,6 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Функция уведомлений ---
+    // ... (без изменений) ...
     function showTemporaryNotification(message, type = "info") {
         const notification = document.createElement('div');
         notification.className = `notification ${type}`; // Add type class (info, error, warning, success)
@@ -859,7 +874,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- ДОБАВЛЕНО: Обработчик клика по кнопке Магазина ---
+    // --- Обработчик клика по кнопке Магазина ---
+    // ... (без изменений) ...
     if (shopBtn) {
         shopBtn.addEventListener('click', () => {
             // Используем текст из переводов
@@ -879,6 +895,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Автосохранение и обработчики событий ---
+    // ... (без изменений) ...
     const autoSaveInterval = setInterval(saveGame, 15000); // Save every 15 seconds
 
     // Save before the user leaves the page/app
@@ -894,24 +911,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Save when the Telegram viewport changes state (e.g., resizing)
     if (tg?.onEvent) {
         tg.onEvent('viewportChanged', (event) => {
-            // The event might fire rapidly during resize, save only when it stabilizes
-            if (!event.isStateStable) {
-                 // Debounce or throttle this if it causes too many saves
-                 // For now, just save when it's potentially changing
-                 // saveGame(); // Might be too frequent, consider debouncing
-            } else {
-                 // Save when viewport stabilizes after changes
+            // Save when viewport stabilizes after changes
+             if (event.isStateStable) {
                  saveGame();
             }
         });
-
-        // Optional: Handle main button clicks if you enable it
-        // tg.MainButton.setText("SAVE");
-        // tg.MainButton.show();
-        // tg.onEvent('mainButtonClicked', () => {
-        //     saveGame();
-        //     tg.MainButton.hide(); // Hide after click for example
-        // });
     }
 
 

@@ -33,7 +33,7 @@
 
         <!-- КНОПКА МАГАЗИНА (теперь позиционируется отдельно) -->
         <button id="shop-btn" class="shop-button control-button-icon" aria-label="Магазин">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28"> <!-- Увеличен размер SVG -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28">
                 <path fill="currentColor" d="M17 6h-2c0-2.21-1.79-4-4-4S7 3.79 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm7 16H5V8h14v12zM12 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
             </svg>
         </button>
@@ -62,7 +62,8 @@
         <!-- Кнопки управления -->
         <div class="controls">
             <button id="open-upgrades-btn" class="control-button" data-translate="upgradesButton">Улучшения</button>
-            <button id="invite-friend-btn" class="control-button telegram-feature" data-translate="friendsButton">Друзья</button>
+            <!-- ИЗМЕНЕНО: data-translate и, возможно, текст по умолчанию (хотя data-translate важнее) -->
+            <button id="invite-friend-btn" class="control-button telegram-feature" data-translate="inviteFriendsButton">Пригласить</button>
         </div>
 
         <!-- Панель улучшений (скрыта по умолчанию) -->
