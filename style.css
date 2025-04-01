@@ -80,7 +80,8 @@ body {
 .control-button-icon img, .control-button-icon svg { display: block; width: 24px; height: 24px; object-fit: contain; }
 
 .settings-button { background: none; border-radius: 50%; order: -1; /* Слева */ }
-.settings-button img { filter: invert(90%) sepia(10%) saturate(100%) hue-rotate(180deg) brightness(100%) contrast(90%); }
+/* --- ИЗМЕНЕНИЕ: Правило filter удалено, так как используется SVG --- */
+/* .settings-button img { filter: invert(90%) sepia(10%) saturate(100%) hue-rotate(180deg) brightness(100%) contrast(90%); } */
 
 .secondary-currency { /* Кристаллы справа */ }
 .gem-display { display: flex; align-items: center; background-color: rgba(0, 0, 0, 0.2); padding: 5px 10px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; }
@@ -255,13 +256,11 @@ body {
     pointer-events: auto;
 }
 
-/* --- ДОБАВЛЕНО: Явно определяем ВИДИМОЕ состояние для .settings-box --- */
+/* Явно определяем ВИДИМОЕ состояние для .settings-box */
 .settings-panel:not(.hidden) .settings-box {
     transform: scale(1); /* Анимируем к нормальному размеру */
     opacity: 1;         /* Анимируем к полной непрозрачности */
 }
-/* ----------------------------------------------------------------- */
-
 
 /* Окно настроек при скрытии */
 .settings-panel.hidden .settings-box {
@@ -358,7 +357,7 @@ body {
     background-color: var(--accent-color); /* Выделим цветом */
     color: var(--primary-bg); /* Контрастный цвет иконки */
     box-shadow: 0 0 10px rgba(118, 215, 196, 0.5); /* Легкое свечение */
-    transition: opacity 0.3s ease, transform 0.2s ease, visibility 0.3s; /* Плавные переходы */
+    transition: opacity 0.3s ease, transform 0.2s ease, visibility 0s linear 0.3s; /* Плавные переходы + visibility */
 }
 
 .bonus-button:hover:not(.hidden) {
@@ -376,6 +375,7 @@ body {
     visibility: hidden;
     pointer-events: none;
     transform: translateY(0) scale(0.8); /* Убрали Y-сдвиг из transform */
+    transition: opacity 0.3s ease, transform 0.2s ease, visibility 0s linear 0.3s; /* Плавные переходы + visibility */
 }
 /* ============================================= */
 

@@ -135,7 +135,6 @@ document.addEventListener('DOMContentLoaded', () => {
         upgrade_click5_desc: { ru: "+1000 к клику", en: "+1000 per click" },
         upgrade_auto7_name: { ru: "Поток Чистой Магии", en: "Flow of Pure Magic" },
         upgrade_auto7_desc: { ru: "+5000 в секунду", en: "+5000 per second" },
-        // Добавим переводы для уведомлений, связанных с бонусом
         bonusClaimedAlready: { ru: "Бонус уже получен.", en: "Bonus already claimed." },
         bonusClaimSuccess: { ru: "+100K 🧪 Бонус получен!", en: "+100K 🧪 Bonus claimed!" },
     };
@@ -186,12 +185,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Общая функция обновления UI ---
     function updateDisplay() {
-        essenceCountElement.textContent = formatNumber(Math.floor(essence));
+        if (essenceCountElement) essenceCountElement.textContent = formatNumber(Math.floor(essence));
         if (essencePerSecondElement && perSecondDisplayDiv) { essencePerSecondElement.textContent = formatNumber(essencePerSecond); perSecondDisplayDiv.style.display = essencePerSecond > 0 ? 'block' : 'none'; }
         if (gemCountElement) gemCountElement.textContent = formatNumber(gems);
         updateLiquidLevelVisual(visualLiquidLevel);
-        if (!upgradesPanel.classList.contains('hidden')) updateUpgradeButtonStates();
-        if (!shopPanel.classList.contains('hidden')) updateSkinButtonStates();
+        if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) updateUpgradeButtonStates();
+        if (shopPanel && !shopPanel.classList.contains('hidden')) updateSkinButtonStates();
     }
 
     // --- Функция форматирования чисел ---
@@ -211,11 +210,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (Math.random() < GEM_AWARD_CHANCE) { gems += GEMS_PER_AWARD; console.log(`+${GEMS_PER_AWARD} gem! Total: ${gems}`); showClickFeedback(GEMS_PER_AWARD, 'gem'); tg.HapticFeedback?.impactOccurred('medium'); }
             visualLiquidLevel = Math.min(visualLiquidLevel + LIQUID_INCREASE_PER_CLICK, LIQUID_MAX_LEVEL);
             updateDisplay();
-            cauldronElement.style.transform = 'scale(0.95)'; setTimeout(() => { cauldronElement.style.transform = 'scale(1)'; }, 80);
+            cauldronElement.style.transform = 'scale(0.95)'; setTimeout(() => { if(cauldronElement) cauldronElement.style.transform = 'scale(1)'; }, 80);
             lastClickTime = now;
         } else {
             warningCount++; lastInteractionTime = now; console.warn(`Fast click ${warningCount}/${MAX_WARNINGS}`); showTemporaryNotification(`${translations.tooFastClick[currentLanguage]} (${warningCount}/${MAX_WARNINGS})`, "warning"); tg.HapticFeedback?.impactOccurred('medium');
-            if (warningCount >= MAX_WARNINGS) { isBlocked = true; console.error("Autoclicker blocked."); showTemporaryNotification(translations.autoclickerBlocked[currentLanguage], "error"); tg.HapticFeedback?.notificationOccurred('error'); cauldronElement.classList.add('blocked-cauldron'); }
+            if (warningCount >= MAX_WARNINGS) { isBlocked = true; console.error("Autoclicker blocked."); showTemporaryNotification(translations.autoclickerBlocked[currentLanguage], "error"); tg.HapticFeedback?.notificationOccurred('error'); if(cauldronElement) cauldronElement.classList.add('blocked-cauldron'); }
         }
     });
 
@@ -232,109 +231,101 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderUpgrades() { if (!upgradesListElement) return; upgradesListElement.innerHTML = ''; upgrades.sort((a, b) => (a.requiredEssence || 0) - (b.requiredEssence || 0)); if (upgrades.length === 0) { upgradesListElement.innerHTML = `<li><p>Нет улучшений.</p></li>`; return; } const cef = Math.floor(essence); upgrades.forEach(upg => { const cost = calculateCost(upg); if (!Number.isFinite(cost)) { console.error("Skip rendering upgrade with invalid cost:", upg.id, cost); return; } const req = upg.requiredEssence || 0; const lock = cef < req; const aff = cef >= cost; const li = document.createElement('li'); li.dataset.upgradeId = upg.id; li.classList.toggle('locked', lock); li.classList.toggle('cannot-afford', !lock && !aff); const tName = translations[upg.nameKey]?.[currentLanguage] || upg.nameKey; const tDesc = translations[upg.descKey]?.[currentLanguage] || upg.descKey; const btnBuy = translations.buyButton?.[currentLanguage] || "Купить"; const preReq = translations.requirementPrefix?.[currentLanguage] || "Нужно"; const infReq = translations.requirementInfoPrefix?.[currentLanguage] || "Требуется"; let btnTxt = btnBuy; let dis = lock || !aff; if (lock) { btnTxt = `${preReq} ${formatNumber(req)} 🧪`; } li.innerHTML = `<div class="upgrade-info"><h3>${tName} (Ур. ${upg.currentLevel})</h3><p>${tDesc}</p><p class="upgrade-cost">Цена: ${formatNumber(cost)} 🧪</p><p class="requirement-info" style="display: ${lock ? 'block' : 'none'};">${infReq}: ${formatNumber(req)} 🧪</p></div><button class="buy-upgrade-btn" data-upgrade-id="${upg.id}">${btnTxt}</button>`; const btn = li.querySelector('.buy-upgrade-btn'); if (btn) { btn.disabled = dis; btn.addEventListener('click', (e) => { e.stopPropagation(); if (!btn.disabled) { buyUpgrade(upg.id); } else { console.log("Clicked disabled upgrade button:", upg.id); tg.HapticFeedback?.notificationOccurred('warning'); if (lock) { showTemporaryNotification(`${infReq}: ${formatNumber(req)} 🧪`, "warning"); } else if (!aff) { showTemporaryNotification(translations.notEnoughEssence[currentLanguage], "warning"); } } }); } upgradesListElement.appendChild(li); }); }
     function buyUpgrade(id) { if (isBlocked) { showTemporaryNotification(translations.actionBlocked[currentLanguage], "error"); return; } const upg = upgrades.find(u => u.id === id); if (!upg) { console.error("Upgrade not found:", id); return; } const req = upg.requiredEssence || 0; if (Math.floor(essence) < req) { showTemporaryNotification(`${translations.requirementInfoPrefix[currentLanguage]}: ${formatNumber(req)} 🧪`, "warning"); tg.HapticFeedback?.notificationOccurred('warning'); return; } const cost = calculateCost(upg); if (!Number.isFinite(cost)) { showTemporaryNotification(translations.invalidCostError[currentLanguage], "error"); console.error("Attempted buy with invalid cost:", id, cost); return; } if (essence >= cost) { essence -= cost; upg.currentLevel++; recalculateBonuses(); renderUpgrades(); saveGame(); tg.HapticFeedback?.impactOccurred('light'); } else { showTemporaryNotification(translations.notEnoughEssence[currentLanguage], "warning"); tg.HapticFeedback?.notificationOccurred('warning'); } }
     function recalculateBonuses() { let cb = 0; let ab = 0; upgrades.forEach(u => { if (u.currentLevel > 0 && Number.isFinite(u.value) && typeof u.type === 'string') { const b = u.value * u.currentLevel; if (u.type === 'click') cb += b; else if (u.type === 'auto') ab += b; } else if (u.currentLevel > 0) { console.warn("Invalid upgrade data for bonus calc:", u); } }); essencePerClick = 1 + cb; essencePerSecond = ab; if (!Number.isFinite(essencePerClick) || essencePerClick < 1) { console.error("Invalid final essencePerClick:", essencePerClick); essencePerClick = 1; } if (!Number.isFinite(essencePerSecond) || essencePerSecond < 0) { console.error("Invalid final essencePerSecond:", essencePerSecond); essencePerSecond = 0; } }
-    function updateUpgradeButtonStates() { if (!upgradesListElement || upgradesPanel.classList.contains('hidden')) return; const cef = Math.floor(essence); const items = upgradesListElement.querySelectorAll('li[data-upgrade-id]'); items.forEach(li => { const btn = li.querySelector('.buy-upgrade-btn'); const id = li.dataset.upgradeId; if (!btn || !id) return; const upg = upgrades.find(u => u.id === id); if (!upg) return; const cost = calculateCost(upg); const req = upg.requiredEssence || 0; const lock = cef < req; const aff = cef >= cost; const dis = lock || !aff; li.classList.toggle('locked', lock); li.classList.toggle('cannot-afford', !lock && !aff); if (btn.disabled !== dis) btn.disabled = dis; let btnTxt = translations.buyButton[currentLanguage]; if (lock) btnTxt = `${translations.requirementPrefix[currentLanguage]} ${formatNumber(req)} 🧪`; if (btn.textContent !== btnTxt && !dis || lock && btn.textContent !== btnTxt) btn.textContent = btnTxt; const ce = li.querySelector('.upgrade-cost'); if (ce) { const ct = `Цена: ${formatNumber(cost)} 🧪`; if (ce.textContent !== ct) ce.textContent = ct; } const rie = li.querySelector('.requirement-info'); if (rie) { const rt = `${translations.requirementInfoPrefix[currentLanguage]}: ${formatNumber(req)} 🧪`; if (rie.textContent !== rt) rie.textContent = rt; const sv = lock; if ((rie.style.display === 'none') === sv) rie.style.display = sv ? 'block' : 'none'; } }); }
+    function updateUpgradeButtonStates() { if (!upgradesListElement || !upgradesPanel || upgradesPanel.classList.contains('hidden')) return; const cef = Math.floor(essence); const items = upgradesListElement.querySelectorAll('li[data-upgrade-id]'); items.forEach(li => { const btn = li.querySelector('.buy-upgrade-btn'); const id = li.dataset.upgradeId; if (!btn || !id) return; const upg = upgrades.find(u => u.id === id); if (!upg) return; const cost = calculateCost(upg); const req = upg.requiredEssence || 0; const lock = cef < req; const aff = cef >= cost; const dis = lock || !aff; li.classList.toggle('locked', lock); li.classList.toggle('cannot-afford', !lock && !aff); if (btn.disabled !== dis) btn.disabled = dis; let btnTxt = translations.buyButton[currentLanguage]; if (lock) btnTxt = `${translations.requirementPrefix[currentLanguage]} ${formatNumber(req)} 🧪`; if (btn.textContent !== btnTxt && (!dis || lock)) btn.textContent = btnTxt; const ce = li.querySelector('.upgrade-cost'); if (ce) { const ct = `Цена: ${formatNumber(cost)} 🧪`; if (ce.textContent !== ct) ce.textContent = ct; } const rie = li.querySelector('.requirement-info'); if (rie) { const rt = `${translations.requirementInfoPrefix[currentLanguage]}: ${formatNumber(req)} 🧪`; if (rie.textContent !== rt) rie.textContent = rt; const sv = lock; if ((rie.style.display === 'none') === sv) rie.style.display = sv ? 'block' : 'none'; } }); }
 
     // --- Логика магазина ---
-    function renderSkins() { if (!skinsListElement) return; skinsListElement.innerHTML = ''; if (shopGemCountElement) shopGemCountElement.textContent = formatNumber(gems); availableSkins.forEach(skin => { const own = ownedSkins.includes(skin.id); const act = activeSkinId === skin.id; const aff = gems >= skin.cost; const li = document.createElement('li'); li.dataset.skinId = skin.id; li.classList.toggle('active-skin', act); const tName = translations[skin.nameKey]?.[currentLanguage] || skin.nameKey; const btnBuy = translations.buyButton?.[currentLanguage] || "Купить"; const btnSel = translations.selectButton?.[currentLanguage] || "Выбрать"; const btnSeld = translations.selectedButton?.[currentLanguage] || "Выбрано"; const gemSvg = `<span class="gem-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/></svg></span>`; let btnHtml = ''; if (act) btnHtml = `<button class="skin-action-btn selected-btn" disabled>${btnSeld}</button>`; else if (own) btnHtml = `<button class="skin-action-btn select-btn" data-skin-id="${skin.id}">${btnSel}</button>`; else btnHtml = `<button class="skin-action-btn buy-btn" data-skin-id="${skin.id}" ${!aff ? 'disabled' : ''}>${btnBuy}</button>`; li.innerHTML = `<div class="skin-preview ${skin.cssClass || ''}"></div><div class="skin-info"><h3>${tName}</h3>${skin.cost > 0 ? `<p class="skin-cost">${gemSvg} ${formatNumber(skin.cost)}</p>` : '<p class="skin-cost"> </p>'}</div>${btnHtml}`; const ab = li.querySelector('.skin-action-btn:not(.selected-btn)'); if (ab) { ab.addEventListener('click', (e) => { if (!e.currentTarget.disabled) { handleSkinAction(skin.id); } else { console.log("Clicked disabled skin button:", skin.id); tg.HapticFeedback?.notificationOccurred('warning'); if (!own && !aff) showTemporaryNotification(translations.notEnoughGems[currentLanguage], "warning"); } }); } skinsListElement.appendChild(li); }); }
+    function renderSkins() { if (!skinsListElement) return; skinsListElement.innerHTML = ''; if (shopGemCountElement) shopGemCountElement.textContent = formatNumber(gems); availableSkins.forEach(skin => { const own = ownedSkins.includes(skin.id); const act = activeSkinId === skin.id; const aff = gems >= skin.cost; const li = document.createElement('li'); li.dataset.skinId = skin.id; li.classList.toggle('active-skin', act); const tName = translations[skin.nameKey]?.[currentLanguage] || skin.nameKey; const btnBuy = translations.buyButton?.[currentLanguage] || "Купить"; const btnSel = translations.selectButton?.[currentLanguage] || "Выбрать"; const btnSeld = translations.selectedButton?.[currentLanguage] || "Выбрано"; const gemSvg = `<span class="gem-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="1em" height="1em" fill="var(--gem-color)"><path d="M12 1.68l-8 8.42L12 22.32l8-8.42L12 1.68zm0 2.1l5.95 6.27L12 18.54l-5.95-6.27L12 3.78z M6.4 10.1L12 16.1l5.6-6H6.4z"/></svg></span>`; let btnHtml = ''; if (act) btnHtml = `<button class="skin-action-btn selected-btn" disabled>${btnSeld}</button>`; else if (own) btnHtml = `<button class="skin-action-btn select-btn" data-skin-id="${skin.id}">${btnSel}</button>`; else btnHtml = `<button class="skin-action-btn buy-btn" data-skin-id="${skin.id}" ${!aff ? 'disabled' : ''}>${btnBuy}</button>`; li.innerHTML = `<div class="skin-preview ${skin.cssClass || ''}"></div><div class="skin-info"><h3>${tName}</h3>${skin.cost > 0 ? `<p class="skin-cost">${gemSvg} ${formatNumber(skin.cost)}</p>` : '<p class="skin-cost"> </p>'}</div>${btnHtml}`; const ab = li.querySelector('.skin-action-btn:not(.selected-btn)'); if (ab) { ab.addEventListener('click', (e) => { if (e.currentTarget && !e.currentTarget.disabled) { handleSkinAction(skin.id); } else { console.log("Clicked disabled skin button:", skin.id); tg.HapticFeedback?.notificationOccurred('warning'); if (!own && !aff) showTemporaryNotification(translations.notEnoughGems[currentLanguage], "warning"); } }); } skinsListElement.appendChild(li); }); }
     function handleSkinAction(id) { if (isBlocked) { showTemporaryNotification(translations.actionBlocked[currentLanguage], "error"); return; } const skin = availableSkins.find(s => s.id === id); if (!skin) { console.error("Skin not found:", id); return; } if (ownedSkins.includes(id)) { if (activeSkinId !== id) setActiveSkin(id); } else { buySkin(id); } }
-    function buySkin(id) { const skin = availableSkins.find(s => s.id === id); if (!skin || ownedSkins.includes(id) || skin.cost <= 0) { console.warn("Cannot buy skin (not found, owned, or free):", id); return; } if (gems >= skin.cost) { gems -= skin.cost; ownedSkins.push(id); console.log(`Skin purchased: ${id}. Gems left: ${gems}`); showTemporaryNotification(translations.skinPurchaseSuccess[currentLanguage], "success"); tg.HapticFeedback?.notificationOccurred('success'); renderSkins(); setActiveSkin(id); } else { console.log(`Not enough gems for skin: ${id}. Need: ${skin.cost}, Have: ${gems}`); showTemporaryNotification(translations.notEnoughGems[currentLanguage], "warning"); tg.HapticFeedback?.notificationOccurred('warning'); } }
-    function setActiveSkin(id) { if (!ownedSkins.includes(id)) { console.error(`Attempt to activate unowned skin: ${id}`); return; } if (activeSkinId !== id) { activeSkinId = id; console.log(`Active skin set to: ${id}`); applyCauldronSkin(); if (!shopPanel.classList.contains('hidden')) renderSkins(); saveGame(); showTemporaryNotification(translations.skinSelected[currentLanguage], "info"); tg.HapticFeedback?.impactOccurred('light'); } }
-    function applyCauldronSkin() { if (!cauldronElement) return; const ad = availableSkins.find(s => s.id === activeSkinId); const sc = ad?.cssClass; availableSkins.forEach(s => { if (s.cssClass) cauldronElement.classList.remove(s.cssClass); }); if (sc) { cauldronElement.classList.add(sc); console.log(`Applied skin class: ${sc}`); } else { cauldronElement.classList.add('skin-default'); console.warn(`CSS class not found for active skin: ${activeSkinId}. Applied 'skin-default'.`); } }
-    function updateSkinButtonStates() { if (!skinsListElement || shopPanel.classList.contains('hidden')) return; if (shopGemCountElement) { const fg = formatNumber(gems); if (shopGemCountElement.textContent !== fg) shopGemCountElement.textContent = fg; } const items = skinsListElement.querySelectorAll('li[data-skin-id]'); items.forEach(li => { const id = li.dataset.skinId; if (!id) return; const skin = availableSkins.find(s => s.id === id); if (!skin) return; const buyBtn = li.querySelector('.skin-action-btn.buy-btn'); const own = ownedSkins.includes(id); const act = activeSkinId === id; li.classList.toggle('active-skin', act); if (buyBtn && !own) { const aff = gems >= skin.cost; if (buyBtn.disabled === aff) buyBtn.disabled = !aff; } }); }
+    function buySkin(id) { const skin = availableSkins.find(s => s.id === id); if (!skin || ownedSkins.includes(id) || skin.cost <= 0) { console.warn("Cannot buy skin (not found, owned, or free):", id); return; } if (gems >= skin.cost) { gems -= skin.cost; ownedSkins.push(id); console.log(`Skin purchased: ${id}. Gems left: ${gems}`); showTemporaryNotification(translations.skinPurchaseSuccess[currentLanguage], "success"); tg.HapticFeedback?.notificationOccurred('success'); renderSkins(); setActiveSkin(id); /* saveGame() вызовется в setActiveSkin */ } else { console.log(`Not enough gems for skin: ${id}. Need: ${skin.cost}, Have: ${gems}`); showTemporaryNotification(translations.notEnoughGems[currentLanguage], "warning"); tg.HapticFeedback?.notificationOccurred('warning'); } }
+    function setActiveSkin(id) { if (!ownedSkins.includes(id)) { console.error(`Attempt to activate unowned skin: ${id}`); return; } if (activeSkinId !== id) { activeSkinId = id; console.log(`Active skin set to: ${id}`); applyCauldronSkin(); if (shopPanel && !shopPanel.classList.contains('hidden')) renderSkins(); saveGame(); showTemporaryNotification(translations.skinSelected[currentLanguage], "info"); tg.HapticFeedback?.impactOccurred('light'); } }
+    function applyCauldronSkin() { if (!cauldronElement) return; const ad = availableSkins.find(s => s.id === activeSkinId); const sc = ad?.cssClass; availableSkins.forEach(s => { if (s.cssClass && cauldronElement) cauldronElement.classList.remove(s.cssClass); }); if (sc) { cauldronElement.classList.add(sc); console.log(`Applied skin class: ${sc}`); } else { if (cauldronElement) cauldronElement.classList.add('skin-default'); console.warn(`CSS class not found for active skin: ${activeSkinId}. Applied 'skin-default'.`); } }
+    function updateSkinButtonStates() { if (!skinsListElement || !shopPanel || shopPanel.classList.contains('hidden')) return; if (shopGemCountElement) { const fg = formatNumber(gems); if (shopGemCountElement.textContent !== fg) shopGemCountElement.textContent = fg; } const items = skinsListElement.querySelectorAll('li[data-skin-id]'); items.forEach(li => { const id = li.dataset.skinId; if (!id) return; const skin = availableSkins.find(s => s.id === id); if (!skin) return; const buyBtn = li.querySelector('.skin-action-btn.buy-btn'); const own = ownedSkins.includes(id); const act = activeSkinId === id; li.classList.toggle('active-skin', act); if (buyBtn && !own) { const aff = gems >= skin.cost; if (buyBtn.disabled === aff) buyBtn.disabled = !aff; } }); }
 
     // --- Открытие/Закрытие панелей ---
-    function closeAllPanels() { settingsPanel.classList.add('hidden'); upgradesPanel.classList.add('hidden'); shopPanel.classList.add('hidden'); }
+    function closeAllPanels() { if(settingsPanel) settingsPanel.classList.add('hidden'); if(upgradesPanel) upgradesPanel.classList.add('hidden'); if(shopPanel) shopPanel.classList.add('hidden'); }
     function openPanel(panel) { if (!panel) return; closeAllPanels(); panel.classList.remove('hidden'); tg.HapticFeedback?.impactOccurred('light'); }
-    openUpgradesBtn.addEventListener('click', () => { renderUpgrades(); openPanel(upgradesPanel); });
-    settingsBtn.addEventListener('click', () => { updateActiveLangButton(); openPanel(settingsPanel); });
-    shopBtn.addEventListener('click', () => { renderSkins(); openPanel(shopPanel); });
+    if (openUpgradesBtn) openUpgradesBtn.addEventListener('click', () => { renderUpgrades(); openPanel(upgradesPanel); });
+    if (settingsBtn) settingsBtn.addEventListener('click', () => { updateActiveLangButton(); openPanel(settingsPanel); });
+    if (shopBtn) shopBtn.addEventListener('click', () => { renderSkins(); openPanel(shopPanel); });
     if (closeUpgradesBtn) closeUpgradesBtn.addEventListener('click', closeAllPanels);
     if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeAllPanels);
     if (closeShopBtn) closeShopBtn.addEventListener('click', closeAllPanels);
-    settingsPanel.addEventListener('click', (e) => { if (e.target === settingsPanel) closeAllPanels(); });
+    if (settingsPanel) settingsPanel.addEventListener('click', (e) => { if (e.target === settingsPanel) closeAllPanels(); });
 
     // --- Логика Настроек (язык) ---
-    function setLanguage(lang) { if (translations.greetingBase[lang] && lang !== currentLanguage) { currentLanguage = lang; console.log(`Language changed to: ${currentLanguage}`); applyTranslations(); updateActiveLangButton(); saveGame(); if (!upgradesPanel.classList.contains('hidden')) renderUpgrades(); if (!shopPanel.classList.contains('hidden')) renderSkins(); } else if (!translations.greetingBase[lang]) { console.warn(`Language "${lang}" not found.`); } }
-    function applyTranslations() { if (userGreetingElement) { let g = translations.greetingBase[currentLanguage] || "Лаборатория"; if (userName) g += ` ${userName}`; userGreetingElement.textContent = g; } document.querySelectorAll('[data-translate]').forEach(el => { const k = el.dataset.translate; const t = translations[k]?.[currentLanguage]; if (t && el.textContent !== t) el.textContent = t; else if (!t) console.warn(`Translation key "${k}" not found for lang "${currentLanguage}".`); }); const ps = perSecondDisplayDiv?.querySelector('span[data-translate="perSec"]'); if(ps) { const pt = translations.perSec?.[currentLanguage] || '/ sec'; if (ps.textContent !== pt) ps.textContent = pt; } }
-    function updateActiveLangButton() { if (!languageOptionsContainer) return; languageOptionsContainer.querySelectorAll('.lang-btn').forEach(b => { b.classList.toggle('active', b.dataset.lang === currentLanguage); }); }
-    if (languageOptionsContainer) { languageOptionsContainer.addEventListener('click', (e) => { if (e.target.classList.contains('lang-btn')) { const l = e.target.dataset.lang; if (l) setLanguage(l); } }); } else { console.error("Language options container not found."); }
+    function setLanguage(lang) { if (translations.greetingBase[lang] && lang !== currentLanguage) { currentLanguage = lang; console.log(`Language changed to: ${currentLanguage}`); applyTranslations(); updateActiveLangButton(); saveGame(); if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) renderUpgrades(); if (shopPanel && !shopPanel.classList.contains('hidden')) renderSkins(); } else if (!translations.greetingBase[lang]) { console.warn(`Language "${lang}" not found.`); } }
+    function applyTranslations() { if (userGreetingElement) { let g = translations.greetingBase[currentLanguage] || "Лаборатория"; if (userName) g += ` ${userName}`; userGreetingElement.textContent = g; } document.querySelectorAll('[data-translate]').forEach(el => { const k = el.dataset.translate; const t = translations[k]?.[currentLanguage]; if (t && el.textContent !== t) el.textContent = t; else if (!t && k) console.warn(`Translation key "${k}" not found for lang "${currentLanguage}".`); }); const ps = perSecondDisplayDiv?.querySelector('span[data-translate="perSec"]'); if(ps) { const pt = translations.perSec?.[currentLanguage] || '/ sec'; if (ps.textContent !== pt) ps.textContent = pt; } }
+    function updateActiveLangButton() { if (!languageOptionsContainer) return; languageOptionsContainer.querySelectorAll('.lang-btn').forEach(b => { if (b.dataset.lang) b.classList.toggle('active', b.dataset.lang === currentLanguage); }); }
+    if (languageOptionsContainer) { languageOptionsContainer.addEventListener('click', (e) => { if (e.target instanceof HTMLElement && e.target.classList.contains('lang-btn')) { const l = e.target.dataset.lang; if (l) setLanguage(l); } }); } else { console.error("Language options container not found."); }
 
     // --- Логика реферальной системы ---
-    function checkReferralAndBonus() { try { const sp = tg.initDataUnsafe?.start_param; const up = new URLSearchParams(window.location.search); const cp = up.get('claimBonus'); console.log("Launch Params:", { sp, cp }); if (cp) { handleBonusClaim(cp); cleanBonusUrlParam(); } else if (sp && !isNaN(parseInt(sp))) { const cuid = tg.initDataUnsafe?.user?.id?.toString(); if (sp !== cuid) { handleNewReferral(sp); } else { console.log("User opened via own ref link."); } } } catch (e) { console.error("Error checking ref params:", e); } }
-    function handleNewReferral(invId) { console.log(`Handling new referral from ${invId}.`); /* TODO: Implement logic */ }
-    function handleBonusClaim(refId) { console.log(`Handling bonus claim for referral ${refId}.`); /* TODO: Implement logic (likely backend) */ }
-    function cleanBonusUrlParam() { try { const url = new URL(window.location); if (url.searchParams.has('claimBonus')) { url.searchParams.delete('claimBonus'); window.history.replaceState({}, document.title, url); console.log("claimBonus param removed from URL."); } } catch (e) { console.error("Error cleaning URL:", e); } }
+    function checkReferralAndBonus() { try { const sp = tg.initDataUnsafe?.start_param; const up = new URLSearchParams(window.location.search); const cp = up.get('claimBonus'); console.log("Launch Params:", { startParam: sp, claimBonusParam: cp }); if (cp) { handleBonusClaim(cp); cleanBonusUrlParam(); } else if (sp && !isNaN(parseInt(sp))) { const cuid = tg.initDataUnsafe?.user?.id?.toString(); if (sp !== cuid) { handleNewReferral(sp); } else { console.log("User opened via own ref link."); } } } catch (e) { console.error("Error checking ref/bonus params:", e); } }
+    function handleNewReferral(invId) { console.log(`Handling new referral from inviter ID: ${invId}.`); /* TODO: Implement logic if needed (e.g., notify backend) */ }
+    function handleBonusClaim(refId) { console.log(`Handling potential bonus claim for referral ID: ${refId}.`); /* TODO: Implement bonus claim logic (likely backend communication) */ }
+    function cleanBonusUrlParam() { try { const url = new URL(window.location.href); if (url.searchParams.has('claimBonus')) { url.searchParams.delete('claimBonus'); window.history.replaceState({}, document.title, url.toString()); console.log("claimBonus param removed from URL."); } } catch (e) { console.error("Error cleaning URL param:", e); } }
+
+    // --- ИЗМЕНЕНИЕ: Добавлено подробное логирование в обработчик кнопки "Пригласить друзей" ---
     inviteFriendBtn.addEventListener('click', () => {
-        if (isBlocked) { // Проверяем, не заблокированы ли действия
+        console.log("[Invite Button] Clicked."); // Лог: Кнопка нажата
+
+        if (isBlocked) {
+            console.warn("[Invite Button] Action blocked.");
             showTemporaryNotification(translations.actionBlocked[currentLanguage], "error");
-            return; // Выходим, если заблокировано
+            return;
         }
 
-        // Проверяем версию Telegram Web App, поддерживающую нужные функции
-        // Для tg.openTelegramLink с 't.me/share/url' обычно достаточно базовой поддержки,
-        // но оставим проверку на 6.1 как было, на всякий случай для будущих функций.
-        if (tg.isVersionAtLeast('6.1')) {
-            const uid = tg.initDataUnsafe?.user?.id; // Получаем ID пользователя
-            const botUsername = tg.initDataUnsafe?.bot?.username; // Получаем имя пользователя бота
+        const versionCheck = tg.isVersionAtLeast('6.1');
+        console.log(`[Invite Button] isVersionAtLeast('6.1'): ${versionCheck}`); // Лог: Результат проверки версии
 
-            // --- ВАЖНАЯ ПРОВЕРКА: Убедимся, что ID пользователя и имя бота получены ---
+        if (versionCheck) {
+            const uid = tg.initDataUnsafe?.user?.id;
+            const botUsername = tg.initDataUnsafe?.bot?.username;
+            console.log("[Invite Button] Data:", { uid, botUsername }); // Лог: Полученные uid и botUsername
+
             if (!uid || !botUsername) {
-                console.error("Не удалось получить ID пользователя или имя бота для реферальной ссылки.", { uid, botUsername });
-                // Показываем пользователю ошибку
+                console.error("[Invite Button] User ID or Bot username missing!");
                 showTemporaryNotification(translations.inviteLinkError[currentLanguage], "error");
-                return; // Прерываем выполнение, если данных нет
+                return;
             }
 
-            // --- КОРРЕКТИРОВКА URL ДЛЯ ПРИГЛАШЕНИЯ ---
-            // Стандартный и надежный формат ссылки для запуска Mini App через бота с параметром startapp:
-            // https://t.me/ИМЯ_ВАШЕГО_БОТА?startapp=ПАРАМЕТР
-            // В нашем случае ПАРАМЕТР - это ID пригласившего пользователя (uid).
             const url = `https://t.me/${botUsername}?startapp=${uid}`;
-
-            // Текст для окна "Поделиться"
             const txt = translations.shareText?.[currentLanguage] || 'Присоединяйся к моей Алхимической Лаборатории в Telegram! 🧪⚗️ Кликай и создавай эликсиры!';
-
-            console.log("Попытка поделиться:", { url, txt });
+            console.log("[Invite Button] Generated link:", { url, txt }); // Лог: Сгенерированная ссылка и текст
 
             try {
-                // Используем tg.openTelegramLink для вызова стандартного окна "Поделиться" в Telegram
-                // Параметры url и text должны быть закодированы для URL
+                console.log("[Invite Button] Attempting to call openTelegramLink..."); // Лог: Перед вызовом API
                 tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(txt)}`);
-                // Добавляем тактильный отклик при успешном вызове
+                console.log("[Invite Button] openTelegramLink called successfully (no immediate error)."); // Лог: Сразу после вызова (если не было синхронной ошибки)
                 tg.HapticFeedback?.impactOccurred('light');
             } catch (e) {
-                // Обрабатываем возможные ошибки при вызове openTelegramLink
-                console.error("Ошибка при попытке открыть ссылку для 'Поделиться' в Telegram:", e);
+                console.error("[Invite Button] Error calling openTelegramLink:", e); // Лог: Ошибка вызова API
                 showTemporaryNotification(translations.inviteLinkError[currentLanguage], "error");
             }
         } else {
-            // Если версия Telegram слишком старая
-            console.warn("Функция 'Поделиться' требует Telegram Web App версии 6.1 или выше.");
-            // Формируем сообщение об ошибке для пользователя
-            const errMsg = (translations.referralRegErrorFunc?.[currentLanguage] || "Функция недоступна") + " (нужна версия v6.1+)";
+            console.warn("[Invite Button] Version check failed.");
+            const errMsg = (translations.referralRegErrorFunc?.[currentLanguage] || "Feature unavailable") + " (v6.1+)";
             showTemporaryNotification(errMsg, "warning");
         }
     });
+    // --- Конец измененного обработчика ---
 
     // --- Сохранение/Загрузка ---
     let saveTimeout = null;
     function saveGame(immediate = false) {
         if (!tg?.CloudStorage || typeof tg.CloudStorage.setItem !== 'function') {
-            // Если CloudStorage недоступен, просто выходим (ошибки логгируются в loadGame)
             // console.warn("[Save] CloudStorage unavailable. Skipping save.");
             return;
         }
 
         const saveData = () => {
-            console.log("[Save] Попытка сохранения...");
+            // console.log("[Save] Попытка сохранения..."); // Можно раскомментировать для отладки
             let vld = true;
-            // --- Валидация данных перед сохранением ---
             if (!Number.isFinite(essence) || essence < 0) { console.warn(`[Save Valid] Неверная эссенция ${essence}. Сброс до 0.`); essence = 0; vld = false; }
             if (!Number.isFinite(gems) || gems < 0) { console.warn(`[Save Valid] Неверные кристаллы ${gems}. Сброс до 0.`); gems = 0; vld = false; }
             if (!Array.isArray(ownedSkins) || !ownedSkins.includes('default')) { console.warn(`[Save Valid] Неверные купленные скины ${ownedSkins}. Сброс до ['default'].`); ownedSkins = ['default']; if (activeSkinId !== 'default') activeSkinId = 'default'; vld = false; }
             if (typeof activeSkinId !== 'string' || !ownedSkins.includes(activeSkinId)) { console.warn(`[Save Valid] Неверный активный скин ${activeSkinId}. Сброс до 'default'.`); activeSkinId = 'default'; vld = false; }
             upgrades.forEach(u => { if (!Number.isFinite(u.currentLevel) || u.currentLevel < 0) { console.warn(`[Save Valid] Неверный уровень улучшения ${u.id}: ${u.currentLevel}. Сброс до 0.`); u.currentLevel = 0; vld = false; } });
-            // --- Конец валидации ---
+            if (typeof bonusClaimed !== 'boolean') { console.warn(`[Save Valid] Неверный флаг бонуса ${bonusClaimed}. Сброс до false.`); bonusClaimed = false; vld = false; }
 
             if (!vld) console.warn("[Save] Данные были исправлены перед сохранением.");
 
@@ -346,85 +337,76 @@ document.addEventListener('DOMContentLoaded', () => {
                 ownedSkins: ownedSkins,
                 activeSkinId: activeSkinId,
                 bonusClaimed: bonusClaimed,
-                saveVersion: 1
+                saveVersion: 1 // Версия структуры сохранения
             };
 
             try {
                 const gss = JSON.stringify(gs);
-                // Оборачиваем вызов setItem в try...catch, так как он тоже может вызвать ошибку
                 tg.CloudStorage.setItem('gameState', gss, (err, ok) => {
                     if (err) {
                         console.error("[Save Callback] Ошибка при вызове setItem:", err);
-                        // Не показываем уведомление здесь, так как оно уже показано в catch ниже,
-                        // если ошибка связана с JSON.stringify или самим вызовом.
-                        // Ошибки типа "WebAppMethodUnsupported" будут залогированы здесь.
                     }
-                    /* else if (ok) console.log("[Save Callback] Успешно."); */
-                    /* else console.warn("[Save Callback] Неизвестный результат."); */
+                     /* else if (ok) console.log("[Save Callback] Успешно."); // Раскомментировать для отладки */
+                     /* else console.warn("[Save Callback] Неизвестный результат."); */
                 });
             } catch (e) {
-                // --- ИЗМЕНЕНО: Безопасный показ уведомления об ошибке ---
                 console.error("[Save] Ошибка JSON.stringify или вызова setItem:", e);
                 try {
-                    // Пытаемся показать уведомление
                     const errMsg = translations?.saveCritError?.[currentLanguage] ?? "Критическая ошибка сохранения!";
                     showTemporaryNotification(errMsg, "error");
                 } catch (notifyError) {
-                    // Если даже показ уведомления вызвал ошибку, просто логируем ее
                     console.error("[Save] Ошибка при показе уведомления об ошибке сохранения:", notifyError);
                 }
-                // --------------------------------------------------------
             }
-            saveTimeout = null; // Сбрасываем таймаут
+            saveTimeout = null;
         };
 
-        // Отложенное сохранение для предотвращения слишком частых вызовов
         if (saveTimeout) clearTimeout(saveTimeout);
         if (immediate) {
-            saveData(); // Сохраняем немедленно, если требуется
+            saveData();
         } else {
-            saveTimeout = setTimeout(saveData, 1000); // Сохраняем через 1 секунду
+            saveTimeout = setTimeout(saveData, 1000); // Debounce сохранения
         }
     }
 
     function loadGame() {
         console.log("[Load] Попытка загрузки...");
-        isBlocked = false; // Сброс блокировки при загрузке
+        isBlocked = false;
         warningCount = 0;
         if (cauldronElement) cauldronElement.classList.remove('blocked-cauldron');
-        let setupDone = false; // Флаг, что начальная настройка выполнена
+        let setupDone = false;
 
         const postSetup = (isNew = false) => {
-            if (setupDone) return; // Выполняем только один раз
+            if (setupDone) return;
             console.log("[Load] Выполнение пост-загрузочной настройки...");
             if (isNew) {
                 console.log("[Load] Начало новой игры.");
-                resetGameData(); // Сбрасываем данные, если это новая игра
+                resetGameData();
             }
-            recalculateBonuses(); // Пересчитываем бонусы от улучшений
-            applyTranslations(); // Применяем язык
-            updateLiquidColor(); // Устанавливаем цвет жидкости
-            visualLiquidLevel = LIQUID_MIN_LEVEL; // Сбрасываем уровень жидкости
-            lastInteractionTime = Date.now(); // Сбрасываем время последнего взаимодействия
-            applyCauldronSkin(); // Применяем выбранный скин колбы
-            updateDisplay(); // Обновляем все отображаемые значения
-            checkReferralAndBonus(); // Проверяем реферальные параметры
+            recalculateBonuses();
+            applyTranslations();
+            updateLiquidColor();
+            visualLiquidLevel = LIQUID_MIN_LEVEL;
+            lastInteractionTime = Date.now();
+            applyCauldronSkin();
+            updateDisplay();
+            checkReferralAndBonus();
+            updateBonusButtonVisibility(); // Обновляем видимость кнопки бонуса после загрузки
             console.log(`[Load] Пост-настройка завершена. Состояние: E:${formatNumber(essence)}, G:${gems}, Lng:${currentLanguage}, Skin:${activeSkinId}, BonusClaimed:${bonusClaimed}`);
             setupDone = true;
         };
 
         if (!tg?.CloudStorage || typeof tg.CloudStorage.getItem !== 'function') {
             console.warn("[Load] CloudStorage недоступен. Начало новой игры.");
-            postSetup(true); // Запускаем как новую игру
+            postSetup(true);
             showTemporaryNotification("Прогресс не будет сохранен.", "warning");
-            updateBonusButtonVisibility(); // Обновляем видимость кнопки даже при ошибке
-            return; // Выходим, если хранилище недоступно
+            return;
         }
 
         try {
             tg.CloudStorage.getItem('gameState', (err, val) => {
                 console.log("[Load Callback] Ответ от CloudStorage получен.");
-                let reset = false; // Флаг для сброса на новую игру
+                let reset = false;
 
                 if (err) {
                     console.error("[Load Callback] Ошибка получения данных:", err);
@@ -436,14 +418,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         showTemporaryNotification(translations.loadError[currentLanguage], "error");
                     }
-                    reset = true; // Сбрасываем на новую игру при любой ошибке загрузки
+                    reset = true;
                 } else if (val) {
-                    console.log(`[Load Callback] Данные получены (${val.length} байт). Парсинг...`);
+                    console.log(`[Load Callback] Данные получены (${val ? val.length : 0} байт). Парсинг...`);
                     try {
-                        const ss = JSON.parse(val); // Парсим строку JSON
+                        const ss = JSON.parse(val);
                         console.log("[Load Parse] OK:", ss);
 
-                        // Загружаем основные значения с проверками
                         essence = Number(ss.essence) || 0;
                         if (!Number.isFinite(essence) || essence < 0) { console.warn("[Load Valid] essence -> 0"); essence = 0; }
                         gems = Number(ss.gems) || 0;
@@ -451,54 +432,47 @@ document.addEventListener('DOMContentLoaded', () => {
                         currentLanguage = ss.language || 'ru';
                         if (!translations.greetingBase[currentLanguage]) { console.warn(`[Load Valid] язык '${ss.language}' -> ru`); currentLanguage = 'ru'; }
 
-                        // Загружаем уровни улучшений
                         if (Array.isArray(ss.upgrades)) {
                             upgrades.forEach(u => {
                                 const savedUpgrade = ss.upgrades.find(s => s.id === u.id);
                                 const level = Number(savedUpgrade?.level);
                                 u.currentLevel = (Number.isFinite(level) && level >= 0) ? level : 0;
-                                if (u.currentLevel !== 0 && !(Number.isFinite(level) && level >= 0)) console.warn(`[Load Valid] уровень улучш. ${u.id} (${level}) -> 0`);
+                                if (u.currentLevel !== 0 && !(Number.isFinite(level) && level >= 0)) console.warn(`[Load Valid] уровень улучш. ${u.id} (${savedUpgrade?.level}) -> 0`);
                             });
                         } else {
                             console.warn("[Load Valid] массив улучшений неверный -> все уровни 0");
                             upgrades.forEach(u => u.currentLevel = 0);
                         }
 
-                        // Загружаем скины
                         ownedSkins = Array.isArray(ss.ownedSkins) ? ss.ownedSkins : ['default'];
                         if (!ownedSkins.includes('default')) { ownedSkins.push('default'); console.warn("[Load Valid] добавлен скин 'default'."); }
                         activeSkinId = (typeof ss.activeSkinId === 'string' && ownedSkins.includes(ss.activeSkinId)) ? ss.activeSkinId : 'default';
                         if (ss.activeSkinId && !ownedSkins.includes(ss.activeSkinId)) console.warn(`[Load Valid] активный скин '${ss.activeSkinId}' не куплен -> 'default'`);
 
-                        // Загружаем статус получения бонуса
                         bonusClaimed = ss.bonusClaimed === true; // Строго проверяем на true
-                        if (bonusClaimed) console.log("[Load] Одноразовый бонус уже был получен ранее.");
+                        if (ss.bonusClaimed !== undefined) console.log(`[Load] Статус бонуса загружен: ${bonusClaimed}`);
+                        else console.warn("[Load Valid] Флаг бонуса отсутствовал в сохранении -> false");
+
 
                         console.log("[Load] Данные успешно загружены.");
 
                     } catch (pe) {
                         console.error("[Load Parse] Ошибка парсинга JSON:", pe, "Данные:", val);
                         showTemporaryNotification(translations.readError[currentLanguage], "error");
-                        reset = true; // Сбрасываем, если данные повреждены
+                        reset = true;
                     }
                 } else {
-                    // Если val пустой, значит сохранения нет
                     console.log("[Load Callback] Пустое значение от CloudStorage. Новая игра.");
                     reset = true;
                 }
 
-                // Выполняем пост-настройку после обработки данных
                 postSetup(reset);
-                // Обновляем видимость кнопки бонуса после загрузки
-                updateBonusButtonVisibility();
 
             }); // Конец CloudStorage.getItem callback
         } catch (se) {
             console.error("[Load Try] Критическая ошибка вызова CloudStorage.getItem:", se);
             showTemporaryNotification("Ошибка доступа к хранилищу.", "error");
-            postSetup(true); // Начинаем новую игру при критической ошибке
-             // Обновляем видимость кнопки бонуса даже при ошибке
-            updateBonusButtonVisibility();
+            postSetup(true);
         }
     }
 
@@ -509,9 +483,10 @@ document.addEventListener('DOMContentLoaded', () => {
         upgrades.forEach(u => u.currentLevel = 0);
         ownedSkins = ['default'];
         activeSkinId = 'default';
-        bonusClaimed = false; // Сбрасываем флаг бонуса при новой игре
+        bonusClaimed = false;
         isBlocked = false;
         warningCount = 0;
+        // Сброс визуальных элементов не требуется здесь, т.к. postSetup их обновит
     }
 
     // --- Функция уведомлений ---
@@ -519,80 +494,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Функция: Управляет видимостью кнопки бонуса ---
     function updateBonusButtonVisibility() {
-        if (!oneTimeBonusBtn) return; // Если кнопки нет, ничего не делаем
+        if (!oneTimeBonusBtn) return;
         if (bonusClaimed) {
-            // Если бонус получен, добавляем класс hidden
             oneTimeBonusBtn.classList.add('hidden');
         } else {
-            // Если бонус не получен, убираем класс hidden
             oneTimeBonusBtn.classList.remove('hidden');
         }
+        console.log(`[Bonus Button] Visibility updated. Claimed: ${bonusClaimed}, Hidden: ${oneTimeBonusBtn.classList.contains('hidden')}`);
     }
-    // -------------------------------------------------------
 
     // --- Первоначальная инициализация ---
-    loadGame(); // Загружаем игру при старте
+    loadGame();
 
     // --- Автосохранение и обработчики событий ---
-    setInterval(() => saveGame(false), 3000); // Debounced save every 15s
-    window.addEventListener('beforeunload', () => saveGame(true)); // Immediate save on close
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveGame(true); }); // Immediate save on hide
+    // --- ИЗМЕНЕНИЕ: Интервал сохранения 3 секунды ---
+    setInterval(() => saveGame(false), 3000); // Debounced save every 3s
+    window.addEventListener('beforeunload', () => saveGame(true));
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveGame(true); });
     if (tg?.onEvent) { tg.onEvent('viewportChanged', (e) => { if (e && e.isStateStable) { console.log("Viewport стабилен, сохранение."); saveGame(false); } }); }
     // --- Интервал для обновления цвета жидкости ---
-    let liquidColorInterval = setInterval(updateLiquidColor, 5 * 60 * 1000);
+    let liquidColorInterval = setInterval(updateLiquidColor, 5 * 60 * 1000); // Каждые 5 минут
 
     // --- ОБРАБОТЧИК: Клик по кнопке одноразового бонуса ---
     if (oneTimeBonusBtn) {
         oneTimeBonusBtn.addEventListener('click', () => {
             if (isBlocked) {
-                 // Используем !! для преобразования в boolean и ?? для значения по умолчанию
                  const message = translations.actionBlocked?.[currentLanguage] ?? "Действие заблокировано.";
                  showTemporaryNotification(message, "error");
-                 return; // Не даем получить бонус, если заблокировано
+                 return;
             }
-
-            // Проверяем, не был ли бонус уже получен
             if (!bonusClaimed) {
                 console.log("Получение одноразового бонуса!");
-                tg.HapticFeedback?.notificationOccurred('success'); // Вибрация успеха
-
-                // Начисляем бонус
+                tg.HapticFeedback?.notificationOccurred('success');
                 essence += 100000;
-                // Устанавливаем флаг, что бонус получен
                 bonusClaimed = true;
-
-                // Показываем уведомление
                 const successMessage = translations.bonusClaimSuccess?.[currentLanguage] ?? "+100K 🧪 Бонус получен!";
                 showTemporaryNotification(successMessage, "success", 3000);
-
-                // Обновляем видимость кнопки (скрываем ее)
                 updateBonusButtonVisibility();
-                // Обновляем отображение эссенции
                 updateDisplay();
-                // Немедленно сохраняем игру, чтобы зафиксировать получение бонуса
-                saveGame(true);
-
+                saveGame(true); // Немедленное сохранение после получения бонуса
             } else {
-                // Если кнопка почему-то видима, но бонус уже получен
                 console.log("Бонус уже был получен ранее.");
-                tg.HapticFeedback?.notificationOccurred('warning'); // Вибрация предупреждения
-                 // Можно раскомментировать, если нужно явное уведомление
+                tg.HapticFeedback?.notificationOccurred('warning');
                 // const claimedMessage = translations.bonusClaimedAlready?.[currentLanguage] ?? "Бонус уже получен.";
-                // showTemporaryNotification(claimedMessage, "info");
+                // showTemporaryNotification(claimedMessage, "info"); // Можно раскомментировать для уведомления
             }
         });
     } else {
         console.error("Кнопка одноразового бонуса не найдена!");
     }
-    // -----------------------------------------------------------
 
-
-    // --- Очистка интервалов при необходимости (редко нужно) ---
-    // window.addEventListener('unload', () => {
-    //     if (bubbleInterval) clearInterval(bubbleInterval);
-    //     if (autoClickInterval) clearInterval(autoClickInterval);
-    //     if (uiInterval) clearInterval(uiInterval);
-    //     if (liquidColorInterval) clearInterval(liquidColorInterval);
-    // });
+    // --- Очистка интервалов при необходимости ---
+     window.addEventListener('unload', () => {
+         if (bubbleInterval) clearInterval(bubbleInterval);
+         if (autoClickInterval) clearInterval(autoClickInterval);
+         if (uiInterval) clearInterval(uiInterval);
+         if (liquidColorInterval) clearInterval(liquidColorInterval);
+         if (saveTimeout) clearTimeout(saveTimeout); // Очистить таймаут сохранения при выгрузке
+         console.log("Intervals cleared on unload.");
+     });
 
 }); // --- КОНЕЦ DOMContentLoaded ---
