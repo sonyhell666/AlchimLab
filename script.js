@@ -33,18 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const skinsListElement = document.getElementById('skins-list');
     const shopGemCountElement = document.getElementById('shop-gem-count');
     const oneTimeBonusBtn = document.getElementById('one-time-bonus-btn');
-    const appVersionElement = document.getElementById('app-version'); // <-- Новый элемент
+    const appVersionElement = document.getElementById('app-version'); // <-- Элемент версии
 
     // Проверка критически важных элементов
     if (!essenceCountElement || !cauldronElement || !openUpgradesBtn || !upgradesPanel || !settingsPanel || !shopPanel || !inviteFriendBtn || !settingsBtn || !shopBtn || !gemCountElement || !userGreetingElement || !oneTimeBonusBtn || !appVersionElement) { // <-- Добавлена проверка appVersionElement
         console.error("КРИТИЧЕСКАЯ ОШИБКА: Не найдены один или несколько основных элементов DOM. Работа скрипта невозможна.");
         alert("Произошла ошибка при загрузке интерфейса. Пожалуйста, попробуйте перезапустить приложение.");
         return; // Прекращаем выполнение скрипта
-    }
-
-    // --- Установка текста версии ---
-    if (appVersionElement) {
-        appVersionElement.textContent = `Версия: ${APP_VERSION}`;
     }
 
     // --- Игровые переменные (состояние) ---
@@ -146,6 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         upgrade_auto7_desc: { ru: "+5000 в секунду", en: "+5000 per second" },
         bonusClaimedAlready: { ru: "Бонус уже получен.", en: "Bonus already claimed." },
         bonusClaimSuccess: { ru: "+100K 🧪 Бонус получен!", en: "+100K 🧪 Bonus claimed!" },
+        versionPrefix: { ru: "Версия:", en: "Version:" }, // <-- ДОБАВЛЕН КЛЮЧ ПЕРЕВОДА
     };
 
     // --- Определения улучшений ---
@@ -262,8 +258,53 @@ document.addEventListener('DOMContentLoaded', () => {
     if (settingsPanel) settingsPanel.addEventListener('click', (e) => { if (e.target === settingsPanel) closeAllPanels(); });
 
     // --- Логика Настроек (язык) ---
-    function setLanguage(lang) { if (translations.greetingBase[lang] && lang !== currentLanguage) { currentLanguage = lang; console.log(`Language changed to: ${currentLanguage}`); applyTranslations(); updateActiveLangButton(); saveGame(); if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) renderUpgrades(); if (shopPanel && !shopPanel.classList.contains('hidden')) renderSkins(); } else if (!translations.greetingBase[lang]) { console.warn(`Language "${lang}" not found.`); } }
-    function applyTranslations() { if (userGreetingElement) { let g = translations.greetingBase[currentLanguage] || "Лаборатория"; if (userName) g += ` ${userName}`; userGreetingElement.textContent = g; } document.querySelectorAll('[data-translate]').forEach(el => { const k = el.dataset.translate; const t = translations[k]?.[currentLanguage]; if (t && el.textContent !== t) el.textContent = t; else if (!t && k) console.warn(`Translation key "${k}" not found for lang "${currentLanguage}".`); }); const ps = perSecondDisplayDiv?.querySelector('span[data-translate="perSec"]'); if(ps) { const pt = translations.perSec?.[currentLanguage] || '/ sec'; if (ps.textContent !== pt) ps.textContent = pt; } }
+    function setLanguage(lang) {
+        if (translations.greetingBase[lang] && lang !== currentLanguage) {
+            currentLanguage = lang;
+            console.log(`Language changed to: ${currentLanguage}`);
+            applyTranslations(); // Применяем основные переводы
+            updateAppVersionDisplay(); // ОБНОВЛЯЕМ текст версии
+            updateActiveLangButton();
+            saveGame();
+            if (upgradesPanel && !upgradesPanel.classList.contains('hidden')) renderUpgrades();
+            if (shopPanel && !shopPanel.classList.contains('hidden')) renderSkins();
+        } else if (!translations.greetingBase[lang]) {
+            console.warn(`Language "${lang}" not found.`);
+        }
+    }
+
+    function applyTranslations() {
+        // Перевод заголовка
+        if (userGreetingElement) {
+            let g = translations.greetingBase[currentLanguage] || "Лаборатория";
+            if (userName) g += ` ${userName}`;
+            userGreetingElement.textContent = g;
+        }
+        // Перевод элементов с data-translate
+        document.querySelectorAll('[data-translate]').forEach(el => {
+            const k = el.dataset.translate;
+            const t = translations[k]?.[currentLanguage];
+            if (t && el.textContent !== t) el.textContent = t;
+            else if (!t && k) console.warn(`Translation key "${k}" not found for lang "${currentLanguage}".`);
+        });
+        // Перевод "в сек"
+        const ps = perSecondDisplayDiv?.querySelector('span[data-translate="perSec"]');
+        if(ps) {
+            const pt = translations.perSec?.[currentLanguage] || '/ sec';
+            if (ps.textContent !== pt) ps.textContent = pt;
+        }
+        // ПРИМЕЧАНИЕ: Текст версии теперь обновляется отдельно в updateAppVersionDisplay()
+    }
+
+    // --- НОВАЯ ФУНКЦИЯ: Обновление текста версии ---
+    function updateAppVersionDisplay() {
+        if (appVersionElement) {
+            const prefix = translations.versionPrefix?.[currentLanguage] || "Version:"; // Получаем префикс для текущего языка
+            appVersionElement.textContent = `${prefix} ${APP_VERSION}`; // Устанавливаем текст
+        }
+    }
+    // --- КОНЕЦ НОВОЙ ФУНКЦИИ ---
+
     function updateActiveLangButton() { if (!languageOptionsContainer) return; languageOptionsContainer.querySelectorAll('.lang-btn').forEach(b => { if (b.dataset.lang) b.classList.toggle('active', b.dataset.lang === currentLanguage); }); }
     if (languageOptionsContainer) { languageOptionsContainer.addEventListener('click', (e) => { if (e.target instanceof HTMLElement && e.target.classList.contains('lang-btn')) { const l = e.target.dataset.lang; if (l) setLanguage(l); } }); } else { console.error("Language options container not found."); }
 
@@ -426,7 +467,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 resetGameData();
             }
             recalculateBonuses();
-            applyTranslations();
+            applyTranslations(); // Применяем основные переводы
+            updateAppVersionDisplay(); // Устанавливаем текст версии с правильным префиксом
             updateLiquidColor();
             visualLiquidLevel = LIQUID_MIN_LEVEL;
             lastInteractionTime = Date.now();
@@ -473,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (!Number.isFinite(essence) || essence < 0) { console.warn("[Load Valid] essence -> 0"); essence = 0; }
                         gems = Number(ss.gems) || 0;
                         if (!Number.isFinite(gems) || gems < 0) { console.warn("[Load Valid] gems -> 0"); gems = 0; }
-                        currentLanguage = ss.language || 'ru';
+                        currentLanguage = ss.language || 'ru'; // Загружаем язык ПЕРЕД postSetup
                         if (!translations.greetingBase[currentLanguage]) { console.warn(`[Load Valid] язык '${ss.language}' -> ru`); currentLanguage = 'ru'; }
 
                         if (Array.isArray(ss.upgrades)) {
@@ -512,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     reset = true;
                 }
 
-                postSetup(reset);
+                postSetup(reset); // Вызываем postSetup ПОСЛЕ парсинга (и установки currentLanguage)
 
             }); // Конец CloudStorage.getItem callback
         } catch (se) {
@@ -551,7 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Первоначальная инициализация ---
-    loadGame(); // Load game first, which might set language
+    loadGame(); // Load game first, which might set language and will call postSetup
 
     // --- Автосохранение и обработчики событий ---
     setInterval(() => saveGame(false), 3000); // Debounced save every 3s
