@@ -264,7 +264,57 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleNewReferral(invId) { console.log(`Handling new referral from ${invId}.`); /* TODO: Implement logic */ }
     function handleBonusClaim(refId) { console.log(`Handling bonus claim for referral ${refId}.`); /* TODO: Implement logic (likely backend) */ }
     function cleanBonusUrlParam() { try { const url = new URL(window.location); if (url.searchParams.has('claimBonus')) { url.searchParams.delete('claimBonus'); window.history.replaceState({}, document.title, url); console.log("claimBonus param removed from URL."); } } catch (e) { console.error("Error cleaning URL:", e); } }
-    inviteFriendBtn.addEventListener('click', () => { if (isBlocked) { showTemporaryNotification(translations.actionBlocked[currentLanguage], "error"); return; } if (tg.isVersionAtLeast('6.1')) { const uid = tg.initDataUnsafe?.user?.id; const bot = tg.initDataUnsafe?.bot?.username; if (!uid || !bot) { console.error("User ID or Bot username missing for referral link."); showTemporaryNotification(translations.inviteLinkError[currentLanguage], "error"); return; } const url = `https://t.me/${bot}/${tg.WebApp.name}?startapp=${uid}`; const txt = translations.shareText?.[currentLanguage] || 'Join my Alchemy Lab!'; console.log("Sharing:", { url, txt }); try { tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(txt)}`); tg.HapticFeedback?.impactOccurred('light'); } catch (e) { console.error("Error opening share link:", e); showTemporaryNotification(translations.inviteLinkError[currentLanguage], "error"); } } else { console.warn("Share feature potentially unavailable."); showTemporaryNotification(translations.referralRegErrorFunc[currentLanguage], "warning"); } });
+    inviteFriendBtn.addEventListener('click', () => {
+        if (isBlocked) { // Проверяем, не заблокированы ли действия
+            showTemporaryNotification(translations.actionBlocked[currentLanguage], "error");
+            return; // Выходим, если заблокировано
+        }
+
+        // Проверяем версию Telegram Web App, поддерживающую нужные функции
+        // Для tg.openTelegramLink с 't.me/share/url' обычно достаточно базовой поддержки,
+        // но оставим проверку на 6.1 как было, на всякий случай для будущих функций.
+        if (tg.isVersionAtLeast('6.1')) {
+            const uid = tg.initDataUnsafe?.user?.id; // Получаем ID пользователя
+            const botUsername = tg.initDataUnsafe?.bot?.username; // Получаем имя пользователя бота
+
+            // --- ВАЖНАЯ ПРОВЕРКА: Убедимся, что ID пользователя и имя бота получены ---
+            if (!uid || !botUsername) {
+                console.error("Не удалось получить ID пользователя или имя бота для реферальной ссылки.", { uid, botUsername });
+                // Показываем пользователю ошибку
+                showTemporaryNotification(translations.inviteLinkError[currentLanguage], "error");
+                return; // Прерываем выполнение, если данных нет
+            }
+
+            // --- КОРРЕКТИРОВКА URL ДЛЯ ПРИГЛАШЕНИЯ ---
+            // Стандартный и надежный формат ссылки для запуска Mini App через бота с параметром startapp:
+            // https://t.me/ИМЯ_ВАШЕГО_БОТА?startapp=ПАРАМЕТР
+            // В нашем случае ПАРАМЕТР - это ID пригласившего пользователя (uid).
+            const url = `https://t.me/${botUsername}?startapp=${uid}`;
+
+            // Текст для окна "Поделиться"
+            const txt = translations.shareText?.[currentLanguage] || 'Присоединяйся к моей Алхимической Лаборатории в Telegram! 🧪⚗️ Кликай и создавай эликсиры!';
+
+            console.log("Попытка поделиться:", { url, txt });
+
+            try {
+                // Используем tg.openTelegramLink для вызова стандартного окна "Поделиться" в Telegram
+                // Параметры url и text должны быть закодированы для URL
+                tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(txt)}`);
+                // Добавляем тактильный отклик при успешном вызове
+                tg.HapticFeedback?.impactOccurred('light');
+            } catch (e) {
+                // Обрабатываем возможные ошибки при вызове openTelegramLink
+                console.error("Ошибка при попытке открыть ссылку для 'Поделиться' в Telegram:", e);
+                showTemporaryNotification(translations.inviteLinkError[currentLanguage], "error");
+            }
+        } else {
+            // Если версия Telegram слишком старая
+            console.warn("Функция 'Поделиться' требует Telegram Web App версии 6.1 или выше.");
+            // Формируем сообщение об ошибке для пользователя
+            const errMsg = (translations.referralRegErrorFunc?.[currentLanguage] || "Функция недоступна") + " (нужна версия v6.1+)";
+            showTemporaryNotification(errMsg, "warning");
+        }
+    });
 
     // --- Сохранение/Загрузка ---
     let saveTimeout = null;
@@ -484,7 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadGame(); // Загружаем игру при старте
 
     // --- Автосохранение и обработчики событий ---
-    setInterval(() => saveGame(false), 15000); // Debounced save every 15s
+    setInterval(() => saveGame(false), 3000); // Debounced save every 15s
     window.addEventListener('beforeunload', () => saveGame(true)); // Immediate save on close
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveGame(true); }); // Immediate save on hide
     if (tg?.onEvent) { tg.onEvent('viewportChanged', (e) => { if (e && e.isStateStable) { console.log("Viewport стабилен, сохранение."); saveGame(false); } }); }

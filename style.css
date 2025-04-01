@@ -89,7 +89,6 @@ body {
 #gem-count { font-weight: bold; color: var(--text-color); }
 
 /* Кнопка Магазина - позиционируем абсолютно СПРАВА В ИГРОВОЙ ЗОНЕ */
-/* --- ИЗМЕНЕНО: Фиксированное позиционирование top --- */
 .shop-button {
     position: absolute;
     top: 120px; /* Фиксированный отступ сверху (подбирайте значение) */
@@ -100,13 +99,11 @@ body {
 }
 
 /* --- Игровая зона --- */
-/* --- ИЗМЕНЕНО: Выравнивание и отступ --- */
 .game-area {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* justify-content: center; */ /* Убрано центрирование */
     justify-content: flex-start; /* Выравнивание по верху */
     padding-top: 15px; /* Отступ сверху внутри зоны */
     position: relative; /* Для позиционирования кнопок */
@@ -114,30 +111,26 @@ body {
 }
 
 /* Эссенция и доход */
-/* --- ИЗМЕНЕНО: Отступ и z-index --- */
 .essence-display {
     text-align: center;
-    margin-top: 180px;   /* <<< ДОБАВЛЕНО: Этот отступ опустит цифры (подберите значение) */
+    margin-top: 180px;   /* Отступ опускает цифры */
     margin-bottom: 30px; /* Увеличен отступ снизу */
     flex-shrink: 0;
     position: relative;
-    z-index: 1; /* Можно вернуть 1 */
+    z-index: 1;
     width: 100%;
-    /* background-color: rgba(0, 255, 0, 0.1); */ /* Для отладки */
 }
 .main-currency { font-size: 2.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 0; display: block; line-height: 1.1; }
 .essence-icon { display: inline-block; margin-right: 5px; font-size: 0.9em; vertical-align: baseline; }
 .per-second-display { display: block; font-size: 0.9rem; font-weight: normal; opacity: 0.7; margin-top: 0; color: var(--text-secondary-color); }
 
 /* Колба */
-/* --- ИЗМЕНЕНО: Убрано auto margin --- */
 .cauldron {
     width: clamp(160px, 45vw, 200px);
     height: clamp(180px, 50vw, 220px);
     position: relative;
     cursor: pointer;
     user-select: none;
-    /* margin: 10px auto; */ /* Убрано auto */
     margin-top: 40px; /* Явный отступ сверху */
     margin-bottom: 20px; /* Явный отступ снизу */
     flex-shrink: 0;
@@ -163,7 +156,7 @@ body {
 @keyframes fadeUp { 0% { opacity: 1; transform: translate(-50%, -50%) scale(1); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(0.8); } }
 
 /* Нижние кнопки */
-.controls { display: flex; justify-content: space-around; padding: 10px 0; border-radius: 8px; flex-shrink: 0; position: relative; z-index: 1; /* margin-bottom убран */ }
+.controls { display: flex; justify-content: space-around; padding: 10px 0; border-radius: 8px; flex-shrink: 0; position: relative; z-index: 1; }
 .control-button { padding: 10px 15px; font-size: 1rem; background-color: var(--button-bg); color: var(--text-color); border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s ease, transform 0.1s ease-out; flex-grow: 1; margin: 0 5px; max-width: 48%; text-align: center; line-height: 1.4; }
 .control-button:hover:not(:disabled) { background-color: var(--button-hover-bg); }
 .control-button:active:not(:disabled) { transform: scale(0.98); }
@@ -172,21 +165,113 @@ body {
 .telegram-feature:hover:not(:disabled) { background-color: var(--telegram-button-hover-bg); }
 
 /* --- Панели --- */
-.panel-base { background-color: var(--secondary-bg); box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2); padding: 15px; display: flex; flex-direction: column; color: var(--text-color); position: fixed; z-index: 100; overflow: hidden; transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0s linear 0.3s; opacity: 1; visibility: visible; }
-.panel-base.hidden { opacity: 0; visibility: hidden; pointer-events: none; transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0s linear 0s; transform: none !important; /* Сброс transform при скрытии */ }
+.panel-base {
+    background-color: var(--secondary-bg);
+    box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    color: var(--text-color);
+    position: fixed;
+    z-index: 100;
+    overflow: hidden;
+    /* Только transform в базовом transition */
+    transition: transform 0.3s ease-out;
+    /* Значения по умолчанию */
+    opacity: 1;
+    visibility: visible;
+}
+
+.panel-base.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: none !important; /* Сброс transform при скрытии */
+}
 
 /* Панели снизу */
-.upgrades-panel, .shop-panel { bottom: 0; left: 0; width: 100%; border-top-left-radius: 15px; border-top-right-radius: 15px; transform: translateY(100%); }
+.upgrades-panel, .shop-panel {
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    transform: translateY(100%);
+    /* Возвращаем transition для выезжающих панелей (при скрытии) */
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0s linear 0.3s;
+}
 .upgrades-panel { height: 60%; }
 .shop-panel { height: 70%; max-height: 550px; }
-.panel-base:not(.hidden).upgrades-panel, .panel-base:not(.hidden).shop-panel { transform: translateY(0); }
 
-/* Панель настроек (модальное окно) */
-.settings-panel { top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 200; border-radius: 0; padding: 0; /* Убираем transform из базового состояния панели, т.к. она не двигается */ }
-.settings-panel.hidden { transform: none; /* Убираем transform и для скрытого состояния */ }
-.settings-box { background-color: var(--secondary-bg); border-radius: 15px; padding: 15px; width: 90%; max-width: 400px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); transform: scale(0.95); opacity: 0; transition: transform 0.2s ease-out, opacity 0.2s ease-out; visibility: visible; pointer-events: auto; }
-.settings-panel:not(.hidden) .settings-box { transform: scale(1); opacity: 1; }
-.settings-panel.hidden .settings-box { opacity: 0; transform: scale(0.95); pointer-events: none; }
+.panel-base:not(.hidden).upgrades-panel,
+.panel-base:not(.hidden).shop-panel {
+    transform: translateY(0);
+    /* Возвращаем transition для выезжающих панелей (при появлении) */
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out, visibility 0s linear 0s;
+}
+
+/* Панель настроек (фон) */
+.settings-panel {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6); /* Фон затемнения */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    border-radius: 0;
+    padding: 0;
+    /* Transition для фона - быстрый при появлении */
+    transition: opacity 0.1s ease-out, visibility 0s linear 0s;
+}
+
+/* Панель настроек (фон) при скрытии */
+.settings-panel.hidden {
+    /* Наследует opacity: 0, visibility: hidden, pointer-events: none от .panel-base.hidden */
+    /* Transition для фона - плавный при скрытии */
+    transition: opacity 0.3s ease-out, visibility 0s linear 0.3s;
+    transform: none;
+}
+
+/* Окно настроек внутри панели */
+.settings-box {
+    background-color: var(--secondary-bg);
+    border-radius: 15px;
+    padding: 15px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    /* Начальное состояние перед анимацией */
+    transform: scale(0.95);
+    opacity: 0;
+    /* Анимация появления с задержкой 0.1s */
+    transition: transform 0.2s ease-out 0.1s, opacity 0.2s ease-out 0.1s;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* --- ДОБАВЛЕНО: Явно определяем ВИДИМОЕ состояние для .settings-box --- */
+.settings-panel:not(.hidden) .settings-box {
+    transform: scale(1); /* Анимируем к нормальному размеру */
+    opacity: 1;         /* Анимируем к полной непрозрачности */
+}
+/* ----------------------------------------------------------------- */
+
+
+/* Окно настроек при скрытии */
+.settings-panel.hidden .settings-box {
+    opacity: 0;
+    transform: scale(0.95);
+    /* Анимация скрытия без задержки */
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+    pointer-events: none;
+}
+
 
 /* Заголовок панелей */
 .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); flex-shrink: 0; }
@@ -260,7 +345,6 @@ body {
 .notification.success { background-color: var(--success-color); }
 
 /* === СТИЛИ ДЛЯ КНОПКИ ОДНОРАЗОВОГО БОНУСА === */
-/* --- ИЗМЕНЕНО: Фиксированное позиционирование top --- */
 .bonus-button {
     position: absolute;
     top: 120px; /* Фиксированный отступ сверху (такой же, как у shop-button) */
