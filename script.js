@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function cleanBonusUrlParam() { try { const url = new URL(window.location.href); if (url.searchParams.has('claimBonus')) { url.searchParams.delete('claimBonus'); window.history.replaceState({}, document.title, url.toString()); console.log("claimBonus param removed from URL."); } } catch (e) { console.error("Error cleaning URL param:", e); } }
 
 
-    // --- Обработчик кнопки "Пригласить друзей" (БЕЗ ALERT) ---
+    // --- Обработчик кнопки "Пригласить друзей" (С РУЧНЫМ ВВОДОМ ИМЕНИ БОТА) ---
     inviteFriendBtn.addEventListener('click', () => {
         console.log("[Invite Button] Clicked.");
 
@@ -280,20 +280,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (versionCheck) {
             const uid = tg.initDataUnsafe?.user?.id;
-            const botUsername = tg.initDataUnsafe?.bot?.username;
-            console.log("[Invite Button] Data:", { uid, botUsername });
 
-            // --- ГЛАВНАЯ ПРОВЕРКА ---
-            if (!uid || !botUsername) {
-                console.error("[Invite Button] User ID or Bot username missing! Cannot generate invite link.");
-                // Показываем ошибку пользователю
-                showTemporaryNotification(translations.inviteLinkError[currentLanguage], "error");
-                // Дополнительный лог для понимания, чего не хватает
-                if (!uid) console.error("[Invite Button] Reason: User ID is missing.");
-                if (!botUsername) console.error("[Invite Button] Reason: Bot Username is missing. Ensure the app is launched VIA THE BOT.");
-                return; // Выход, т.к. ссылку создать нельзя
+            // --- ИЗМЕНЕНИЕ: Получаем имя бота или используем ЗАДАННОЕ ЗНАЧЕНИЕ ---
+            // !!!!! ЗАМЕНИТЕ 'ВАШ_БОТ_USERNAME' на реальное имя пользователя вашего бота (БЕЗ @) !!!!!
+            const YOUR_BOT_USERNAME_PLACEHOLDER = 'AlchimLaboratory_Bot'; // <--- ЗАМЕНИТЬ ЗДЕСЬ!
+            // !!!!! -------------------------------------------------------------------------- !!!!!
+            const botUsername = tg.initDataUnsafe?.bot?.username || YOUR_BOT_USERNAME_PLACEHOLDER;
+
+            // Логирование используемого имени бота
+            if (botUsername === YOUR_BOT_USERNAME_PLACEHOLDER && YOUR_BOT_USERNAME_PLACEHOLDER !== 'ВАШ_БОТ_USERNAME') {
+                 console.log(`[Invite Button] Using hardcoded bot username: ${botUsername}`);
+            } else if (botUsername === YOUR_BOT_USERNAME_PLACEHOLDER) {
+                 console.warn(`[Invite Button] WARNING: Using DEFAULT placeholder bot username: '${botUsername}'. Please replace it in the code!`);
             }
-            // --- КОНЕЦ ПРОВЕРКИ ---
+             else {
+                 console.log(`[Invite Button] Using bot username from initData: ${botUsername}`);
+            }
+            // --- Конец ИЗМЕНЕНИЯ ---
+
+            console.log("[Invite Button] Data Check:", { uid, botUsername });
+
+            // --- ОБНОВЛЕННАЯ ПРОВЕРКА ---
+            // Проверяем, что У НАС ЕСТЬ ID пользователя И имя бота (из initData или заданное)
+            // И что заданное имя не является незамененным плейсхолдером
+            if (!uid || !botUsername || botUsername === 'ВАШ_БОТ_USERNAME') {
+                console.error("[Invite Button] User ID missing or Bot username is missing/not replaced!");
+                 if (botUsername === 'ВАШ_БОТ_USERNAME') {
+                      // Если используется плейсхолдер по умолчанию, сообщить об этом явно
+                      alert("ОШИБКА КОНФИГУРАЦИИ: Имя пользователя бота не задано в коде script.js! Обратитесь к разработчику."); // Оставляем этот alert, т.к. это ошибка конфигурации
+                 }
+                showTemporaryNotification(translations.inviteLinkError[currentLanguage], "error");
+                if (!uid) console.error("[Invite Button] Reason: User ID is missing.");
+                if (!botUsername) console.error("[Invite Button] Reason: Bot Username is missing.");
+                return; // Выход
+            }
+            // --- КОНЕЦ ОБНОВЛЕННОЙ ПРОВЕРКИ ---
 
 
             const url = `https://t.me/${botUsername}?startapp=${uid}`;
