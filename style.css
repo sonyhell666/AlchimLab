@@ -305,6 +305,21 @@ body {
 .lang-btn:hover { background-color: var(--button-hover-bg); }
 .lang-btn.active { background-color: var(--accent-color); color: var(--primary-bg); border-color: var(--text-color); font-weight: bold; }
 
+/* === СТИЛИ ДЛЯ ВЕРСИИ ПРИЛОЖЕНИЯ === */
+.settings-box #app-version {
+    margin-top: 15px; /* Отступ сверху от контента */
+    padding-top: 10px; /* Дополнительный отступ сверху (внутри) */
+    border-top: 1px solid rgba(255, 255, 255, 0.1); /* Линия-разделитель */
+    font-size: 0.8rem; /* Маленький шрифт */
+    color: var(--text-secondary-color); /* Приглушенный цвет */
+    opacity: 0.7; /* Полупрозрачность */
+    text-align: center; /* Выравнивание по центру */
+    width: 100%; /* Занимает всю ширину для центрирования */
+    flex-shrink: 0; /* Не сжимается */
+}
+/* ===================================== */
+
+
 .shop-currency-display { text-align: right; margin-bottom: 15px; font-size: 1.1rem; opacity: 0.9; display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0; }
 .shop-currency-display .gem-icon { margin: 0 5px; }
 #shop-gem-count { font-weight: bold; }

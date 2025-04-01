@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     tg.ready();
     tg.expand();
 
+    // --- Версия приложения ---
+    const APP_VERSION = "1.76"; // <-- Будет инкрементироваться при обновлениях
+
     // --- Получаем ссылки на элементы DOM ---
     const essenceCountElement = document.getElementById('essence-count');
     const cauldronElement = document.getElementById('cauldron');
@@ -30,12 +33,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const skinsListElement = document.getElementById('skins-list');
     const shopGemCountElement = document.getElementById('shop-gem-count');
     const oneTimeBonusBtn = document.getElementById('one-time-bonus-btn');
+    const appVersionElement = document.getElementById('app-version'); // <-- Новый элемент
 
     // Проверка критически важных элементов
-    if (!essenceCountElement || !cauldronElement || !openUpgradesBtn || !upgradesPanel || !settingsPanel || !shopPanel || !inviteFriendBtn || !settingsBtn || !shopBtn || !gemCountElement || !userGreetingElement || !oneTimeBonusBtn ) {
+    if (!essenceCountElement || !cauldronElement || !openUpgradesBtn || !upgradesPanel || !settingsPanel || !shopPanel || !inviteFriendBtn || !settingsBtn || !shopBtn || !gemCountElement || !userGreetingElement || !oneTimeBonusBtn || !appVersionElement) { // <-- Добавлена проверка appVersionElement
         console.error("КРИТИЧЕСКАЯ ОШИБКА: Не найдены один или несколько основных элементов DOM. Работа скрипта невозможна.");
         alert("Произошла ошибка при загрузке интерфейса. Пожалуйста, попробуйте перезапустить приложение.");
         return; // Прекращаем выполнение скрипта
+    }
+
+    // --- Установка текста версии ---
+    if (appVersionElement) {
+        appVersionElement.textContent = `Версия: ${APP_VERSION}`;
     }
 
     // --- Игровые переменные (состояние) ---
@@ -365,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ownedSkins: ownedSkins,
                 activeSkinId: activeSkinId,
                 bonusClaimed: bonusClaimed,
-                saveVersion: 1
+                saveVersion: 1 // Можно использовать для будущих миграций данных
             };
 
             try {
@@ -373,6 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     tg.CloudStorage.setItem('gameState', gss, (err, ok) => {
                         if (err) { console.error("[Save Callback] Ошибка при вызове setItem:", err); }
+                        // Не показываем уведомление об успехе, чтобы не спамить
                     });
                 } catch (setItemError) {
                      console.error("[Save] КРИТИЧЕСКАЯ ошибка ПРЯМОГО вызова tg.CloudStorage.setItem:", setItemError);
@@ -483,9 +493,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         activeSkinId = (typeof ss.activeSkinId === 'string' && ownedSkins.includes(ss.activeSkinId)) ? ss.activeSkinId : 'default';
                         if (ss.activeSkinId && !ownedSkins.includes(ss.activeSkinId)) console.warn(`[Load Valid] активный скин '${ss.activeSkinId}' не куплен -> 'default'`);
 
-                        bonusClaimed = ss.bonusClaimed === true;
+                        bonusClaimed = ss.bonusClaimed === true; // Строгая проверка на true
                         if (ss.bonusClaimed !== undefined) console.log(`[Load] Статус бонуса загружен: ${bonusClaimed}`);
-                        else console.warn("[Load Valid] Флаг бонуса отсутствовал в сохранении -> false");
+                        else {
+                           console.warn("[Load Valid] Флаг бонуса отсутствовал в сохранении -> false");
+                           bonusClaimed = false; // Убедиться, что он false, если его нет
+                        }
 
                         console.log("[Load] Данные успешно загружены.");
 
@@ -519,6 +532,8 @@ document.addEventListener('DOMContentLoaded', () => {
         bonusClaimed = false;
         isBlocked = false;
         warningCount = 0;
+        // Не сбрасываем язык, если он уже был загружен или установлен
+        // currentLanguage = 'ru'; // <- Не сбрасываем язык здесь
     }
 
     // --- Функция уведомлений ---
@@ -536,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Первоначальная инициализация ---
-    loadGame();
+    loadGame(); // Load game first, which might set language
 
     // --- Автосохранение и обработчики событий ---
     setInterval(() => saveGame(false), 3000); // Debounced save every 3s
@@ -567,6 +582,8 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 console.log("Бонус уже был получен ранее.");
                 tg.HapticFeedback?.notificationOccurred('warning');
+                 const alreadyClaimedMsg = translations.bonusClaimedAlready?.[currentLanguage] ?? "Бонус уже получен.";
+                 showTemporaryNotification(alreadyClaimedMsg, "warning"); // Показываем уведомление
             }
         });
     } else {
@@ -579,7 +596,10 @@ document.addEventListener('DOMContentLoaded', () => {
          if (autoClickInterval) clearInterval(autoClickInterval);
          if (uiInterval) clearInterval(uiInterval);
          if (liquidColorInterval) clearInterval(liquidColorInterval);
-         if (saveTimeout) clearTimeout(saveTimeout); // Очистить таймаут сохранения при выгрузке
+         if (saveTimeout) { // Немедленно сохранить, если есть отложенное сохранение
+             clearTimeout(saveTimeout);
+             saveGame(true);
+         }
          console.log("Intervals cleared on unload.");
      });
 
