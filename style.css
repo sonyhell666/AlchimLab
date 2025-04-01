@@ -89,35 +89,67 @@ body {
 #gem-count { font-weight: bold; color: var(--text-color); }
 
 /* Кнопка Магазина - позиционируем абсолютно СПРАВА В ИГРОВОЙ ЗОНЕ */
+/* --- ИЗМЕНЕНО: Фиксированное позиционирование top --- */
 .shop-button {
     position: absolute;
-    top: 50%; /* По центру игровой зоны по вертикали */
+    top: 120px; /* Фиксированный отступ сверху (подбирайте значение) */
     right: 0; /* Прижимаем к правому краю игровой зоны */
-    transform: translateY(-50%);
+    transform: translateY(0); /* Убран вертикальный сдвиг */
     width: 44px; height: 44px; border-radius: 12px; z-index: 10;
     margin-right: -5px; /* Немного вынесем за пределы для визуального баланса */
 }
 
 /* --- Игровая зона --- */
+/* --- ИЗМЕНЕНО: Выравнивание и отступ --- */
 .game-area {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    position: relative; /* Для позиционирования кнопки магазина и фидбека */
+    /* justify-content: center; */ /* Убрано центрирование */
+    justify-content: flex-start; /* Выравнивание по верху */
+    padding-top: 15px; /* Отступ сверху внутри зоны */
+    position: relative; /* Для позиционирования кнопок */
     min-height: 250px;
-    /* Убираем padding, он в app-container */
 }
 
 /* Эссенция и доход */
-.essence-display { text-align: center; margin-bottom: 10px; flex-shrink: 0; position: relative; z-index: 1; }
+/* --- ИЗМЕНЕНО: Отступ и z-index --- */
+.essence-display {
+    text-align: center;
+    margin-top: 180px;   /* <<< ДОБАВЛЕНО: Этот отступ опустит цифры (подберите значение) */
+    margin-bottom: 30px; /* Увеличен отступ снизу */
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1; /* Можно вернуть 1 */
+    width: 100%;
+    /* background-color: rgba(0, 255, 0, 0.1); */ /* Для отладки */
+}
 .main-currency { font-size: 2.5rem; font-weight: bold; color: var(--text-color); margin-bottom: 0; display: block; line-height: 1.1; }
 .essence-icon { display: inline-block; margin-right: 5px; font-size: 0.9em; vertical-align: baseline; }
 .per-second-display { display: block; font-size: 0.9rem; font-weight: normal; opacity: 0.7; margin-top: 0; color: var(--text-secondary-color); }
 
 /* Колба */
-.cauldron { width: clamp(160px, 45vw, 200px); height: clamp(180px, 50vw, 220px); position: relative; cursor: pointer; user-select: none; margin: 10px auto; flex-shrink: 0; clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%); border-radius: 0; will-change: transform, filter; background-color: var(--flask-color-default); border: 3px solid var(--cauldron-border-color-default); transition: transform 0.1s ease-out, filter 0.1s ease-out, background-color 0.3s ease, background-image 0.3s ease, border-color 0.3s ease; overflow: hidden; z-index: 0; }
+/* --- ИЗМЕНЕНО: Убрано auto margin --- */
+.cauldron {
+    width: clamp(160px, 45vw, 200px);
+    height: clamp(180px, 50vw, 220px);
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    /* margin: 10px auto; */ /* Убрано auto */
+    margin-top: 50px; /* Явный отступ сверху */
+    margin-bottom: 20px; /* Явный отступ снизу */
+    flex-shrink: 0;
+    clip-path: polygon(46% 5%, 36% 5%, 34% 10%, 36% 15%, 33% 30%, 22% 50%, 15% 65%, 18% 75%, 23% 85%, 32% 93%, 40% 96%, 50% 97%, 60% 96%, 68% 93%, 77% 85%, 82% 75%, 85% 65%, 78% 50%, 67% 30%, 64% 15%, 66% 10%, 64% 5%, 54% 5%);
+    border-radius: 0;
+    will-change: transform, filter;
+    background-color: var(--flask-color-default);
+    border: 3px solid var(--cauldron-border-color-default);
+    transition: transform 0.1s ease-out, filter 0.1s ease-out, background-color 0.3s ease, background-image 0.3s ease, border-color 0.3s ease;
+    overflow: hidden;
+    z-index: 0;
+ }
 .cauldron.blocked-cauldron { cursor: not-allowed !important; filter: grayscale(80%) brightness(0.8); }
 .cauldron:active:not(.blocked-cauldron) { transform: scale(0.95); filter: brightness(1.1); }
 .cauldron::before { content: ''; position: absolute; bottom: 3px; left: 3px; right: 3px; width: calc(100% - 6px); height: var(--liquid-level, 10%); background-color: var(--liquid-color); z-index: 1; transition: background-color 1s ease, height 0.1s linear; border-radius: 5px 5px 0 0; overflow: hidden; }
@@ -226,6 +258,42 @@ body {
 .notification.error { background-color: var(--error-color); }
 .notification.warning { background-color: var(--warning-color); }
 .notification.success { background-color: var(--success-color); }
+
+/* === СТИЛИ ДЛЯ КНОПКИ ОДНОРАЗОВОГО БОНУСА === */
+/* --- ИЗМЕНЕНО: Фиксированное позиционирование top --- */
+.bonus-button {
+    position: absolute;
+    top: 120px; /* Фиксированный отступ сверху (такой же, как у shop-button) */
+    left: 0; /* Прижимаем к левому краю игровой зоны */
+    transform: translateY(0); /* Убран вертикальный сдвиг */
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    z-index: 10;
+    margin-left: -5px; /* Немного вынесем за пределы для визуального баланса */
+    background-color: var(--accent-color); /* Выделим цветом */
+    color: var(--primary-bg); /* Контрастный цвет иконки */
+    box-shadow: 0 0 10px rgba(118, 215, 196, 0.5); /* Легкое свечение */
+    transition: opacity 0.3s ease, transform 0.2s ease, visibility 0.3s; /* Плавные переходы */
+}
+
+.bonus-button:hover:not(.hidden) {
+    transform: translateY(0) scale(1.05); /* Убрали Y-сдвиг из transform */
+    background-color: #88e8d8; /* Осветляем при наведении */
+}
+
+.bonus-button:active:not(.hidden) {
+    transform: translateY(0) scale(0.95); /* Убрали Y-сдвиг из transform */
+}
+
+/* Стиль для скрытой кнопки (после использования) */
+.bonus-button.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(0) scale(0.8); /* Убрали Y-сдвиг из transform */
+}
+/* ============================================= */
 
 /* Адаптация */
 @media (min-width: 600px) {

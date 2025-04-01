@@ -29,9 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeShopBtn = document.getElementById('close-shop-btn');
     const skinsListElement = document.getElementById('skins-list');
     const shopGemCountElement = document.getElementById('shop-gem-count');
+    const oneTimeBonusBtn = document.getElementById('one-time-bonus-btn');
 
     // Проверка критически важных элементов
-    if (!essenceCountElement || !cauldronElement || !openUpgradesBtn || !upgradesPanel || !settingsPanel || !shopPanel || !inviteFriendBtn || !settingsBtn || !shopBtn || !gemCountElement || !userGreetingElement) {
+    if (!essenceCountElement || !cauldronElement || !openUpgradesBtn || !upgradesPanel || !settingsPanel || !shopPanel || !inviteFriendBtn || !settingsBtn || !shopBtn || !gemCountElement || !userGreetingElement || !oneTimeBonusBtn ) {
         console.error("КРИТИЧЕСКАЯ ОШИБКА: Не найдены один или несколько основных элементов DOM. Работа скрипта невозможна.");
         alert("Произошла ошибка при загрузке интерфейса. Пожалуйста, попробуйте перезапустить приложение.");
         return; // Прекращаем выполнение скрипта
@@ -48,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const GEMS_PER_AWARD = 1;
     let currentLanguage = 'ru'; // Язык по умолчанию
     let userName = tg.initDataUnsafe?.user?.first_name || null;
+    let bonusClaimed = false; // Флаг для отслеживания получения одноразового бонуса
 
     // --- Переменные для защиты от автокликера ---
     let lastClickTime = 0;
@@ -87,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadErrorStartNew: { ru: "Ошибка загрузки прогресса. Начинаем новую игру.", en: "Failed to load progress. Starting new game." },
         loadError: { ru: "Ошибка загрузки прогресса!", en: "Error loading progress!" },
         readError: { ru: "Ошибка чтения данных сохранения!", en: "Error reading save data!" },
-        saveCritError: { ru: "Критическая ошибка сохранения!", en: "Critical save error!" },
+        saveCritError: { ru: "Критическая ошибка сохранения!", en: "Critical save error!" }, // Используется при ошибке JSON.stringify или setItem
         saveSuccess: { ru: "Прогресс сохранен", en: "Progress saved" },
         welcomeReferral: { ru: "Добро пожаловать! Ваш пригласитель получит бонус.", en: "Welcome! Your inviter gets a bonus." },
         referralRegErrorBot: { ru: "Не удалось зарегистрировать приглашение (ошибка бота).", en: "Could not register invite (bot error)." },
@@ -133,6 +135,9 @@ document.addEventListener('DOMContentLoaded', () => {
         upgrade_click5_desc: { ru: "+1000 к клику", en: "+1000 per click" },
         upgrade_auto7_name: { ru: "Поток Чистой Магии", en: "Flow of Pure Magic" },
         upgrade_auto7_desc: { ru: "+5000 в секунду", en: "+5000 per second" },
+        // Добавим переводы для уведомлений, связанных с бонусом
+        bonusClaimedAlready: { ru: "Бонус уже получен.", en: "Bonus already claimed." },
+        bonusClaimSuccess: { ru: "+100K 🧪 Бонус получен!", en: "+100K 🧪 Bonus claimed!" },
     };
 
     // --- Определения улучшений ---
@@ -263,23 +268,274 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Сохранение/Загрузка ---
     let saveTimeout = null;
-    function saveGame(immediate = false) { if (!tg?.CloudStorage || typeof tg.CloudStorage.setItem !== 'function') return; const saveData = () => { console.log("[Save] Attempting save..."); let vld = true; if (!Number.isFinite(essence) || essence < 0) { console.warn(`[Save Valid] Invalid essence ${essence}. Reset to 0.`); essence = 0; vld = false; } if (!Number.isFinite(gems) || gems < 0) { console.warn(`[Save Valid] Invalid gems ${gems}. Reset to 0.`); gems = 0; vld = false; } if (!Array.isArray(ownedSkins) || !ownedSkins.includes('default')) { console.warn(`[Save Valid] Invalid ownedSkins ${ownedSkins}. Reset to ['default'].`); ownedSkins = ['default']; if (activeSkinId !== 'default') activeSkinId = 'default'; vld = false; } if (typeof activeSkinId !== 'string' || !ownedSkins.includes(activeSkinId)) { console.warn(`[Save Valid] Invalid activeSkinId ${activeSkinId}. Reset to 'default'.`); activeSkinId = 'default'; vld = false; } upgrades.forEach(u => { if (!Number.isFinite(u.currentLevel) || u.currentLevel < 0) { console.warn(`[Save Valid] Invalid upgrade level ${u.id}: ${u.currentLevel}. Reset to 0.`); u.currentLevel = 0; vld = false; } }); if (!vld) console.warn("[Save] Data was corrected before saving."); const gs = { essence: essence, gems: gems, upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel })), language: currentLanguage, ownedSkins: ownedSkins, activeSkinId: activeSkinId, saveVersion: 1 }; try { const gss = JSON.stringify(gs); tg.CloudStorage.setItem('gameState', gss, (err, ok) => { if (err) console.error("[Save Callback] Error:", err); /* else if (ok) console.log("[Save Callback] Success."); else console.warn("[Save Callback] Unknown result."); */ }); } catch (e) { console.error("[Save] JSON.stringify error:", e); showTemporaryNotification(translations.saveCritError[currentLanguage], "error"); } saveTimeout = null; }; if (saveTimeout) clearTimeout(saveTimeout); if (immediate) saveData(); else saveTimeout = setTimeout(saveData, 1000); }
-    function loadGame() { console.log("[Load] Attempting load..."); isBlocked = false; warningCount = 0; if (cauldronElement) cauldronElement.classList.remove('blocked-cauldron'); let setupDone = false; const postSetup = (isNew = false) => { if (setupDone) return; console.log("[Load] Performing post-load setup..."); if (isNew) { console.log("[Load] Starting new game."); resetGameData(); } recalculateBonuses(); applyTranslations(); updateLiquidColor(); visualLiquidLevel = LIQUID_MIN_LEVEL; lastInteractionTime = Date.now(); applyCauldronSkin(); updateDisplay(); checkReferralAndBonus(); console.log(`[Load] Post-setup complete. State: E:${formatNumber(essence)}, G:${gems}, Lng:${currentLanguage}, Skin:${activeSkinId}`); setupDone = true; }; if (!tg?.CloudStorage || typeof tg.CloudStorage.getItem !== 'function') { console.warn("[Load] CloudStorage unavailable. Starting new game."); postSetup(true); showTemporaryNotification("Прогресс не будет сохранен.", "warning"); return; } try { tg.CloudStorage.getItem('gameState', (err, val) => { console.log("[Load Callback] Response from CloudStorage."); let reset = false; if (err) { console.error("[Load Callback] Error getting data:", err); if (err.message?.includes("STORAGE_KEY_CLOUD_NOT_FOUND")) console.log("[Load Callback] 'gameState' key not found. New game."); else if (err.message?.includes("Unsupported")) { console.warn("[Load Callback] CloudStorage.getItem unsupported."); showTemporaryNotification("Сохранение/загрузка недоступны.", "warning"); } else showTemporaryNotification(translations.loadError[currentLanguage], "error"); reset = true; } else if (val) { console.log(`[Load Callback] Data received (${val.length} bytes). Parsing...`); try { const ss = JSON.parse(val); console.log("[Load Parse] OK:", ss); essence = Number(ss.essence) || 0; if (!Number.isFinite(essence) || essence < 0) { console.warn("[Load Valid] essence -> 0"); essence = 0; } gems = Number(ss.gems) || 0; if (!Number.isFinite(gems) || gems < 0) { console.warn("[Load Valid] gems -> 0"); gems = 0; } currentLanguage = ss.language || 'ru'; if (!translations.greetingBase[currentLanguage]) { console.warn(`[Load Valid] lang '${ss.language}' -> ru`); currentLanguage = 'ru'; } if (Array.isArray(ss.upgrades)) { upgrades.forEach(u => { const su = ss.upgrades.find(s => s.id === u.id); const l = Number(su?.level); u.currentLevel = (Number.isFinite(l) && l >= 0) ? l : 0; if (u.currentLevel !== 0 && !(Number.isFinite(l) && l >= 0)) console.warn(`[Load Valid] upg ${u.id} lvl ${l} -> 0`); }); } else { console.warn("[Load Valid] upgrades array invalid -> all levels 0"); upgrades.forEach(u => u.currentLevel = 0); } ownedSkins = Array.isArray(ss.ownedSkins) ? ss.ownedSkins : ['default']; if (!ownedSkins.includes('default')) { ownedSkins.push('default'); console.warn("[Load Valid] 'default' skin added."); } activeSkinId = (typeof ss.activeSkinId === 'string' && ownedSkins.includes(ss.activeSkinId)) ? ss.activeSkinId : 'default'; if (ss.activeSkinId && !ownedSkins.includes(ss.activeSkinId)) console.warn(`[Load Valid] active skin '${ss.activeSkinId}' not owned -> 'default'`); console.log("[Load] Data loaded successfully."); } catch (pe) { console.error("[Load Parse] JSON parse error:", pe, "Data:", val); showTemporaryNotification(translations.readError[currentLanguage], "error"); reset = true; } } else { console.log("[Load Callback] Empty value from CloudStorage. New game."); reset = true; } postSetup(reset); }); } catch (se) { console.error("[Load Try] Critical error calling CloudStorage.getItem:", se); showTemporaryNotification("Ошибка доступа к хранилищу.", "error"); postSetup(true); } }
-    function resetGameData() { console.warn("Resetting game data to defaults!"); essence = 0; gems = 0; upgrades.forEach(u => u.currentLevel = 0); ownedSkins = ['default']; activeSkinId = 'default'; isBlocked = false; warningCount = 0; }
+    function saveGame(immediate = false) {
+        if (!tg?.CloudStorage || typeof tg.CloudStorage.setItem !== 'function') {
+            // Если CloudStorage недоступен, просто выходим (ошибки логгируются в loadGame)
+            // console.warn("[Save] CloudStorage unavailable. Skipping save.");
+            return;
+        }
+
+        const saveData = () => {
+            console.log("[Save] Попытка сохранения...");
+            let vld = true;
+            // --- Валидация данных перед сохранением ---
+            if (!Number.isFinite(essence) || essence < 0) { console.warn(`[Save Valid] Неверная эссенция ${essence}. Сброс до 0.`); essence = 0; vld = false; }
+            if (!Number.isFinite(gems) || gems < 0) { console.warn(`[Save Valid] Неверные кристаллы ${gems}. Сброс до 0.`); gems = 0; vld = false; }
+            if (!Array.isArray(ownedSkins) || !ownedSkins.includes('default')) { console.warn(`[Save Valid] Неверные купленные скины ${ownedSkins}. Сброс до ['default'].`); ownedSkins = ['default']; if (activeSkinId !== 'default') activeSkinId = 'default'; vld = false; }
+            if (typeof activeSkinId !== 'string' || !ownedSkins.includes(activeSkinId)) { console.warn(`[Save Valid] Неверный активный скин ${activeSkinId}. Сброс до 'default'.`); activeSkinId = 'default'; vld = false; }
+            upgrades.forEach(u => { if (!Number.isFinite(u.currentLevel) || u.currentLevel < 0) { console.warn(`[Save Valid] Неверный уровень улучшения ${u.id}: ${u.currentLevel}. Сброс до 0.`); u.currentLevel = 0; vld = false; } });
+            // --- Конец валидации ---
+
+            if (!vld) console.warn("[Save] Данные были исправлены перед сохранением.");
+
+            const gs = {
+                essence: essence,
+                gems: gems,
+                upgrades: upgrades.map(u => ({ id: u.id, level: u.currentLevel })),
+                language: currentLanguage,
+                ownedSkins: ownedSkins,
+                activeSkinId: activeSkinId,
+                bonusClaimed: bonusClaimed,
+                saveVersion: 1
+            };
+
+            try {
+                const gss = JSON.stringify(gs);
+                // Оборачиваем вызов setItem в try...catch, так как он тоже может вызвать ошибку
+                tg.CloudStorage.setItem('gameState', gss, (err, ok) => {
+                    if (err) {
+                        console.error("[Save Callback] Ошибка при вызове setItem:", err);
+                        // Не показываем уведомление здесь, так как оно уже показано в catch ниже,
+                        // если ошибка связана с JSON.stringify или самим вызовом.
+                        // Ошибки типа "WebAppMethodUnsupported" будут залогированы здесь.
+                    }
+                    /* else if (ok) console.log("[Save Callback] Успешно."); */
+                    /* else console.warn("[Save Callback] Неизвестный результат."); */
+                });
+            } catch (e) {
+                // --- ИЗМЕНЕНО: Безопасный показ уведомления об ошибке ---
+                console.error("[Save] Ошибка JSON.stringify или вызова setItem:", e);
+                try {
+                    // Пытаемся показать уведомление
+                    const errMsg = translations?.saveCritError?.[currentLanguage] ?? "Критическая ошибка сохранения!";
+                    showTemporaryNotification(errMsg, "error");
+                } catch (notifyError) {
+                    // Если даже показ уведомления вызвал ошибку, просто логируем ее
+                    console.error("[Save] Ошибка при показе уведомления об ошибке сохранения:", notifyError);
+                }
+                // --------------------------------------------------------
+            }
+            saveTimeout = null; // Сбрасываем таймаут
+        };
+
+        // Отложенное сохранение для предотвращения слишком частых вызовов
+        if (saveTimeout) clearTimeout(saveTimeout);
+        if (immediate) {
+            saveData(); // Сохраняем немедленно, если требуется
+        } else {
+            saveTimeout = setTimeout(saveData, 1000); // Сохраняем через 1 секунду
+        }
+    }
+
+    function loadGame() {
+        console.log("[Load] Попытка загрузки...");
+        isBlocked = false; // Сброс блокировки при загрузке
+        warningCount = 0;
+        if (cauldronElement) cauldronElement.classList.remove('blocked-cauldron');
+        let setupDone = false; // Флаг, что начальная настройка выполнена
+
+        const postSetup = (isNew = false) => {
+            if (setupDone) return; // Выполняем только один раз
+            console.log("[Load] Выполнение пост-загрузочной настройки...");
+            if (isNew) {
+                console.log("[Load] Начало новой игры.");
+                resetGameData(); // Сбрасываем данные, если это новая игра
+            }
+            recalculateBonuses(); // Пересчитываем бонусы от улучшений
+            applyTranslations(); // Применяем язык
+            updateLiquidColor(); // Устанавливаем цвет жидкости
+            visualLiquidLevel = LIQUID_MIN_LEVEL; // Сбрасываем уровень жидкости
+            lastInteractionTime = Date.now(); // Сбрасываем время последнего взаимодействия
+            applyCauldronSkin(); // Применяем выбранный скин колбы
+            updateDisplay(); // Обновляем все отображаемые значения
+            checkReferralAndBonus(); // Проверяем реферальные параметры
+            console.log(`[Load] Пост-настройка завершена. Состояние: E:${formatNumber(essence)}, G:${gems}, Lng:${currentLanguage}, Skin:${activeSkinId}, BonusClaimed:${bonusClaimed}`);
+            setupDone = true;
+        };
+
+        if (!tg?.CloudStorage || typeof tg.CloudStorage.getItem !== 'function') {
+            console.warn("[Load] CloudStorage недоступен. Начало новой игры.");
+            postSetup(true); // Запускаем как новую игру
+            showTemporaryNotification("Прогресс не будет сохранен.", "warning");
+            updateBonusButtonVisibility(); // Обновляем видимость кнопки даже при ошибке
+            return; // Выходим, если хранилище недоступно
+        }
+
+        try {
+            tg.CloudStorage.getItem('gameState', (err, val) => {
+                console.log("[Load Callback] Ответ от CloudStorage получен.");
+                let reset = false; // Флаг для сброса на новую игру
+
+                if (err) {
+                    console.error("[Load Callback] Ошибка получения данных:", err);
+                    if (err.message?.includes("STORAGE_KEY_CLOUD_NOT_FOUND")) {
+                        console.log("[Load Callback] Ключ 'gameState' не найден. Новая игра.");
+                    } else if (err.message?.includes("Unsupported")) {
+                        console.warn("[Load Callback] CloudStorage.getItem не поддерживается.");
+                        showTemporaryNotification("Сохранение/загрузка недоступны.", "warning");
+                    } else {
+                        showTemporaryNotification(translations.loadError[currentLanguage], "error");
+                    }
+                    reset = true; // Сбрасываем на новую игру при любой ошибке загрузки
+                } else if (val) {
+                    console.log(`[Load Callback] Данные получены (${val.length} байт). Парсинг...`);
+                    try {
+                        const ss = JSON.parse(val); // Парсим строку JSON
+                        console.log("[Load Parse] OK:", ss);
+
+                        // Загружаем основные значения с проверками
+                        essence = Number(ss.essence) || 0;
+                        if (!Number.isFinite(essence) || essence < 0) { console.warn("[Load Valid] essence -> 0"); essence = 0; }
+                        gems = Number(ss.gems) || 0;
+                        if (!Number.isFinite(gems) || gems < 0) { console.warn("[Load Valid] gems -> 0"); gems = 0; }
+                        currentLanguage = ss.language || 'ru';
+                        if (!translations.greetingBase[currentLanguage]) { console.warn(`[Load Valid] язык '${ss.language}' -> ru`); currentLanguage = 'ru'; }
+
+                        // Загружаем уровни улучшений
+                        if (Array.isArray(ss.upgrades)) {
+                            upgrades.forEach(u => {
+                                const savedUpgrade = ss.upgrades.find(s => s.id === u.id);
+                                const level = Number(savedUpgrade?.level);
+                                u.currentLevel = (Number.isFinite(level) && level >= 0) ? level : 0;
+                                if (u.currentLevel !== 0 && !(Number.isFinite(level) && level >= 0)) console.warn(`[Load Valid] уровень улучш. ${u.id} (${level}) -> 0`);
+                            });
+                        } else {
+                            console.warn("[Load Valid] массив улучшений неверный -> все уровни 0");
+                            upgrades.forEach(u => u.currentLevel = 0);
+                        }
+
+                        // Загружаем скины
+                        ownedSkins = Array.isArray(ss.ownedSkins) ? ss.ownedSkins : ['default'];
+                        if (!ownedSkins.includes('default')) { ownedSkins.push('default'); console.warn("[Load Valid] добавлен скин 'default'."); }
+                        activeSkinId = (typeof ss.activeSkinId === 'string' && ownedSkins.includes(ss.activeSkinId)) ? ss.activeSkinId : 'default';
+                        if (ss.activeSkinId && !ownedSkins.includes(ss.activeSkinId)) console.warn(`[Load Valid] активный скин '${ss.activeSkinId}' не куплен -> 'default'`);
+
+                        // Загружаем статус получения бонуса
+                        bonusClaimed = ss.bonusClaimed === true; // Строго проверяем на true
+                        if (bonusClaimed) console.log("[Load] Одноразовый бонус уже был получен ранее.");
+
+                        console.log("[Load] Данные успешно загружены.");
+
+                    } catch (pe) {
+                        console.error("[Load Parse] Ошибка парсинга JSON:", pe, "Данные:", val);
+                        showTemporaryNotification(translations.readError[currentLanguage], "error");
+                        reset = true; // Сбрасываем, если данные повреждены
+                    }
+                } else {
+                    // Если val пустой, значит сохранения нет
+                    console.log("[Load Callback] Пустое значение от CloudStorage. Новая игра.");
+                    reset = true;
+                }
+
+                // Выполняем пост-настройку после обработки данных
+                postSetup(reset);
+                // Обновляем видимость кнопки бонуса после загрузки
+                updateBonusButtonVisibility();
+
+            }); // Конец CloudStorage.getItem callback
+        } catch (se) {
+            console.error("[Load Try] Критическая ошибка вызова CloudStorage.getItem:", se);
+            showTemporaryNotification("Ошибка доступа к хранилищу.", "error");
+            postSetup(true); // Начинаем новую игру при критической ошибке
+             // Обновляем видимость кнопки бонуса даже при ошибке
+            updateBonusButtonVisibility();
+        }
+    }
+
+    function resetGameData() {
+        console.warn("Сброс игровых данных к значениям по умолчанию!");
+        essence = 0;
+        gems = 0;
+        upgrades.forEach(u => u.currentLevel = 0);
+        ownedSkins = ['default'];
+        activeSkinId = 'default';
+        bonusClaimed = false; // Сбрасываем флаг бонуса при новой игре
+        isBlocked = false;
+        warningCount = 0;
+    }
 
     // --- Функция уведомлений ---
     function showTemporaryNotification(msg, type = "info", dur = 2500) { const oldN = document.querySelector('.notification'); if (oldN) oldN.remove(); const n = document.createElement('div'); n.className = `notification ${type}`; n.textContent = msg; document.body.appendChild(n); requestAnimationFrame(() => { n.style.opacity = '1'; n.style.transform = 'translate(-50%, 0)'; }); setTimeout(() => { n.style.opacity = '0'; n.style.transform = 'translate(-50%, 10px)'; setTimeout(() => { if (n.parentNode) n.remove(); }, 500); }, dur); }
 
+    // --- Функция: Управляет видимостью кнопки бонуса ---
+    function updateBonusButtonVisibility() {
+        if (!oneTimeBonusBtn) return; // Если кнопки нет, ничего не делаем
+        if (bonusClaimed) {
+            // Если бонус получен, добавляем класс hidden
+            oneTimeBonusBtn.classList.add('hidden');
+        } else {
+            // Если бонус не получен, убираем класс hidden
+            oneTimeBonusBtn.classList.remove('hidden');
+        }
+    }
+    // -------------------------------------------------------
+
     // --- Первоначальная инициализация ---
-    loadGame();
+    loadGame(); // Загружаем игру при старте
 
     // --- Автосохранение и обработчики событий ---
     setInterval(() => saveGame(false), 15000); // Debounced save every 15s
     window.addEventListener('beforeunload', () => saveGame(true)); // Immediate save on close
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveGame(true); }); // Immediate save on hide
-    if (tg?.onEvent) { tg.onEvent('viewportChanged', (e) => { if (e && e.isStateStable) { console.log("Viewport stable, saving."); saveGame(false); } }); }
+    if (tg?.onEvent) { tg.onEvent('viewportChanged', (e) => { if (e && e.isStateStable) { console.log("Viewport стабилен, сохранение."); saveGame(false); } }); }
     // --- Интервал для обновления цвета жидкости ---
     let liquidColorInterval = setInterval(updateLiquidColor, 5 * 60 * 1000);
+
+    // --- ОБРАБОТЧИК: Клик по кнопке одноразового бонуса ---
+    if (oneTimeBonusBtn) {
+        oneTimeBonusBtn.addEventListener('click', () => {
+            if (isBlocked) {
+                 // Используем !! для преобразования в boolean и ?? для значения по умолчанию
+                 const message = translations.actionBlocked?.[currentLanguage] ?? "Действие заблокировано.";
+                 showTemporaryNotification(message, "error");
+                 return; // Не даем получить бонус, если заблокировано
+            }
+
+            // Проверяем, не был ли бонус уже получен
+            if (!bonusClaimed) {
+                console.log("Получение одноразового бонуса!");
+                tg.HapticFeedback?.notificationOccurred('success'); // Вибрация успеха
+
+                // Начисляем бонус
+                essence += 100000;
+                // Устанавливаем флаг, что бонус получен
+                bonusClaimed = true;
+
+                // Показываем уведомление
+                const successMessage = translations.bonusClaimSuccess?.[currentLanguage] ?? "+100K 🧪 Бонус получен!";
+                showTemporaryNotification(successMessage, "success", 3000);
+
+                // Обновляем видимость кнопки (скрываем ее)
+                updateBonusButtonVisibility();
+                // Обновляем отображение эссенции
+                updateDisplay();
+                // Немедленно сохраняем игру, чтобы зафиксировать получение бонуса
+                saveGame(true);
+
+            } else {
+                // Если кнопка почему-то видима, но бонус уже получен
+                console.log("Бонус уже был получен ранее.");
+                tg.HapticFeedback?.notificationOccurred('warning'); // Вибрация предупреждения
+                 // Можно раскомментировать, если нужно явное уведомление
+                // const claimedMessage = translations.bonusClaimedAlready?.[currentLanguage] ?? "Бонус уже получен.";
+                // showTemporaryNotification(claimedMessage, "info");
+            }
+        });
+    } else {
+        console.error("Кнопка одноразового бонуса не найдена!");
+    }
+    // -----------------------------------------------------------
+
 
     // --- Очистка интервалов при необходимости (редко нужно) ---
     // window.addEventListener('unload', () => {
