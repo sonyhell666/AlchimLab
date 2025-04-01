@@ -265,91 +265,74 @@ document.addEventListener('DOMContentLoaded', () => {
     function cleanBonusUrlParam() { try { const url = new URL(window.location.href); if (url.searchParams.has('claimBonus')) { url.searchParams.delete('claimBonus'); window.history.replaceState({}, document.title, url.toString()); console.log("claimBonus param removed from URL."); } } catch (e) { console.error("Error cleaning URL param:", e); } }
 
 
-    // --- ВРЕМЕННОЕ ИЗМЕНЕНИЕ: Добавлено подробное логирование + ALERT для отладки на телефоне ---
+    // --- Обработчик кнопки "Пригласить друзей" (БЕЗ ALERT) ---
     inviteFriendBtn.addEventListener('click', () => {
-        alert("[Debug] Invite Button Clicked."); // ALERT 1: Кнопка нажата
+        console.log("[Invite Button] Clicked.");
 
         if (isBlocked) {
-            alert("[Debug] Action Blocked."); // ALERT: Заблокировано
+            console.warn("[Invite Button] Action blocked.");
             showTemporaryNotification(translations.actionBlocked[currentLanguage], "error");
             return;
         }
 
         const versionCheck = tg.isVersionAtLeast('6.1');
-        alert(`[Debug] Version Check (>= 6.1): ${versionCheck}`); // ALERT 2: Результат проверки версии
+        console.log(`[Invite Button] isVersionAtLeast('6.1'): ${versionCheck}`);
 
         if (versionCheck) {
             const uid = tg.initDataUnsafe?.user?.id;
             const botUsername = tg.initDataUnsafe?.bot?.username;
-            // ALERT 3: Показываем полученные данные
-            alert(`[Debug] Data:\nUser ID: ${uid}\nBot Username: ${botUsername}`);
+            console.log("[Invite Button] Data:", { uid, botUsername });
 
+            // --- ГЛАВНАЯ ПРОВЕРКА ---
             if (!uid || !botUsername) {
-                alert("[Debug] User ID or Bot Username MISSING!"); // ALERT: Данные отсутствуют
-                console.error("[Invite Button] User ID or Bot username missing!");
+                console.error("[Invite Button] User ID or Bot username missing! Cannot generate invite link.");
+                // Показываем ошибку пользователю
                 showTemporaryNotification(translations.inviteLinkError[currentLanguage], "error");
-                return;
+                // Дополнительный лог для понимания, чего не хватает
+                if (!uid) console.error("[Invite Button] Reason: User ID is missing.");
+                if (!botUsername) console.error("[Invite Button] Reason: Bot Username is missing. Ensure the app is launched VIA THE BOT.");
+                return; // Выход, т.к. ссылку создать нельзя
             }
-
-            // --- Тест открытия ПРОСТОЙ ссылки ---
-            try {
-                 alert("[Debug] Testing simple openTelegramLink...");
-                 tg.openTelegramLink('https://telegram.org/'); // Пытаемся открыть простую внешнюю ссылку
-                 alert("[Debug] Simple link open attempted. Check if Telegram link opened."); // ALERT 4: Результат попытки открытия простой ссылки
-            } catch(simpleLinkError) {
-                 alert(`[Debug] ERROR opening simple link: ${simpleLinkError.message}`); // ALERT: Ошибка открытия простой ссылки
-            }
-            // --- Конец теста простой ссылки ---
+            // --- КОНЕЦ ПРОВЕРКИ ---
 
 
-            // --- Основная логика шаринга (выполняется после теста) ---
             const url = `https://t.me/${botUsername}?startapp=${uid}`;
             const txt = translations.shareText?.[currentLanguage] || 'Присоединяйся к моей Алхимической Лаборатории в Telegram! 🧪⚗️ Кликай и создавай эликсиры!';
-            alert(`[Debug] Generated URL for sharing:\n${url}`); // ALERT 5: Сгенерированная ссылка
+            console.log("[Invite Button] Generated link:", { url, txt });
 
             try {
-                alert("[Debug] Attempting to share invite link..."); // ALERT 6: Перед вызовом шаринга
+                console.log("[Invite Button] Attempting to call openTelegramLink for sharing...");
                 tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(txt)}`);
-                // Если мы дошли сюда без ошибки, сам вызов прошел. Откроется ли окно шаринга - зависит от Telegram.
-                 alert("[Debug] Share link attempt done. Check if share dialog appeared."); // ALERT 7: Попытка шаринга завершена
+                console.log("[Invite Button] openTelegramLink called successfully (no immediate error).");
                 tg.HapticFeedback?.impactOccurred('light');
             } catch (e) {
-                alert(`[Debug] ERROR sharing invite link: ${e.message}`); // ALERT 8: Ошибка шаринга
                 console.error("[Invite Button] Error calling openTelegramLink for sharing:", e);
                 showTemporaryNotification(translations.inviteLinkError[currentLanguage], "error");
             }
-             // --- Конец основной логики ---
-
         } else {
-            alert("[Debug] Version check failed."); // ALERT: Версия не подходит
             console.warn("[Invite Button] Version check failed.");
             const errMsg = (translations.referralRegErrorFunc?.[currentLanguage] || "Feature unavailable") + " (v6.1+)";
             showTemporaryNotification(errMsg, "warning");
         }
     });
-    // --- Конец ВРЕМЕННОГО обработчика с ALERT ---
+    // --- Конец ОБНОВЛЕННОГО обработчика ---
 
 
     // --- Сохранение/Загрузка ---
     let saveTimeout = null;
     function saveGame(immediate = false) {
-        // --- ИЗМЕНЕНО: Используем более надежную проверку доступности CloudStorage ---
         if (typeof tg?.CloudStorage?.setItem !== 'function') {
-            // console.warn("[Save] CloudStorage.setItem is unavailable. Skipping save."); // Можно раскомментировать для отладки
             return;
         }
 
         const saveData = () => {
-            // console.log("[Save] Попытка сохранения..."); // Можно раскомментировать для отладки
             let vld = true;
-            // --- Валидация данных перед сохранением ---
             if (!Number.isFinite(essence) || essence < 0) { console.warn(`[Save Valid] Неверная эссенция ${essence}. Сброс до 0.`); essence = 0; vld = false; }
             if (!Number.isFinite(gems) || gems < 0) { console.warn(`[Save Valid] Неверные кристаллы ${gems}. Сброс до 0.`); gems = 0; vld = false; }
             if (!Array.isArray(ownedSkins) || !ownedSkins.includes('default')) { console.warn(`[Save Valid] Неверные купленные скины ${ownedSkins}. Сброс до ['default'].`); ownedSkins = ['default']; if (activeSkinId !== 'default') activeSkinId = 'default'; vld = false; }
             if (typeof activeSkinId !== 'string' || !ownedSkins.includes(activeSkinId)) { console.warn(`[Save Valid] Неверный активный скин ${activeSkinId}. Сброс до 'default'.`); activeSkinId = 'default'; vld = false; }
             upgrades.forEach(u => { if (!Number.isFinite(u.currentLevel) || u.currentLevel < 0) { console.warn(`[Save Valid] Неверный уровень улучшения ${u.id}: ${u.currentLevel}. Сброс до 0.`); u.currentLevel = 0; vld = false; } });
             if (typeof bonusClaimed !== 'boolean') { console.warn(`[Save Valid] Неверный флаг бонуса ${bonusClaimed}. Сброс до false.`); bonusClaimed = false; vld = false; }
-             // --- Конец валидации ---
 
             if (!vld) console.warn("[Save] Данные были исправлены перед сохранением.");
 
@@ -361,19 +344,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 ownedSkins: ownedSkins,
                 activeSkinId: activeSkinId,
                 bonusClaimed: bonusClaimed,
-                saveVersion: 1 // Версия структуры сохранения
+                saveVersion: 1
             };
 
             try {
                 const gss = JSON.stringify(gs);
-                // Оборачиваем вызов setItem в try...catch на всякий случай
                 try {
                     tg.CloudStorage.setItem('gameState', gss, (err, ok) => {
-                        if (err) {
-                            console.error("[Save Callback] Ошибка при вызове setItem:", err);
-                        }
-                         /* else if (ok) console.log("[Save Callback] Успешно."); // Раскомментировать для отладки */
-                         /* else console.warn("[Save Callback] Неизвестный результат setItem."); */
+                        if (err) { console.error("[Save Callback] Ошибка при вызове setItem:", err); }
                     });
                 } catch (setItemError) {
                      console.error("[Save] КРИТИЧЕСКАЯ ошибка ПРЯМОГО вызова tg.CloudStorage.setItem:", setItemError);
@@ -398,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (immediate) {
             saveData();
         } else {
-            saveTimeout = setTimeout(saveData, 1000); // Debounce сохранения 1 сек
+            saveTimeout = setTimeout(saveData, 1000); // Debounce 1 сек
         }
     }
 
@@ -424,17 +402,16 @@ document.addEventListener('DOMContentLoaded', () => {
             applyCauldronSkin();
             updateDisplay();
             checkReferralAndBonus();
-            updateBonusButtonVisibility(); // Обновляем видимость кнопки бонуса после загрузки
+            updateBonusButtonVisibility();
             console.log(`[Load] Пост-настройка завершена. Состояние: E:${formatNumber(essence)}, G:${gems}, Lng:${currentLanguage}, Skin:${activeSkinId}, BonusClaimed:${bonusClaimed}`);
             setupDone = true;
         };
 
-         // --- ИЗМЕНЕНО: Используем более надежную проверку доступности CloudStorage ---
         if (typeof tg?.CloudStorage?.getItem !== 'function') {
             console.warn("[Load] CloudStorage.getItem недоступен. Начало новой игры.");
             postSetup(true);
             showTemporaryNotification("Прогресс не будет сохранен.", "warning");
-            return; // Выходим, если хранилище недоступно
+            return;
         }
 
         try {
@@ -444,21 +421,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (err) {
                     console.error("[Load Callback] Ошибка получения данных:", err);
-                    // Проверяем специфичные ошибки Telegram
-                    if (typeof err === 'string' && err.includes("STORAGE_KEY_CLOUD_NOT_FOUND")) {
-                         console.log("[Load Callback] Ключ 'gameState' не найден (ошибка-строка). Новая игра.");
-                         reset = true;
-                    } else if (err?.message?.includes("STORAGE_KEY_CLOUD_NOT_FOUND")) {
-                         console.log("[Load Callback] Ключ 'gameState' не найден (ошибка-объект). Новая игра.");
+                    if (typeof err === 'string' && err.includes("STORAGE_KEY_CLOUD_NOT_FOUND") || err?.message?.includes("STORAGE_KEY_CLOUD_NOT_FOUND")) {
+                         console.log("[Load Callback] Ключ 'gameState' не найден. Новая игра.");
                          reset = true;
                     } else if (err?.message?.includes("Unsupported") || (typeof err === 'string' && err.includes("Unsupported"))) {
                         console.warn("[Load Callback] CloudStorage.getItem не поддерживается.");
                         showTemporaryNotification("Сохранение/загрузка недоступны.", "warning");
-                        reset = true; // Считаем как новую игру, т.к. загрузиться не можем
+                        reset = true;
                     } else {
-                        // Другая ошибка загрузки
                         showTemporaryNotification(translations.loadError[currentLanguage], "error");
-                        reset = true; // Сбрасываем на новую игру при любой другой ошибке загрузки
+                        reset = true;
                     }
                 } else if (val) {
                     console.log(`[Load Callback] Данные получены (${val ? val.length : 0} байт). Парсинг...`);
@@ -466,7 +438,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         const ss = JSON.parse(val);
                         console.log("[Load Parse] OK:", ss);
 
-                        // Загружаем основные значения с проверками
                         essence = Number(ss.essence) || 0;
                         if (!Number.isFinite(essence) || essence < 0) { console.warn("[Load Valid] essence -> 0"); essence = 0; }
                         gems = Number(ss.gems) || 0;
@@ -474,7 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         currentLanguage = ss.language || 'ru';
                         if (!translations.greetingBase[currentLanguage]) { console.warn(`[Load Valid] язык '${ss.language}' -> ru`); currentLanguage = 'ru'; }
 
-                        // Загружаем уровни улучшений
                         if (Array.isArray(ss.upgrades)) {
                             upgrades.forEach(u => {
                                 const savedUpgrade = ss.upgrades.find(s => s.id === u.id);
@@ -487,39 +457,34 @@ document.addEventListener('DOMContentLoaded', () => {
                             upgrades.forEach(u => u.currentLevel = 0);
                         }
 
-                        // Загружаем скины
                         ownedSkins = Array.isArray(ss.ownedSkins) ? ss.ownedSkins : ['default'];
                         if (!ownedSkins.includes('default')) { ownedSkins.push('default'); console.warn("[Load Valid] добавлен скин 'default'."); }
                         activeSkinId = (typeof ss.activeSkinId === 'string' && ownedSkins.includes(ss.activeSkinId)) ? ss.activeSkinId : 'default';
                         if (ss.activeSkinId && !ownedSkins.includes(ss.activeSkinId)) console.warn(`[Load Valid] активный скин '${ss.activeSkinId}' не куплен -> 'default'`);
 
-                         // Загружаем статус получения бонуса
-                        bonusClaimed = ss.bonusClaimed === true; // Строго проверяем на true
+                        bonusClaimed = ss.bonusClaimed === true;
                         if (ss.bonusClaimed !== undefined) console.log(`[Load] Статус бонуса загружен: ${bonusClaimed}`);
                         else console.warn("[Load Valid] Флаг бонуса отсутствовал в сохранении -> false");
-
 
                         console.log("[Load] Данные успешно загружены.");
 
                     } catch (pe) {
                         console.error("[Load Parse] Ошибка парсинга JSON:", pe, "Данные:", val);
                         showTemporaryNotification(translations.readError[currentLanguage], "error");
-                        reset = true; // Сбрасываем, если данные повреждены
+                        reset = true;
                     }
                 } else {
-                    // Если val пустой или null, значит сохранения нет
                     console.log("[Load Callback] Пустое значение от CloudStorage. Новая игра.");
                     reset = true;
                 }
 
-                // Выполняем пост-настройку после обработки данных
                 postSetup(reset);
 
             }); // Конец CloudStorage.getItem callback
         } catch (se) {
             console.error("[Load Try] Критическая ошибка вызова CloudStorage.getItem:", se);
             showTemporaryNotification("Ошибка доступа к хранилищу.", "error");
-            postSetup(true); // Начинаем новую игру при критической ошибке
+            postSetup(true);
         }
     }
 
@@ -533,7 +498,6 @@ document.addEventListener('DOMContentLoaded', () => {
         bonusClaimed = false;
         isBlocked = false;
         warningCount = 0;
-        // Сброс визуальных элементов не требуется здесь, т.к. postSetup их обновит
     }
 
     // --- Функция уведомлений ---
@@ -582,8 +546,6 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 console.log("Бонус уже был получен ранее.");
                 tg.HapticFeedback?.notificationOccurred('warning');
-                // const claimedMessage = translations.bonusClaimedAlready?.[currentLanguage] ?? "Бонус уже получен.";
-                // showTemporaryNotification(claimedMessage, "info"); // Можно раскомментировать для уведомления
             }
         });
     } else {
